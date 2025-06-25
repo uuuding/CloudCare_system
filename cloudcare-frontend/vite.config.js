@@ -29,7 +29,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },
@@ -41,6 +41,14 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true
+      }
+    }
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // 使用现代API而不是旧版JS API，解决警告问题
+        silenceDeprecations: ['legacy-js-api']
       }
     }
   }
