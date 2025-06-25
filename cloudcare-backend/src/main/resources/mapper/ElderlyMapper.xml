@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloudcare.mapper.ElderlyMapper">
+
+    <!-- 查询指定日期之前创建的老人数量 -->
+    <select id="selectCountByCreateTimeBefore" resultType="int">
+        SELECT COUNT(1) FROM elderly
+        WHERE DATE(create_time) &lt;= #{date}
+    </select>
+
+</mapper>

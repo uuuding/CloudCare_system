@@ -1,0 +1,67 @@
+# 应用配置
+spring:
+  # 环境配置
+  profiles:
+    active: dev
+  # 应用名称
+  application:
+    name: cloudcare-backend
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  # 允许循环依赖
+  main:
+    allow-circular-references: true
+
+# MyBatis Plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.cloudcare.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: AUTO
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Knife4j配置
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+    enable-swagger-models: true
+    enable-document-manage: true
+    swagger-model-name: 实体类列表
+  openapi:
+    title: CloudCare云护智慧医养大数据公共服务平台API文档
+    description: CloudCare云护智慧医养大数据公共服务平台API文档
+    email: admin@cloudcare.com
+    concat: CloudCare团队
+    url: https://www.cloudcare.com
+    version: v1.0.0
+    license: Apache 2.0
+    license-url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  tomcat:
+    uri-encoding: UTF-8
+
+# 日志配置
+logging:
+  level:
+    com.cloudcare: info
+    org.springframework: warn
