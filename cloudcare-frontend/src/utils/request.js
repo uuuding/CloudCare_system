@@ -5,7 +5,7 @@ import router from '@/router'
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_APP_BASE_API || '/api', // url = base url + request url
+  baseURL: import.meta.env.VITE_APP_BASE_API || '', // url = base url + request url
   timeout: 10000 // 请求超时时间
 })
 

@@ -55,7 +55,7 @@ export function getUserInfo() {
  */
 export function updatePassword(data) {
   return request({
-    url: '/api/user/password',
+    url: '/user/password',
     method: 'put',
     data
   })

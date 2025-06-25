@@ -3,7 +3,7 @@
     <div class="login-card">
       <div class="login-header">
         <img src="@/assets/logo.svg" alt="Logo" class="logo" />
-        <h2 class="title">云护理系统</h2>
+        <h2 class="title">云护CloudCare智慧医养大数据公共服务平台云端后台管理系统</h2>
       </div>
       
       <el-form
