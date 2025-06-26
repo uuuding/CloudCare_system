@@ -35,6 +35,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             log.error("用户[{}]不存在", username);
             throw new UsernameNotFoundException("用户不存在");
         }
+        
+        log.info("用户[{}]信息: 状态={}, 密码={}", username, user.getStatus(), user.getPassword());
 
         // 创建权限列表
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
@@ -55,14 +57,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         // 创建UserDetails对象
-        return new org.springframework.security.core.userdetails.User(
+        boolean isEnabled = user.getStatus() == 1;
+        log.info("用户[{}]状态转换: 原始状态={}, 转换后启用状态={}", username, user.getStatus(), isEnabled);
+        
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                user.getStatus() == 1, // 是否启用
+                isEnabled, // 是否启用
                 true, // 账号是否过期
                 true, // 凭证是否过期
                 true, // 账号是否锁定
                 authorities // 权限列表
         );
+        
+        log.info("用户[{}]UserDetails信息: 是否启用={}, 密码={}", 
+                username, userDetails.isEnabled(), userDetails.getPassword());
+        
+        return userDetails;
     }
 }
