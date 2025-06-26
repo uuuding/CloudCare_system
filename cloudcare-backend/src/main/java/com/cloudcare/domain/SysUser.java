@@ -36,7 +36,7 @@ public class SysUser extends BaseEntity {
     private String nickName;
 
     /** 用户类型（00系统用户 01注册用户） */
-    private String userType;
+    private int userType;
 
     /** 用户邮箱 */
     private String email;

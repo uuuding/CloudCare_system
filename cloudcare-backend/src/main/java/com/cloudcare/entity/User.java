@@ -66,7 +66,7 @@ public class User implements Serializable {
     /**
      * 用户类型（1：管理员，2：医生，3：老人）
      */
-    private Integer userType;
+    private int userType;
 
     /**
      * 状态（0：禁用，1：正常）

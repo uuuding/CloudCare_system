@@ -40,7 +40,11 @@ service.interceptors.response.use(
 
       // 401: 未登录或token过期
       // 403: 无权限
+      const whiteList = ['/api/auth/login', '/api/auth/register']
       if (res.code === 401 || res.code === 403) {
+        if (whiteList.includes(response.config.url)) {
+          return Promise.reject(new Error(res.message || '系统错误'))
+        }
         // 重新登录
         ElMessageBox.confirm('您已登出，请重新登录', '确认登出', {
           confirmButtonText: '重新登录',
