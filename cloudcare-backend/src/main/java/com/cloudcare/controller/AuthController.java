@@ -3,6 +3,7 @@ package com.cloudcare.controller;
 import com.cloudcare.common.Result;
 import com.cloudcare.entity.User;
 import com.cloudcare.service.UserService;
+import com.cloudcare.dto.RegisterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -61,19 +63,15 @@ public class AuthController {
      */
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "用户注册接口")
-    public Result<Boolean> register(
-            @Parameter(description = "用户名") @RequestParam String username,
-            @Parameter(description = "密码") @RequestParam String password,
-            @Parameter(description = "真实姓名") @RequestParam String realName,
-            @Parameter(description = "手机号") @RequestParam String phone,
-            @Parameter(description = "用户类型（1：管理员，2：医生，3：老人）") @RequestParam Integer userType) {
+    public Result<Boolean> register(@RequestBody RegisterDTO registerDTO) {
+
         // 创建用户对象
         User user = new User();
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setRealName(realName);
-        user.setPhone(phone);
-        user.setUserType(userType);
+        user.setUsername(registerDTO.getUsername());
+        user.setPassword(registerDTO.getPassword());
+        user.setRealName(registerDTO.getRealName());
+        user.setPhone(registerDTO.getPhone());
+        user.setUserType(registerDTO.getUserType());
         
         // 注册用户
         boolean result = userService.register(user);

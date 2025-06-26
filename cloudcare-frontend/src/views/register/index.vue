@@ -77,9 +77,9 @@
         
         <el-form-item label="用户类型" prop="userType">
           <el-select v-model="registerForm.userType" placeholder="请选择用户类型" style="width: 100%">
-            <el-option label="老人" value="ELDERLY" />
-            <el-option label="家属" value="FAMILY" />
-            <el-option label="普通用户" value="USER" />
+            <el-option label="老人" value="3" />
+            <el-option label="医生" value="2" />
+            <el-option label="普通用户" value="1" />
           </el-select>
         </el-form-item>
         
@@ -127,7 +127,7 @@ const registerForm = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  userType: 'USER'
+  userType: '1'
 })
 
 // 验证密码是否一致
@@ -205,6 +205,7 @@ const handleRegister = () => {
         password: registerForm.password,
         userType: registerForm.userType
       }
+      console.log(registerData)
       
       register(registerData)
         .then(res => {
