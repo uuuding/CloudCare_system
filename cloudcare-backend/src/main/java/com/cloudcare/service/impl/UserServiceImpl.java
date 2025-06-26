@@ -47,21 +47,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public String login(String username, String password) {
-        // 进行身份验证
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password));
+        log.info("开始登录验证: 用户名={}, 密码长度={}", username, password != null ? password.length() : 0);
         
-        // 验证成功后，更新登录信息
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        User user = getUserByUsername(username);
-        if (user != null) {
-            // 更新登录时间和IP
-            user.setLoginTime(LocalDateTime.now());
-            user.setLoginIp(SecurityUtil.getIpAddress());
-            updateById(user);
+        try {
+            // 进行身份验证
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
             
-            // 生成JWT令牌
-            return jwtUtil.generateToken(user);
+            log.info("身份验证成功: 用户名={}", username);
+            
+            // 验证成功后，更新登录信息
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            User user = getUserByUsername(username);
+            if (user != null) {
+                // 更新登录时间和IP
+                user.setLoginTime(LocalDateTime.now());
+                user.setLoginIp(SecurityUtil.getIpAddress());
+                updateById(user);
+                
+                // 生成JWT令牌
+                String token = jwtUtil.generateToken(user);
+                log.info("生成JWT令牌成功: 用户名={}", username);
+                return token;
+            } else {
+                log.error("验证成功但用户不存在: 用户名={}", username);
+            }
+        } catch (Exception e) {
+            log.error("登录验证失败: 用户名={}, 错误信息={}", username, e.getMessage(), e);
+            throw e;
         }
         return null;
     }

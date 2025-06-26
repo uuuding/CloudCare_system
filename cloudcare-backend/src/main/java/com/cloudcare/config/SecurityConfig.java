@@ -1,9 +1,6 @@
 package com.cloudcare.config;
 
-import com.cloudcare.security.JwtAuthenticationFilter;
-import com.cloudcare.security.JwtAuthenticationProvider;
-import com.cloudcare.security.RestAuthenticationEntryPoint;
-import com.cloudcare.security.RestfulAccessDeniedHandler;
+import com.cloudcare.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,10 +54,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(restAuthenticationEntryPoint);
     }
 
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        // 添加这个，才能进行用户名+密码登录
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+
+        // 保留 JWT 的 provider（可选，如果它负责解析 token）
         auth.authenticationProvider(jwtAuthenticationProvider);
     }
+
 
     @Bean
     @Lazy

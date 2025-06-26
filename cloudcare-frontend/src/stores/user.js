@@ -28,10 +28,18 @@ export const useUserStore = defineStore('user', {
       const { username, password } = userInfo
       try {
         const res = await login({ username: username.trim(), password })
-        const { data } = res
-        this.token = data.token
-        setToken(data.token)
-        return Promise.resolve(res)
+        const resData = res.data
+
+        if (resData.code !== 200) {
+          // 后端登录失败时，code不是200，抛出错误
+          return Promise.reject(new Error(resData.msg || '登录失败'))
+        }
+
+        // 登录成功，保存token
+        this.token = resData.data.token
+        setToken(this.token)
+
+        return Promise.resolve(resData.data)
       } catch (error) {
         return Promise.reject(error)
       }

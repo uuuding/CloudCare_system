@@ -63,5 +63,5 @@ server:
 # 日志配置
 logging:
   level:
-    com.cloudcare: info
+    com.cloudcare: debug
     org.springframework: warn

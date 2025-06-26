@@ -7,9 +7,9 @@ import request from '@/utils/request'
  */
 export function login(data) {
   return request({
-    url: '/api/auth/login',
+    url: '/auth/login',
     method: 'post',
-    params: data
+    data: data
   })
 }
 
@@ -20,7 +20,7 @@ export function login(data) {
  */
 export function register(data) {
   return request({
-    url: '/api/auth/register',
+    url: '/auth/register',
     method: 'post',
     data: data
   })
@@ -32,7 +32,7 @@ export function register(data) {
  */
 export function logout() {
   return request({
-    url: '/api/auth/logout',
+    url: '/auth/logout',
     method: 'post'
   })
 }
@@ -43,7 +43,7 @@ export function logout() {
  */
 export function getUserInfo() {
   return request({
-    url: '/api/user/info',
+    url: '/user/info',
     method: 'get'
   })
 }
@@ -55,7 +55,7 @@ export function getUserInfo() {
  */
 export function updatePassword(data) {
   return request({
-    url: '/api/user/password',
+    url: '/user/password',
     method: 'put',
     data
   })
@@ -68,7 +68,7 @@ export function updatePassword(data) {
  */
 export function resetPassword(data) {
   return request({
-    url: '/api/user/reset-password',
+    url: '/user/reset-password',
     method: 'post',
     data
   })
