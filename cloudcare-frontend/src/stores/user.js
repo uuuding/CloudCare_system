@@ -28,18 +28,20 @@ export const useUserStore = defineStore('user', {
       const { username, password } = userInfo
       try {
         const res = await login({ username: username.trim(), password })
+        console.log(res)
         const resData = res.data
+        console.log(resData)
 
-        if (resData.code !== 200) {
+        if (res.code !== 200) {
           // 后端登录失败时，code不是200，抛出错误
           return Promise.reject(new Error(resData.msg || '登录失败'))
         }
 
         // 登录成功，保存token
-        this.token = resData.data.token
+        this.token = resData.token
         setToken(this.token)
 
-        return Promise.resolve(resData.data)
+        return Promise.resolve(resData)
       } catch (error) {
         return Promise.reject(error)
       }
@@ -55,19 +57,12 @@ export const useUserStore = defineStore('user', {
           return Promise.reject('验证失败，请重新登录')
         }
         
-        const { userId, username, realName, avatar, roles, permissions } = data
-        
-        // 角色必须是非空数组
-        if (!roles || roles.length <= 0) {
-          return Promise.reject('用户没有任何权限')
-        }
+        const { userId, username, realName, avatar } = data
         
         this.userId = userId
         this.username = username
         this.realName = realName
         this.avatar = avatar
-        this.roles = roles
-        this.permissions = permissions
         
         return Promise.resolve(data)
       } catch (error) {
