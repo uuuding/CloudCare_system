@@ -37,6 +37,28 @@ export function getStaffList() {
 }
 
 /**
+ * 获取老人列表
+ * @returns {Promise}
+ */
+export function getElderList() {
+  return request({
+    url: '/user/elders',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取医生列表
+ * @returns {Promise}
+ */
+export function getDoctorList() {
+  return request({
+    url: '/user/doctors',
+    method: 'get'
+  })
+}
+
+/**
  * 新增用户
  * @param {Object} data 用户信息
  * @returns {Promise}
