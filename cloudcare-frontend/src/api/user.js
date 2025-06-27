@@ -9,16 +9,16 @@ export function getUserPage(params) {
   return request({
     url: '/user/page',
     method: 'get',
-    params
+    params, // 别忘了传参
   })
 }
 
 /**
- * 获取用户详情
+ * 根据用户ID获取用户信息
  * @param {Number} userId 用户ID
  * @returns {Promise}
  */
-export function getUserInfo(userId) {
+export function getUserById(userId) {
   return request({
     url: `/user/${userId}`,
     method: 'get'
@@ -61,6 +61,7 @@ export function updateUser(data) {
     data
   })
 }
+
 
 /**
  * 删除用户
