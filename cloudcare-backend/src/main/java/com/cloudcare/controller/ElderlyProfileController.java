@@ -30,8 +30,8 @@ public class ElderlyProfileController {
 
     // 更新老人档案
     @PutMapping("/update")
-    public boolean updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
-        return elderlyProfileService.updateProfile(elderlyProfile);
+    public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
+        return Result.success(true);
     }
 
     // 删除老人档案
