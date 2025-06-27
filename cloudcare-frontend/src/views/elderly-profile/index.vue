@@ -26,46 +26,60 @@
       </el-table>
     </el-card>
 
-    <!-- 编辑弹窗（浮动提示框）-->
-    <div v-if="dialogVisible" class="edit-dialog">
-      <div class="edit-dialog-content">
-        <h3>编辑老人档案</h3>
-        <form @submit.prevent="handleEditSave">
-          <div>
-            <label>姓名</label>
-            <input v-model="editProfile.name" placeholder="请输入姓名" required />
-          </div>
-          <div>
-            <label>年龄</label>
-            <input v-model="editProfile.age" type="number" placeholder="请输入年龄" required />
-          </div>
-          <div>
-            <label>性别</label>
-            <select v-model="editProfile.gender" required>
-              <option value="男">男</option>
-              <option value="女">女</option>
-              <option value="其他">其他</option>
-            </select>
-          </div>
-          <div class="dialog-footer">
-            <button type="button" @click="closeEditDialog">取消</button>
-            <button type="submit">确定</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- 编辑弹窗 -->
+    <el-dialog
+        v-model="dialogVisible"
+        title="编辑老人档案"
+        width="600px"
+        :before-close="closeEditDialog"
+    >
+      <el-form
+          :model="editProfile"
+          :rules="formRules"
+          label-width="100px"
+          ref="formRef"
+      >
+        <el-form-item label="姓名" prop="name">
+          <el-input v-model="editProfile.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="年龄" prop="age">
+          <el-input v-model="editProfile.age" type="number" placeholder="请输入年龄" />
+        </el-form-item>
+        <el-form-item label="性别" prop="gender">
+          <el-select v-model="editProfile.gender" placeholder="请选择性别">
+            <el-option label="男" value="男" />
+            <el-option label="女" value="女" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeEditDialog">取消</el-button>
+          <el-button type="primary" @click="handleEditSave">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElDialog, ElButton, ElInput, ElSelect, ElOption, ElForm, ElFormItem } from 'element-plus'
 import { getAllElderlyProfiles, searchElderlyProfiles, updateElderlyProfile, deleteElderlyProfile } from '@/api/elderlyProfile'
 
 const elderlyProfiles = ref([])
 const searchQuery = reactive({ name: '', age: '' })
 const editProfile = reactive({ id: null, name: '', age: '', gender: '' })
 const dialogVisible = ref(false) // 控制弹窗的显示
+
+// 表单验证规则
+const formRules = {
+  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
+  gender: [{ required: true, message: '请选择性别', trigger: 'change' }]
+}
 
 const loadElderlyProfiles = async () => {
   try {
@@ -91,8 +105,8 @@ const resetSearch = () => {
   loadElderlyProfiles()
 }
 
+// 打开编辑弹窗并填充数据
 const openEditDialog = (profile) => {
-  console.log('Opening edit dialog for profile:', profile)  // 确保数据传递正确
   editProfile.id = profile.id
   editProfile.name = profile.name
   editProfile.age = profile.age
@@ -100,20 +114,32 @@ const openEditDialog = (profile) => {
   dialogVisible.value = true // 打开弹窗
 }
 
+// 关闭编辑弹窗
 const closeEditDialog = () => {
   dialogVisible.value = false
 }
 
+// 保存编辑的老人档案
 const handleEditSave = async () => {
   try {
     const response = await updateElderlyProfile(editProfile)
-    if (response.data) {
+    if (response) {
       ElMessage.success('更新成功')
       closeEditDialog()
       await loadElderlyProfiles()
+    } else {
+      ElMessage.error('更新失败')
     }
   } catch (error) {
+    console.log(error)
     ElMessage.error('更新失败')
+    if (error.response) {
+      console.log("响应错误：", error.response.data)
+    } else if (error.request) {
+      console.log("请求没有收到响应：", error.request)
+    } else {
+      console.log("请求设置错误：", error.message)
+    }
   }
 }
 
@@ -135,27 +161,7 @@ onMounted(() => {
 </script>
 
 <style>
-/* 新增编辑弹窗样式 */
-.edit-dialog {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* 遮罩层 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.edit-dialog-content {
-  background: white;
-  padding: 20px;
-  width: 400px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
+/* 样式：已包含Element Plus对话框的样式，默认居中并可适应大小 */
 .dialog-footer {
   text-align: right;
   margin-top: 20px;
@@ -165,3 +171,5 @@ onMounted(() => {
   margin-left: 10px;
 }
 </style>
+
+

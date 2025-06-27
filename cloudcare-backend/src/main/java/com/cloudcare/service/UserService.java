@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloudcare.entity.User;
 
+import java.util.List;
+
 /**
  * 用户服务接口
  *
@@ -98,5 +100,13 @@ public interface UserService extends IService<User> {
      * @return 更新成功返回true，失败返回false
      */
     boolean updateAvatar(Long userId, String avatar);
+
+    /**
+     * 根据用户类型获取用户列表
+     *
+     * @param userType 用户类型（1：管理员，2：医生，3：老人）
+     * @return 用户列表
+     */
+    List<User> getUsersByType(Integer userType);
 
 }
