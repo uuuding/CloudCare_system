@@ -119,24 +119,6 @@ public class User implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 年龄（主要用于老人用户）
-     */
-    @TableField("age")
-    private Integer age;
-
-    /**
-     * 紧急联系人（主要用于老人用户）
-     */
-    @TableField("emergency_contact")
-    private String emergencyContact;
-
-    /**
-     * 紧急联系电话（主要用于老人用户）
-     */
-    @TableField("emergency_phone")
-    private String emergencyPhone;
-
-    /**
      * 备注
      */
     @TableField("remark")
