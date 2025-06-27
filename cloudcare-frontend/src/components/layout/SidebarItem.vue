@@ -30,6 +30,7 @@
         :item="child"
         :is-nest="true"
         :base-path="resolvePath(child.path)"
+        :is-collapse="isCollapse"
       />
     </el-sub-menu>
   </div>
@@ -53,6 +54,10 @@ const props = defineProps({
   basePath: {
     type: String,
     default: ''
+  },
+  isCollapse: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -96,3 +101,56 @@ const resolvePath = (routePath) => {
   return path.resolve(props.basePath, routePath)
 }
 </script>
+
+<style scoped>
+/* 确保图标在折叠状态下居中显示 */
+.el-menu-item .el-icon,
+.el-sub-menu .el-icon,
+.el-menu--collapse .el-menu-item .el-icon,
+.el-menu--collapse .el-sub-menu .el-icon {
+  margin-right: 10px;
+  width: 24px;
+  text-align: center;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 确保文字垂直居中 */
+.el-menu-item span,
+.el-sub-menu__title span {
+  vertical-align: middle;
+}
+
+/* 确保折叠状态下文字隐藏 */
+.el-menu--collapse .el-menu-item span,
+.el-menu--collapse .el-sub-menu__title span,
+.el-menu--collapse .el-sub-menu .el-sub-menu__title span,
+.el-menu--collapse .el-sub-menu .el-menu-item span {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+/* 折叠时的提示框样式 */
+.el-menu--popup {
+  background-color: #1f2d3d !important;
+}
+
+.el-menu--popup .el-menu-item {
+  background-color: #1f2d3d !important;
+}
+
+.el-menu--popup .el-menu-item:hover {
+  background-color: #001528 !important;
+}
+
+/* 确保折叠时弹出的子菜单中的文字正确显示 */
+.el-menu--popup .el-menu-item span {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+</style>
