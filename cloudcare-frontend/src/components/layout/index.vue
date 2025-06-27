@@ -1,7 +1,7 @@
 <template>
   <div class="app-wrapper">
     <!-- 侧边栏 -->
-    <div class="sidebar-container">
+    <div class="sidebar-container" :class="{'is-collapse': isCollapse}">
       <div class="logo-container">
         <img src="@/assets/logo.svg" alt="Logo" class="logo" />
         <h1 class="title">云护CloudCare</h1>
@@ -23,7 +23,8 @@
           v-for="route in routes" 
           :key="route.path" 
           :item="route" 
-          :base-path="route.path" 
+          :base-path="route.path"
+          :is-collapse="isCollapse"
         />
       </el-menu>
     </div>
@@ -146,7 +147,7 @@ const logout = () => {
 }
 </script>
 
-<style scoped>
+<style>
 .app-wrapper {
   position: relative;
   height: 100%;
@@ -162,6 +163,83 @@ const logout = () => {
   overflow-y: auto;
 }
 
+/* 折叠时的侧边栏样式 */
+.app-wrapper .sidebar-container {
+  width: 210px;
+  transition: width 0.28s;
+}
+
+.app-wrapper .sidebar-container.is-collapse {
+  width: 64px;
+}
+
+/* 确保折叠时菜单项的图标居中 */
+.app-wrapper .sidebar-container.is-collapse .el-menu-item .el-icon,
+.app-wrapper .sidebar-container.is-collapse .el-sub-menu .el-icon,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-menu-item .el-icon,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu .el-icon {
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 确保折叠时子菜单标题文字隐藏 */
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu__title span,
+.app-wrapper .sidebar-container.is-collapse .el-sub-menu__title span,
+.app-wrapper .sidebar-container.is-collapse .el-menu-item span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse span:not(.el-menu--popup span),
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-menu-item span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu__title span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-menu-item span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu .el-sub-menu__title span,
+.app-wrapper .sidebar-container.is-collapse .el-menu--collapse .el-sub-menu .el-menu-item span {
+  display: none !important;
+}
+
+/* 全局样式：确保所有折叠菜单中的文字都隐藏 */
+.el-menu--collapse .el-menu-item span,
+.el-menu--collapse .el-sub-menu__title span,
+.el-menu--collapse .el-sub-menu .el-sub-menu__title span,
+.el-menu--collapse .el-sub-menu .el-menu-item span {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+/* 确保折叠状态下图标居中 */
+.el-menu--collapse .el-menu-item,
+.el-menu--collapse .el-sub-menu__title {
+  justify-content: center !important;
+}
+
+.el-menu--collapse .el-menu-item .el-icon,
+.el-menu--collapse .el-sub-menu__title .el-icon {
+  margin: 0 !important;
+}
+
+/* 确保折叠时弹出的子菜单中的文字正确显示 */
+.el-menu--vertical .el-menu-item span,
+.el-menu--vertical .el-sub-menu__title span {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+.app-wrapper .main-container {
+  margin-left: 0;
+  width: calc(100% - 210px);
+  transition: all 0.28s;
+}
+
+.app-wrapper .sidebar-container.is-collapse + .main-container {
+  width: calc(100% - 64px);
+}
+
 .sidebar-container::-webkit-scrollbar {
   display: none;
 }
@@ -173,12 +251,19 @@ const logout = () => {
   align-items: center;
   justify-content: center;
   background-color: #2b3649;
+  overflow: hidden;
+  transition: all 0.3s;
 }
 
 .logo {
   width: 32px;
   height: 32px;
   margin-right: 10px;
+  transition: margin-right 0.3s;
+}
+
+.is-collapse .logo {
+  margin-right: 0;
 }
 
 .title {
@@ -187,10 +272,22 @@ const logout = () => {
   font-weight: bold;
   margin: 0;
   white-space: nowrap;
+  transition: opacity 0.3s;
+}
+
+.is-collapse .title {
+  display: inline-block;
+  opacity: 0;
+  width: 0;
 }
 
 .sidebar-menu {
   border-right: none;
+  width: 100%;
+}
+
+.sidebar-menu:not(.el-menu--collapse) {
+  width: 100%;
 }
 
 .main-container {
@@ -198,6 +295,7 @@ const logout = () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: margin-left 0.28s;
 }
 
 .navbar {
