@@ -19,7 +19,6 @@ const routes = [
   },
   {
     path: '/',
-    component: () => import('@/layout/index.vue'),
     redirect: '/dashboard',
     children: [
       {
@@ -30,69 +29,9 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/profile',
-    component: () => import('@/layout/index.vue'),
-    children: [
-      {
-        path: 'index',
-        name: 'Profile',
-        component: () => import('@/views/profile/index.vue'),
-        meta: { title: '个人中心', icon: 'User' }
-      }
-    ]
-  },
-  {
-    path: '/health',
-    component: () => import('@/layout/index.vue'),
-    redirect: '/health/record',
-    meta: { title: '健康管理', icon: 'FirstAid' },
-    children: [
-      {
-        path: 'record',
-        name: 'HealthRecord',
-        component: () => import('@/views/health/record/index.vue'),
-        meta: { title: '健康记录', icon: 'Notebook' }
-      },
-      {
-        path: 'warning',
-        name: 'HealthWarning',
-        component: () => import('@/views/health/warning/index.vue'),
-        meta: { title: '健康预警', icon: 'Warning' }
-      },
-      {
-        path: 'warning/detail/:id',
-        name: 'HealthWarningDetail',
-        component: () => import('@/views/health/warning/detail.vue'),
-        meta: { title: '预警详情', activeMenu: '/health/warning' },
-        hidden: true
-      }
-    ]
-  },
-  {
-    path: '/elderly',
-    component: () => import('@/layout/index.vue'),
-    redirect: '/elderly/list',
-    meta: { title: '老人管理', icon: 'User', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_NURSE'] },
-    children: [
-      {
-        path: 'list',
-        name: 'ElderlyList',
-        component: () => import('@/views/elderly/list/index.vue'),
-        meta: { title: '老人列表', icon: 'List' }
-      },
-      {
-        path: 'detail/:id',
-        name: 'ElderlyDetail',
-        component: () => import('@/views/elderly/detail/index.vue'),
-        meta: { title: '老人详情', activeMenu: '/elderly/list' },
-        hidden: true
-      }
-    ]
-  },
+
   {
     path: '/system',
-    component: () => import('@/layout/index.vue'),
     redirect: '/system/user',
     meta: { title: '系统管理', icon: 'Setting', roles: ['ROLE_ADMIN'] },
     children: [
@@ -102,24 +41,6 @@ const routes = [
         component: () => import('@/views/system/user/index.vue'),
         meta: { title: '用户管理', icon: 'UserFilled' }
       },
-      {
-        path: 'role',
-        name: 'Role',
-        component: () => import('@/views/system/role/index.vue'),
-        meta: { title: '角色管理', icon: 'Lock' }
-      },
-      {
-        path: 'menu',
-        name: 'Menu',
-        component: () => import('@/views/system/menu/index.vue'),
-        meta: { title: '菜单管理', icon: 'Menu' }
-      },
-      {
-        path: 'log',
-        name: 'Log',
-        component: () => import('@/views/system/log/index.vue'),
-        meta: { title: '操作日志', icon: 'Document' }
-      }
     ]
   },
   {
