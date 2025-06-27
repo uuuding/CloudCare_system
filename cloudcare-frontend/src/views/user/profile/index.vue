@@ -1,26 +1,30 @@
 <template>
   <div class="profile-container">
-    <h1>个人中心</h1>
-    <el-form :model="userInfo" ref="formRef" label-width="100px" class="profile-form">
-      <el-form-item label="用户名">
-        <el-input v-model="userInfo.username" disabled></el-input>
-      </el-form-item>
-      <el-form-item label="真实姓名">
-        <el-input v-model="userInfo.realName"></el-input>
-      </el-form-item>
-      <el-form-item label="手机号">
-        <el-input v-model="userInfo.phone"></el-input>
-      </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="userInfo.email"></el-input>
-      </el-form-item>
-      <el-form-item label="用户类型">
-        <el-input v-model="userInfo.userType" disabled></el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="handleSave">保存</el-button>
-      </el-form-item>
-    </el-form>
+    <el-card class="profile-card" shadow="hover">
+      <div class="header">
+        <h2>个人中心</h2>
+      </div>
+      <el-form :model="userInfo" label-width="100px" class="profile-form">
+        <el-form-item label="用户名">
+          <el-input v-model="userInfo.username" disabled />
+        </el-form-item>
+        <el-form-item label="真实姓名">
+          <el-input v-model="userInfo.realName" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="userInfo.phone" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="userInfo.email" />
+        </el-form-item>
+        <el-form-item label="用户类型">
+          <el-input v-model="userInfo.userType" disabled />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="saveUserInfo">保存</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
   </div>
 </template>
 
