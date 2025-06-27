@@ -176,12 +176,12 @@ onMounted(() => {
   timer = setInterval(updateTime, 1000)
   
   // 获取最近健康预警
-  getWarnings()
+  //getWarnings()
   
   // 初始化图表
   setTimeout(() => {
-    initWarningChart()
-    initRecordChart()
+    //initWarningChart()
+    //initRecordChart()
   }, 100)
   
   // 监听窗口大小变化

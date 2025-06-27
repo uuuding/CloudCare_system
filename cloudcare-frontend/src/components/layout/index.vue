@@ -83,6 +83,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import SidebarItem from './SidebarItem.vue'
 import Breadcrumb from '../breadcrumb/index.vue'
+import {ArrowDown, SwitchButton, User} from "@element-plus/icons-vue";
 
 // 默认头像
 const defaultAvatar = new URL('@/assets/default-avatar.png', import.meta.url).href
