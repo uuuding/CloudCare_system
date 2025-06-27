@@ -9,13 +9,16 @@ export function getUserPage(params) {
   return request({
     url: '/user/page',
     method: 'get',
+    params, // 别忘了传参
   })
 }
 
 /**
+ * 根据用户ID获取用户信息
  * @param {Number} userId 用户ID
  * @returns {Promise}
  */
+export function getUserById(userId) {
   return request({
     url: `/user/${userId}`,
     method: 'get'
@@ -38,9 +41,11 @@ export function getStaffList() {
  * @param {Object} data 用户信息
  * @returns {Promise}
  */
+export function addUser(data) {
   return request({
     url: '/user',
     method: 'post',
+    data
   })
 }
 
@@ -53,8 +58,10 @@ export function updateUser(data) {
   return request({
     url: '/user',
     method: 'put',
+    data
   })
 }
+
 
 /**
  * 删除用户
