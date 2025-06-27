@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getToken, isTokenExpired } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
+import Layout from '@/components/layout/index.vue'
 
 // 路由配置
 const routes = [
@@ -9,16 +10,19 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/login/index.vue'),
-    meta: { title: '登录', isPublic: true }
+    meta: { title: '登录', isPublic: true },
+    hidden: true
   },
   {
     path: '/register',
     name: 'Register',
     component: () => import('@/views/register/index.vue'),
-    meta: { title: '注册', isPublic: true }
+    meta: { title: '注册', isPublic: true },
+    hidden: true
   },
   {
     path: '/',
+    component: Layout,
     redirect: '/dashboard',
     children: [
       {
@@ -29,18 +33,166 @@ const routes = [
       }
     ]
   },
-
   {
-    path: '/system',
-    redirect: '/system/user',
-    meta: { title: '系统管理', icon: 'Setting', roles: ['ROLE_ADMIN'] },
+    path: '/elderly-profile',
+    component: Layout,
+    redirect: '/elderly-profile/index',
     children: [
       {
-        path: 'user',
-        name: 'User',
-        component: () => import('@/views/system/user/index.vue'),
-        meta: { title: '用户管理', icon: 'UserFilled' }
+        path: 'index',
+        name: 'ElderlyProfile',
+        component: () => import('@/views/elderly-profile/index.vue'),
+        meta: { title: '老人档案管理', icon: 'Files' }
+      }
+    ]
+  },
+  {
+    path: '/health',
+    component: Layout,
+    redirect: '/health/alert',
+    meta: { title: '健康管理模块', icon: 'FirstAidKit' },
+    children: [
+      {
+        path: 'alert',
+        name: 'HealthAlert',
+        component: () => import('@/views/health/alert/index.vue'),
+        meta: { title: '健康预警', icon: 'Warning' }
       },
+      {
+        path: 'assessment',
+        name: 'HealthAssessment',
+        component: () => import('@/views/health/assessment/index.vue'),
+        meta: { title: '健康评估', icon: 'DataAnalysis' }
+      },
+      {
+        path: 'intervention-plan',
+        name: 'InterventionPlan',
+        component: () => import('@/views/health/intervention-plan/index.vue'),
+        meta: { title: '干预方案', icon: 'List' }
+      }
+    ]
+  },
+  {
+    path: '/medical',
+    component: Layout,
+    redirect: '/medical/appointment',
+    meta: { title: '医疗服务模块', icon: 'Stethoscope' },
+    children: [
+      {
+        path: 'appointment',
+        name: 'Appointment',
+        component: () => import('@/views/medical/appointment/index.vue'),
+        meta: { title: '在线预约', icon: 'Calendar' }
+      },
+      {
+        path: 'medical-record',
+        name: 'MedicalRecord',
+        component: () => import('@/views/medical/medical-record/index.vue'),
+        meta: { title: '电子病历共享', icon: 'Document' }
+      }
+    ]
+  },
+  {
+    path: '/elderly-service',
+    component: Layout,
+    redirect: '/elderly-service/institution',
+    meta: { title: '养老服务模块', icon: 'House' },
+    children: [
+      {
+        path: 'institution',
+        name: 'Institution',
+        component: () => import('@/views/elderly-service/institution/index.vue'),
+        meta: { title: '机构管理', icon: 'OfficeBuilding' }
+      },
+      {
+        path: 'service-schedule',
+        name: 'ServiceSchedule',
+        component: () => import('@/views/elderly-service/service-schedule/index.vue'),
+        meta: { title: '服务调度', icon: 'Timer' }
+      },
+      {
+        path: 'geo-fence',
+        name: 'GeoFence',
+        component: () => import('@/views/elderly-service/geo-fence/index.vue'),
+        meta: { title: '电子围栏', icon: 'LocationInformation' }
+      },
+      {
+        path: 'family-interaction',
+        name: 'FamilyInteraction',
+        component: () => import('@/views/elderly-service/family-interaction/index.vue'),
+        meta: { title: '家属互动', icon: 'ChatDotRound' }
+      }
+    ]
+  },
+  {
+    path: '/reports',
+    component: Layout,
+    redirect: '/reports/index',
+    children: [
+      {
+        path: 'index',
+        name: 'Reports',
+        component: () => import('@/views/reports/index.vue'),
+        meta: { title: '报表统计与分析', icon: 'PieChart' }
+      }
+    ]
+  },
+  {
+    path: '/device',
+    component: Layout,
+    redirect: '/device/index',
+    children: [
+      {
+        path: 'index',
+        name: 'Device',
+        component: () => import('@/views/device/index.vue'),
+        meta: { title: '设备管理', icon: 'Monitor' }
+      }
+    ]
+  },
+  {
+    path: '/user',
+    component: Layout,
+    redirect: '/user/elder-account',
+    meta: { title: '用户与权限管理', icon: 'User' },
+    children: [
+      {
+        path: 'elder-account',
+        name: 'ElderAccount',
+        component: () => import('@/views/user/elder-account/index.vue'),
+        meta: { title: '老人账号管理', icon: 'Avatar' }
+      },
+      {
+        path: 'doctor-account',
+        name: 'DoctorAccount',
+        component: () => import('@/views/user/doctor-account/index.vue'),
+        meta: { title: '医生账号管理', icon: 'UserFilled' }
+      },
+      {
+        path: 'admin-user',
+        name: 'AdminUser',
+        component: () => import('@/views/user/admin-user/index.vue'),
+        meta: { title: '系统用户管理', icon: 'Setting', roles: ['ROLE_ADMIN'] }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/user/profile/index.vue'),
+        meta: { title: '个人中心', icon: 'User' }
+      }
+    ]
+  },
+  {
+    path: '/bigdata',
+    component: Layout,
+    redirect: '/bigdata/index',
+    children: [
+      {
+        path: 'index',
+        name: 'Bigdata',
+        component: () => import('@/views/bigdata/index.vue'),
+        meta: { title: '大数据决策分析', icon: 'DataLine' }
+      }
     ]
   },
   {
