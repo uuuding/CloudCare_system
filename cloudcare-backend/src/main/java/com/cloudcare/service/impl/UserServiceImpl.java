@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户服务实现类
@@ -215,5 +216,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUpdateBy(SecurityUtil.getCurrentUsername());
         
         return updateById(user);
+    }
+
+    @Override
+    public List<User> getUsersByType(Integer userType) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getUserType, userType)
+                   .eq(User::getStatus, 1)
+                   .eq(User::getDeleted, 0)
+                   .orderBy(true, true, User::getCreateTime);
+        return list(queryWrapper);
     }
 }

@@ -33,7 +33,7 @@ export function updateElderlyProfile(data) {
   return request({
     url: '/elderly-profile/update',
     method: 'put',
-    data
+    data:data
   })
 }
 
