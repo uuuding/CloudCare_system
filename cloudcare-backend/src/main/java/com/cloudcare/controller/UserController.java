@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 用户控制器
  *
@@ -154,5 +156,25 @@ public class UserController {
             @Parameter(description = "状态（0：禁用，1：正常）") @PathVariable Integer status) {
         boolean result = userService.updateStatus(userId, status);
         return Result.success(result);
+    }
+
+    /**
+     * 获取医生列表
+     */
+    @GetMapping("/doctors")
+    @Operation(summary = "获取医生列表", description = "获取所有医生用户列表")
+    public Result<List<User>> getDoctorList() {
+        List<User> doctors = userService.getUsersByType(2);
+        return Result.success(doctors);
+    }
+
+    /**
+     * 获取老人列表
+     */
+    @GetMapping("/elders")
+    @Operation(summary = "获取老人列表", description = "获取所有老人用户列表")
+    public Result<List<User>> getElderList() {
+        List<User> elders = userService.getUsersByType(3);
+        return Result.success(elders);
     }
 }
