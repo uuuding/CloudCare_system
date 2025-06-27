@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cloudcare.mapper.MedicalAppointmentMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloudcare.entity.MedicalAppointment">
+        <id column="appointment_id" property="appointmentId" />
+        <result column="elder_id" property="elderId" />
+        <result column="doctor_id" property="doctorId" />
+        <result column="appointment_time" property="appointmentTime" />
+        <result column="appointment_type" property="appointmentType" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="elder_name" property="elderName" />
+        <result column="doctor_name" property="doctorName" />
+    </resultMap>
+
+    <!-- 分页查询医疗预约列表（包含老人和医生信息） -->
+    <select id="selectAppointmentPage" resultMap="BaseResultMap">
+        <![CDATA[
+    SELECT
+        ma.appointment_id,
+        ma.elder_id,
+        ma.doctor_id,
+        ma.appointment_time,
+        ma.appointment_type,
+        ma.status,
+        ma.remark,
+        ma.create_time,
+        ma.update_time,
+        COALESCE(e.real_name, CONCAT('老人', ma.elder_id)) AS elder_name,
+        COALESCE(d.real_name, CONCAT('医生', ma.doctor_id)) AS doctor_name
+    FROM medical_appointment ma
+    LEFT JOIN (
+        SELECT user_id, real_name FROM sys_user WHERE user_type = 3
+    ) e ON ma.elder_id = e.user_id
+    LEFT JOIN (
+        SELECT user_id, real_name FROM sys_user WHERE user_type = 2
+    ) d ON ma.doctor_id = d.user_id
+    ]]>
+        <where>
+            <if test="query.elderName != null and query.elderName != ''">
+                <![CDATA[
+            AND COALESCE(e.real_name, CONCAT('老人', ma.elder_id)) LIKE CONCAT('%', #{query.elderName}, '%')
+            ]]>
+            </if>
+            <if test="query.doctorName != null and query.doctorName != ''">
+                <![CDATA[
+            AND COALESCE(d.real_name, CONCAT('医生', ma.doctor_id)) LIKE CONCAT('%', #{query.doctorName}, '%')
+            ]]>
+            </if>
+            <if test="query.appointmentType != null">
+                AND ma.appointment_type = #{query.appointmentType}
+            </if>
+            <if test="query.status != null">
+                AND ma.status = #{query.status}
+            </if>
+            <if test="query.startTime != null">
+                AND ma.appointment_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND ma.appointment_time &lt;= #{query.endTime}
+            </if>
+        </where>
+        <![CDATA[
+    ORDER BY ma.create_time DESC
+    ]]>
+    </select>
+
+
+    <!-- 根据ID查询医疗预约详情（包含老人和医生信息） -->
+    <select id="selectAppointmentById" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT
+            ma.appointment_id,
+            ma.elder_id,
+            ma.doctor_id,
+            ma.appointment_time,
+            ma.appointment_type,
+            ma.status,
+            ma.remark,
+            ma.create_time,
+            ma.update_time,
+            COALESCE(e.real_name, CONCAT('老人', ma.elder_id)) AS elder_name,
+            COALESCE(d.real_name, CONCAT('医生', ma.doctor_id)) AS doctor_name
+        FROM medical_appointment ma
+                 LEFT JOIN (
+            SELECT user_id, real_name FROM sys_user WHERE user_type = 3
+        ) e ON ma.elder_id = e.user_id
+                 LEFT JOIN (
+            SELECT user_id, real_name FROM sys_user WHERE user_type = 2
+        ) d ON ma.doctor_id = d.user_id
+        WHERE ma.appointment_id = #{appointmentId}
+        ]]>
+    </select>
+
+</mapper>
