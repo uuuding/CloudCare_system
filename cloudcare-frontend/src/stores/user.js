@@ -63,6 +63,7 @@ export const useUserStore = defineStore('user', {
         this.username = username
         this.realName = realName
         this.avatar = avatar
+
         
         return Promise.resolve(data)
       } catch (error) {

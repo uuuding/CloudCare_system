@@ -73,3 +73,16 @@ export function resetPassword(data) {
     data
   })
 }
+
+/**
+ * 更新用户基本信息
+ * @param {Object} data 用户信息
+ * @returns {Promise}
+ */
+export function updateUserInfo(data) {
+  return request({
+    url: '/user/info',
+    method: 'put',
+    data
+  })
+}
