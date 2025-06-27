@@ -9,13 +9,16 @@ export function getUserPage(params) {
   return request({
     url: '/user/page',
     method: 'get',
+    params
   })
 }
 
 /**
+ * 获取用户详情
  * @param {Number} userId 用户ID
  * @returns {Promise}
  */
+export function getUserInfo(userId) {
   return request({
     url: `/user/${userId}`,
     method: 'get'
@@ -27,9 +30,11 @@ export function getUserPage(params) {
  * @param {Object} data 用户信息
  * @returns {Promise}
  */
+export function addUser(data) {
   return request({
     url: '/user',
     method: 'post',
+    data
   })
 }
 
@@ -42,6 +47,7 @@ export function updateUser(data) {
   return request({
     url: '/user',
     method: 'put',
+    data
   })
 }
 

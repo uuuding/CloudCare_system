@@ -65,10 +65,10 @@ public class User implements Serializable {
     private String avatar;
 
     /**
-     * 性别（0：未知，1：男，2：女）
+     * 性别
      */
     @TableField("gender")
-    private Integer gender;
+    private String gender;
 
     /**
      * 用户类型（1：管理员，2：医生，3：老人）
@@ -117,6 +117,24 @@ public class User implements Serializable {
      */
     @TableField("update_time")
     private LocalDateTime updateTime;
+
+    /**
+     * 年龄（主要用于老人用户）
+     */
+    @TableField("age")
+    private Integer age;
+
+    /**
+     * 紧急联系人（主要用于老人用户）
+     */
+    @TableField("emergency_contact")
+    private String emergencyContact;
+
+    /**
+     * 紧急联系电话（主要用于老人用户）
+     */
+    @TableField("emergency_phone")
+    private String emergencyPhone;
 
     /**
      * 备注
