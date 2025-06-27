@@ -64,6 +64,8 @@ public class AuthController {
         result.put("avatar", user.getAvatar());
         result.put("userType", user.getUserType());
         result.put("status", user.getStatus());
+        result.put("phone", user.getPhone());
+        result.put("email", user.getEmail());
 
         return Result.success(result, "登录成功");
     }

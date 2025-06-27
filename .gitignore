@@ -1,3 +1,4 @@
 # 项目排除路径
 /cloudcare-backend/target/
 /cloudcare-frontend/index.html
+/cloudcare-backend/src/main/resources/application-dev.yml

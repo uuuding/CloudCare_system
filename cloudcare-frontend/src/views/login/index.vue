@@ -64,7 +64,6 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import { isValidUsername } from '@/utils/validate'
 
 // 路由实例
 const router = useRouter()
