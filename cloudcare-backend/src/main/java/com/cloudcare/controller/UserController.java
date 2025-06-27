@@ -177,4 +177,14 @@ public class UserController {
         List<User> elders = userService.getUsersByType(3);
         return Result.success(elders);
     }
+
+    /**
+     * 获取服务人员列表
+     */
+    @GetMapping("/staff")
+    @Operation(summary = "获取服务人员列表", description = "获取所有服务人员用户列表")
+    public Result<List<User>> getStaffList() {
+        List<User> staff = userService.getUsersByType(4);
+        return Result.success(staff);
+    }
 }

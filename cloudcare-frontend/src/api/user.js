@@ -26,6 +26,17 @@ export function getUserInfo(userId) {
 }
 
 /**
+ * 获取服务人员列表
+ * @returns {Promise}
+ */
+export function getStaffList() {
+  return request({
+    url: '/user/staff',
+    method: 'get'
+  })
+}
+
+/**
  * 新增用户
  * @param {Object} data 用户信息
  * @returns {Promise}
