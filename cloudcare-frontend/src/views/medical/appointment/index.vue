@@ -243,6 +243,7 @@ import {
   deleteAppointment,
   updateAppointmentStatus
 } from '@/api/medical/appointment'
+import { getDoctorList as fetchDoctorList, getElderList as fetchElderList } from '@/api/user'
 
 // 响应式数据
 const loading = ref(false)
@@ -328,13 +329,13 @@ const getAppointmentList = async () => {
 // 获取老人列表
 const getElderList = async () => {
   try {
-    // 模拟API调用
-    elderList.value = [
-      { elderId: 1, name: '张三' },
-      { elderId: 2, name: '李四' },
-      { elderId: 3, name: '王五' }
-    ]
+    const response = await fetchElderList()
+    elderList.value = response.data.map(user => ({
+      elderId: user.userId,
+      name: user.realName
+    }))
   } catch (error) {
+    console.error('获取老人列表失败:', error)
     ElMessage.error('获取老人列表失败')
   }
 }
@@ -342,13 +343,13 @@ const getElderList = async () => {
 // 获取医生列表
 const getDoctorList = async () => {
   try {
-    // 模拟API调用
-    doctorList.value = [
-      { doctorId: 1, name: '李医生' },
-      { doctorId: 2, name: '王医生' },
-      { doctorId: 3, name: '赵医生' }
-    ]
+    const response = await fetchDoctorList()
+    doctorList.value = response.data.map(user => ({
+      doctorId: user.userId,
+      name: user.realName
+    }))
   } catch (error) {
+    console.error('获取医生列表失败:', error)
     ElMessage.error('获取医生列表失败')
   }
 }
