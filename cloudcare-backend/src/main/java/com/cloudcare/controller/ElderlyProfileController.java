@@ -1,6 +1,7 @@
 package com.cloudcare.controller;
 
 import com.cloudcare.common.Result;
+import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.service.ElderlyProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,28 @@ public class ElderlyProfileController {
 
     // 更新老人档案
     @PutMapping("/update")
-    public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
+    public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile, @RequestBody(required = false) List<ElderlyChronicDisease> chronicDiseases) {
+        elderlyProfileService.updateProfile(elderlyProfile, chronicDiseases);
         return Result.success(true);
+    }
+
+@PostMapping("/add")
+    public Result<Boolean> addElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
+        boolean success = elderlyProfileService.addProfile(elderlyProfile);
+        return Result.success(success);
+    }
+
+    @PostMapping("/addc")
+    public Result<Boolean> addDis(@RequestBody ElderlyChronicDisease caseEntry) {
+        boolean success = elderlyProfileService.addCaseEntry(caseEntry);
+        return Result.success(success);
+    }
+
+
+@GetMapping("/chronic-diseases/{elderlyId}")
+    public Result<List<ElderlyChronicDisease>> getChronicDiseases(@PathVariable Integer elderlyId) {
+        List<ElderlyChronicDisease> diseases = elderlyProfileService.getChronicDiseasesByElderlyId(elderlyId);
+        return Result.success(diseases);
     }
 
     // 删除老人档案

@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+export function addCaseEntry(data) {
+  return request({
+    url: '/elderly-profile/addc',
+    method: 'post',
+    data: data
+  });
+}
+
+
 /**
  * 获取所有老人档案
  * @returns {Promise}
@@ -7,6 +16,18 @@ import request from '@/utils/request'
 export function getAllElderlyProfiles() {
   return request({
     url: '/elderly-profile/index',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取老人既往病史
+ * @param {Number} elderlyId 老人ID
+ * @returns {Promise}
+ */
+export function getChronicDiseasesByElderlyId(elderlyId) {
+  return request({
+    url: `/elderly-profile/chronic-diseases/${elderlyId}`,
     method: 'get'
   })
 }
@@ -34,6 +55,14 @@ export function updateElderlyProfile(data) {
     url: '/elderly-profile/update',
     method: 'put',
     data:data
+  })
+}
+
+export function addElderlyProfile(data) {
+  return request({
+    url: '/elderly-profile/add',
+    method: 'post',
+    data: data
   })
 }
 
