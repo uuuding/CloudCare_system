@@ -19,6 +19,9 @@ public class ElderlyObservations extends Model<ElderlyObservations> {
     private Integer systolicBp;
     private Boolean cough;
     private Integer heartRate;
-    private Double sleepHours;
+    private Double sleep_hours;
+    private String observationLocation; // 新增属性，记录观察地点
+    private Double height; // 身高(cm)
+    private Double weight; // 体重(kg)
 
 }
