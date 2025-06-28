@@ -17,8 +17,8 @@ public interface ElderlyObservationsMapper extends BaseMapper<ElderlyObservation
     ElderlyObservations selectObservationById(int id);
 
     // 更新体检记录
-    @Update("UPDATE elderly_observations SET observation_time = #{observationTime}, " +
-            "body_temperature = #{bodyTemperature}, systolic_bp = #{systolicBp}, cough = #{cough}, " +
+    @Update("UPDATE elderly_observations SET observation_time = #{observationTime}, body_temperature = #{bodyTemperature}, " +
+            "systolic_bp = #{systolicBp}, cough = #{cough}, " +
             "heart_rate = #{heartRate}, sleep_hours = #{sleepHours} WHERE id = #{id}")
     int updateObservation(ElderlyObservations observation);
 
@@ -39,7 +39,8 @@ public interface ElderlyObservationsMapper extends BaseMapper<ElderlyObservation
     List<ElderlyObservations> selectObservationsByElderlyIdAndTimeRange(@Param("elderlyId") int elderlyId, @Param("startTime") String startTime, @Param("endTime") String endTime);
 
     // 插入体检记录，包含观察地点
-    @Insert("INSERT INTO elderly_observations(elderly_id, observation_time, body_temperature, systolic_bp, cough, heart_rate, sleep_hours, observation_location, height, weight) VALUES(#{elderlyId}, #{observationTime}, #{bodyTemperature}, #{systolicBp}, #{cough}, #{heartRate}, #{sleep_hours}, #{observationLocation}, #{height}, #{weight})")
+    @Insert("INSERT INTO elderly_observations(elderly_id, observation_time, body_temperature, systolic_bp, cough, heart_rate, sleep_hours, observation_location, height, weight) VALUES(#{elderlyId}, #{observationTime}, #{bodyTemperature}, #{systolicBp}, #{cough}, #{heartRate}, #{sleepHours}, #{observationLocation}, #{height}, #{weight})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertObservationWithLocation(ElderlyObservations observation);
 
     // 更新体检记录，包含观察地点

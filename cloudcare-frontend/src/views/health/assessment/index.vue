@@ -195,8 +195,8 @@
           <el-input-number v-model="importForm.height" :min="0" :precision="1" placeholder="请输入身高(cm)" style="width: 100%" />
         </el-form-item>
         
-        <el-form-item label="睡眠时长" prop="sleep_hours">
-          <el-input-number v-model="importForm.sleep_hours" :min="0" :precision="1" placeholder="请输入睡眠时长(h)" style="width: 100%" />
+        <el-form-item label="睡眠时长" prop="sleepHours">
+          <el-input-number v-model="importForm.sleepHours" :min="0" :precision="1" placeholder="请输入睡眠时长(h)" style="width: 100%" />
         </el-form-item>
         
         <el-form-item label="体温" prop="temperature">
@@ -250,7 +250,7 @@ const importForm = ref({
   heartRate: null,
   weight: null,
   height: null,
-  sleep_hours: 0,
+  sleepHours: 0,
   temperature: null,
   cough:false,
   notes: ''
@@ -270,7 +270,7 @@ const importRules = ref({
   observationLocation: [
     { required: true, message: '请选择体检地点', trigger: 'change' }
   ],
-  sleep_hours: [
+  sleepHours: [
     { required: true, message: '请输入睡眠时长', trigger: 'blur' }
   ]
 });
@@ -279,6 +279,7 @@ const fetchObservations = async () => {
   const response = await getAllObservations();
   observations.value = response.data;
   filteredObservations.value = observations.value;
+  console.log(filteredObservations)
 };
 
 const filterObservations = () => {
@@ -418,7 +419,7 @@ const closeImportDialog = () => {
     heartRate: null,
     weight: null,
     height: null,
-    sleep_hours: 0,
+    sleepHours: 0,
     temperature: null,
     cough: false,
     notes: ''
@@ -446,11 +447,11 @@ const handleImport = async () => {
       bodyTemperature: importForm.value.temperature,
       height: importForm.value.height,
       weight: importForm.value.weight,
-      sleep_hours: importForm.value.sleep_hours,
+      sleepHours: importForm.value.sleepHours,
       cough: importForm.value.cough,
       notes: importForm.value.notes
     };
-    console.log(formData.sleep_hours)
+    console.log(formData.sleepHours)
     
     const response = await addObservation(formData);
     
