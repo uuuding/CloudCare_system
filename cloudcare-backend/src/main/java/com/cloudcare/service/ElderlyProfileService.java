@@ -1,5 +1,6 @@
 package com.cloudcare.service;
 
+import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.mapper.ElderlyProfileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,15 @@ public interface ElderlyProfileService {
 
     public List<ElderlyProfile> searchByNameAndAge(String name, int age);
 
-    public boolean updateProfile(ElderlyProfile profile);
+    public boolean updateProfile(ElderlyProfile profile, List<ElderlyChronicDisease> chronicDiseases);
 
     public boolean deleteProfile(int id);
+
+    public boolean addProfile(ElderlyProfile profile);
+
+    public boolean addCaseEntry(ElderlyChronicDisease caseEntry);
+
+    // 获取老人既往病史
+    public List<ElderlyChronicDisease> getChronicDiseasesByElderlyId(Integer elderlyId);
 
 }

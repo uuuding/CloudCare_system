@@ -1,5 +1,6 @@
 package com.cloudcare.service.impl;
 
+import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.mapper.ElderlyProfileMapper;
 import com.cloudcare.service.ElderlyProfileService;
@@ -25,12 +26,37 @@ public class ElderlyProfileServiceImpl implements ElderlyProfileService {
     }
 
     @Override
-    public boolean updateProfile(ElderlyProfile profile) {
-        return elderlyProfileMapper.updateProfile(profile);
+    public boolean updateProfile(ElderlyProfile profile, List<ElderlyChronicDisease> chronicDiseases) {
+        // 先更新老人档案基本信息
+        boolean updated = elderlyProfileMapper.updateProfile(profile);
+        if (updated) {
+            // 删除原有既往病史
+            // 插入新的既往病史
+            if (chronicDiseases != null && !chronicDiseases.isEmpty()) {
+                elderlyProfileMapper.deleteChronicDiseasesByElderlyId(profile.getId());
+                elderlyProfileMapper.insertChronicDiseases(profile.getId(), chronicDiseases);
+            }
+        }
+        return updated;
     }
 
     @Override
     public boolean deleteProfile(int id) {
         return elderlyProfileMapper.deleteProfile(id);
+    }
+
+@Override
+    public boolean addProfile(ElderlyProfile profile) {
+        return elderlyProfileMapper.insertProfile(profile) > 0;
+    }
+
+@Override
+    public boolean addCaseEntry(ElderlyChronicDisease caseEntry) {
+        return elderlyProfileMapper.insertCaseEntry(caseEntry) > 0;
+    }
+
+@Override
+    public List<ElderlyChronicDisease> getChronicDiseasesByElderlyId(Integer elderlyId) {
+        return elderlyProfileMapper.selectChronicDiseasesByElderlyId(elderlyId);
     }
 }
