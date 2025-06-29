@@ -20,14 +20,18 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // 允许所有域名进行跨域调用
-        config.addAllowedOriginPattern("*");
+        // 允许特定域名进行跨域调用
+        config.addAllowedOrigin("http://8.137.152.246:3000");
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://localhost:3001");
         // 允许跨域发送cookie
         config.setAllowCredentials(true);
         // 放行全部原始头信息
         config.addAllowedHeader("*");
         // 允许所有请求方法跨域调用
         config.addAllowedMethod("*");
+        // 设置预检请求的缓存时间
+        config.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
