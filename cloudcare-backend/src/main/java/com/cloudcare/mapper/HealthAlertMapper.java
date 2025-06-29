@@ -153,13 +153,13 @@ public interface HealthAlertMapper {
     /**
      * 查询活跃预警数量
      */
-    @Select("SELECT COUNT(*) FROM health_alert WHERE status = 'ACTIVE'")
+    @Select("SELECT COUNT(1) FROM health_alert WHERE status = 'ACTIVE'")
     Long countActive();
     
     /**
      * 查询总预警数量
      */
-    @Select("SELECT COUNT(*) FROM health_alert")
+    @Select("SELECT COUNT(1) FROM health_alert")
     Long countAll();
     
     /**
@@ -242,14 +242,14 @@ public interface HealthAlertMapper {
     /**
      * 统计各级别预警数量
      */
-    @Select("SELECT alert_level as level, COUNT(*) as count FROM health_alert " +
+    @Select("SELECT alert_level as level, COUNT(1) as count FROM health_alert " +
             "WHERE status = 'ACTIVE' GROUP BY alert_level")
     List<Map<String, Object>> countByLevel();
 
     /**
      * 统计各类型预警数量
      */
-    @Select("SELECT alert_type as type, COUNT(*) as count FROM health_alert " +
+    @Select("SELECT alert_type as type, COUNT(1) as count FROM health_alert " +
             "WHERE status = 'ACTIVE' GROUP BY alert_type")
     List<Map<String, Object>> countByType();
 }

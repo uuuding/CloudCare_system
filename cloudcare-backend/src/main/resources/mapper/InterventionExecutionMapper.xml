@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloudcare.mapper.InterventionExecutionMapper">
+
+    <!-- 分页查询执行记录 -->
+    <select id="selectExecutionPage" resultType="com.cloudcare.entity.InterventionExecution">
+        SELECT * FROM intervention_execution WHERE 1=1
+        <if test="planId != null">
+            AND plan_id = #{planId}
+        </if>
+        <if test="executionStatus != null and executionStatus != ''">
+            AND execution_status = #{executionStatus}
+        </if>
+        <if test="startDate != null">
+            AND execution_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND execution_date &lt;= #{endDate}
+        </if>
+        ORDER BY execution_date DESC, execution_time DESC
+    </select>
+
+    <!-- 根据方案ID查询执行记录 -->
+    <select id="selectByPlanId" resultType="com.cloudcare.entity.InterventionExecution">
+        SELECT * FROM intervention_execution 
+        WHERE plan_id = #{planId} 
+        ORDER BY execution_date DESC, execution_time DESC
+    </select>
+
+    <!-- 查询最近的执行记录 -->
+    <select id="selectRecentExecutions" resultType="com.cloudcare.entity.InterventionExecution">
+        SELECT * FROM intervention_execution 
+        WHERE plan_id = #{planId} 
+        ORDER BY execution_date DESC, execution_time DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 统计执行记录按状态分组 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT execution_status, COUNT(1) as count 
+        FROM intervention_execution WHERE 1=1
+        <if test="planId != null">
+            AND plan_id = #{planId}
+        </if>
+        <if test="startDate != null">
+            AND execution_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND execution_date &lt;= #{endDate}
+        </if>
+        GROUP BY execution_status
+    </select>
+
+    <!-- 计算方案的平均完成率 -->
+    <select id="calculateAverageCompletionRate" resultType="java.lang.Double">
+        SELECT AVG(completion_rate) 
+        FROM intervention_execution 
+        WHERE plan_id = #{planId} AND execution_status != 'MISSED'
+    </select>
+
+    <!-- 计算方案的平均效果评分 -->
+    <select id="calculateAverageEffectivenessRating" resultType="java.lang.Double">
+        SELECT AVG(effectiveness_rating) 
+        FROM intervention_execution 
+        WHERE plan_id = #{planId} AND effectiveness_rating IS NOT NULL
+    </select>
+
+    <!-- 查询指定日期范围内的执行统计 -->
+    <select id="getExecutionStatistics" resultType="java.util.Map">
+        SELECT execution_date, COUNT(1) as total_count,
+               SUM(CASE WHEN execution_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_count,
+               SUM(CASE WHEN execution_status = 'PARTIAL' THEN 1 ELSE 0 END) as partial_count,
+               SUM(CASE WHEN execution_status = 'MISSED' THEN 1 ELSE 0 END) as missed_count
+        FROM intervention_execution
+        WHERE execution_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY execution_date 
+        ORDER BY execution_date
+    </select>
+
+    <!-- 查询今日待执行的干预记录 -->
+    <select id="selectTodayPendingExecutions" resultType="java.util.Map">
+        SELECT ie.*, ip.plan_title, ip.elderly_name
+        FROM intervention_execution ie
+        JOIN intervention_plan ip ON ie.plan_id = ip.plan_id
+        WHERE ie.execution_date = CURDATE() AND ie.execution_status = 'PENDING'
+        ORDER BY ie.execution_time ASC
+    </select>
+
+    <!-- 查询逾期未执行的记录 -->
+    <select id="selectOverdueExecutions" resultType="java.util.Map">
+        <![CDATA[
+        SELECT ie.*, ip.plan_title, ip.elderly_name
+        FROM intervention_execution ie
+        JOIN intervention_plan ip ON ie.plan_id = ip.plan_id
+        WHERE ie.execution_date < CURDATE() AND ie.execution_status IN ('PENDING', 'PARTIAL')
+        ORDER BY ie.execution_date ASC
+        ]]>
+    </select>
+
+</mapper>

@@ -137,7 +137,7 @@ public interface HealthAlertRuleMapper {
     /**
      * 查询规则总数
      */
-    @Select("SELECT COUNT(*) FROM health_alert_rule")
+    @Select("SELECT COUNT(1) FROM health_alert_rule")
     Long countAll();
 
     /**
@@ -173,13 +173,13 @@ public interface HealthAlertRuleMapper {
     /**
      * 检查规则名称是否存在
      */
-    @Select("SELECT COUNT(*) > 0 FROM health_alert_rule WHERE rule_name = #{ruleName}")
+    @Select("SELECT COUNT(1) > 0 FROM health_alert_rule WHERE rule_name = #{ruleName}")
     boolean existsByName(@Param("ruleName") String ruleName);
 
     /**
      * 检查规则名称是否存在（排除指定ID）
      */
-    @Select("SELECT COUNT(*) > 0 FROM health_alert_rule " +
+    @Select("SELECT COUNT(1) > 0 FROM health_alert_rule " +
             "WHERE rule_name = #{ruleName} AND rule_id != #{ruleId}")
     boolean existsByNameExcludeId(@Param("ruleName") String ruleName, 
                                  @Param("ruleId") Long ruleId);

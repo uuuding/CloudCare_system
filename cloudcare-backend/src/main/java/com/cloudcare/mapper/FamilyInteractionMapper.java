@@ -64,7 +64,7 @@ public interface FamilyInteractionMapper extends BaseMapper<FamilyInteraction> {
      * 获取互动统计数据
      */
     @Select("SELECT " +
-            "COUNT(*) as total_count, " +
+            "COUNT(1) as total_count, " +
             "COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count, " +
             "COUNT(CASE WHEN status = 'replied' THEN 1 END) as replied_count, " +
             "COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_count, " +
