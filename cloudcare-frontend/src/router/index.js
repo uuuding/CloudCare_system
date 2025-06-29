@@ -63,12 +63,27 @@ const routes = [
         name: 'HealthAssessment',
         component: () => import('@/views/health/assessment/index.vue'),
         meta: { title: '健康评估', icon: 'DataAnalysis' }
-      },
+      }
+    ]
+  },
+  {
+    path: '/intervention',
+    component: Layout,
+    redirect: '/intervention/plan',
+    meta: { title: '干预管理模块', icon: 'Operation' },
+    children: [
       {
-        path: 'intervention-plan',
+        path: 'plan',
         name: 'InterventionPlan',
-        component: () => import('@/views/health/intervention-plan/index.vue'),
+        component: () => import('@/views/intervention-plan/index.vue'),
         meta: { title: '干预方案', icon: 'List' }
+      },
+
+      {
+        path: 'template',
+        name: 'InterventionTemplate',
+        component: () => import('@/views/intervention-template/index.vue'),
+        meta: { title: '干预模板', icon: 'Document' }
       }
     ]
   },

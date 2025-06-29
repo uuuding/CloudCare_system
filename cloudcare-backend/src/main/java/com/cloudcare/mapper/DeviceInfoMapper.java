@@ -19,13 +19,13 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
     /**
      * 获取设备统计信息
      */
-    @Select("SELECT device_type, COUNT(*) as count FROM device_info WHERE deleted = 0 GROUP BY device_type")
+    @Select("SELECT device_type, COUNT(1) as count FROM device_info WHERE deleted = 0 GROUP BY device_type")
     List<Map<String, Object>> getDeviceStatistics();
 
     /**
      * 获取设备状态统计
      */
-    @Select("SELECT device_status, COUNT(*) as count FROM device_info WHERE deleted = 0 GROUP BY device_status")
+    @Select("SELECT device_status, COUNT(1) as count FROM device_info WHERE deleted = 0 GROUP BY device_status")
     List<Map<String, Object>> getDeviceStatusStatistics();
 
     /**

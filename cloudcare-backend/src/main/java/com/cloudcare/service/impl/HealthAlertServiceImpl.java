@@ -9,6 +9,7 @@ import com.cloudcare.mapper.ElderlyProfileMapper;
 import com.cloudcare.mapper.HealthAlertMapper;
 import com.cloudcare.mapper.HealthAlertRuleMapper;
 import com.cloudcare.service.HealthAlertService;
+import com.cloudcare.service.InterventionPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,9 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     
     @Autowired
     private ElderlyObservationsMapper elderlyObservationsMapper;
+    
+    @Autowired
+    private InterventionPlanService interventionPlanService;
     
     @Override
     @Transactional
@@ -172,6 +176,19 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         healthAlertMapper.insert(alert);
         log.info("为老人{}创建{}级别{}预警", elderly.getName(), rule.getAlertLevel(), alertType);
+        
+        // 自动创建干预方案
+        try {
+            interventionPlanService.createInterventionFromAlert(
+                alert.getAlertId(),
+                observation.getElderlyId(), 
+                elderly.getName(), 
+                alertType
+            );
+            log.info("为预警{}自动创建干预方案成功", alert.getAlertId());
+        } catch (Exception e) {
+            log.error("为预警{}自动创建干预方案失败: {}", alert.getAlertId(), e.getMessage(), e);
+        }
     }
     
     private String generateAlertTitle(String alertType, String alertLevel) {
