@@ -40,6 +40,14 @@
               <el-option label="日间照料中心" value="日间照料中心" />
             </el-select>
           </el-form-item>
+          <el-form-item label="机构状态">
+            <el-select v-model="searchForm.institutionStatus" placeholder="请选择机构状态" clearable>
+              <el-option label="全部" value="" />
+              <el-option label="运营中" value="运营中" />
+              <el-option label="筹备中" value="筹备中" />
+              <el-option label="暂停服务" value="暂停服务" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="联系人">
             <el-input v-model="searchForm.contactPerson" placeholder="请输入联系人" clearable />
           </el-form-item>
@@ -75,6 +83,11 @@
         <el-table-column prop="institutionId" label="机构ID" width="80" />
         <el-table-column prop="name" label="机构名称" width="200" show-overflow-tooltip />
         <el-table-column prop="type" label="机构类型" width="120" />
+        <el-table-column prop="status" label="机构状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row.status)">{{ getStatusText(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="bedTotal" label="总床位数" width="100" />
         <el-table-column prop="bedAvailable" label="可用床位数" width="120" />
         <el-table-column label="入住率" width="100">
@@ -146,6 +159,20 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
+            <el-form-item label="机构状态" prop="status">
+              <el-select v-model="formData.status" placeholder="请选择机构状态" style="width: 100%">
+                <el-option label="运营中" value="运营中" />
+                <el-option label="筹备中" value="筹备中" />
+                <el-option label="暂停服务" value="暂停服务" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 预留位置 -->
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
             <el-form-item label="机构地址" prop="address">
               <el-input v-model="formData.address" placeholder="请输入机构地址" />
             </el-form-item>
@@ -202,6 +229,9 @@
         <el-descriptions :column="2" border>
           <el-descriptions-item label="机构名称">{{ viewData.name }}</el-descriptions-item>
           <el-descriptions-item label="机构类型">{{ viewData.type }}</el-descriptions-item>
+          <el-descriptions-item label="机构状态">
+            <el-tag :type="getStatusTagType(viewData.status)">{{ getStatusText(viewData.status) }}</el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="床位数">{{ viewData.bedTotal }}</el-descriptions-item>
           <el-descriptions-item label="可用床位">{{ viewData.bedAvailable }}</el-descriptions-item>
           <el-descriptions-item label="入住率">{{ calculateOccupancyRate(viewData.bedTotal - viewData.bedAvailable, viewData.bedTotal) }}%</el-descriptions-item>
@@ -249,6 +279,7 @@ const statistics = reactive({
 const searchForm = reactive({
   institutionName: '',
   institutionType: '',
+  institutionStatus: '',
   contactPerson: '',
   contactPhone: '',
   address: ''
@@ -269,6 +300,7 @@ const formData = reactive({
   institutionId: null,
   name: '',
   type: '',
+  status: null,
   address: '',
   contactPerson: '',
   contactPhone: '',
@@ -282,6 +314,7 @@ const viewData = reactive({
   institutionId: null,
   name: '',
   type: '',
+  status: null,
   address: '',
   contactPerson: '',
   contactPhone: '',
@@ -345,6 +378,7 @@ const handleReset = () => {
   Object.assign(searchForm, {
     institutionName: '',
     institutionType: '',
+    institutionStatus: '',
     contactPerson: '',
     contactPhone: '',
     address: ''
@@ -492,6 +526,7 @@ const resetFormData = () => {
     institutionId: null,
     name: '',
     type: '',
+    status: null,
     address: '',
     contactPerson: '',
     contactPhone: '',
@@ -527,6 +562,7 @@ const loadInstitutionList = async () => {
        pageSize: pagination.size,
        name: searchForm.institutionName,
        type: searchForm.institutionType || undefined,
+       status: searchForm.institutionStatus || undefined,
        contactPerson: searchForm.contactPerson,
        contactPhone: searchForm.contactPhone,
        address: searchForm.address
@@ -552,6 +588,20 @@ const loadInstitutionList = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 状态相关辅助方法
+const getStatusText = (status) => {
+  return status || '未设置'
+}
+
+const getStatusTagType = (status) => {
+  const typeMap = {
+    '运营中': 'success',
+    '筹备中': 'warning',
+    '暂停服务': 'danger'
+  }
+  return typeMap[status] || 'info'
 }
 
 // 组件挂载时加载数据
