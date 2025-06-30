@@ -55,8 +55,7 @@ public class HealthAlertServiceImpl implements HealthAlertService {
                 log.warn("未找到老人信息，ID: {}", observation.getElderlyId());
                 return;
             }
-            System.out.println("laooooooooooooooo8888888888888888888888888888888888888888888" + elderly.toString());
-            
+
             // 计算年龄
             Integer age = elderly.getAge();
             String gender = elderly.getGender();
@@ -79,10 +78,10 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("TEMPERATURE");
         
         for (HealthAlertRule rule : rules) {
-            if (isValueOutOfRange(observation.getBodyTemperature(), rule.getMinThreshold(), rule.getMaxThreshold())) {
+            if (!isValueOutOfRange(observation.getBodyTemperature(), rule.getMinThreshold(), rule.getMaxThreshold())) {
                 createAlert(observation, elderly, "TEMPERATURE", rule, 
                     observation.getBodyTemperature().toString() + "°C", 
-                    "36.0-37.5°C");
+                    "36.0-37.0°C");
                 break; // 只创建最高级别的预警
             }
         }
@@ -93,7 +92,7 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         if (observation.getSystolicBp() != null) {
             List<HealthAlertRule> systolicRules = healthAlertRuleMapper.findApplicableRules("BLOOD_PRESSURE_SYSTOLIC");
             for (HealthAlertRule rule : systolicRules) {
-                if (isValueOutOfRange(observation.getSystolicBp().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
+                if (!isValueOutOfRange(observation.getSystolicBp().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
                     createAlert(observation, elderly, "BLOOD_PRESSURE", rule, 
                         observation.getSystolicBp().toString() + "mmHg", 
                         "90-140mmHg");
@@ -108,7 +107,7 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("HEART_RATE");
         for (HealthAlertRule rule : rules) {
-            if (isValueOutOfRange(observation.getHeartRate().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
+            if (!isValueOutOfRange(observation.getHeartRate().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
                 createAlert(observation, elderly, "HEART_RATE", rule, 
                     observation.getHeartRate().toString() + "次/分", 
                     "60-100次/分");
@@ -123,7 +122,7 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         double bmi = calculateBMI(observation.getHeight(), observation.getWeight());
         List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("BMI");
         for (HealthAlertRule rule : rules) {
-            if (isValueOutOfRange(bmi, rule.getMinThreshold(), rule.getMaxThreshold())) {
+            if (!isValueOutOfRange(bmi, rule.getMinThreshold(), rule.getMaxThreshold())) {
                 createAlert(observation, elderly, "BMI", rule, 
                     String.format("%.1f", bmi), 
                     "18.5-24.9");
@@ -137,7 +136,7 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("SLEEP");
         for (HealthAlertRule rule : rules) {
-            if (isValueOutOfRange(observation.getSleepHours(), rule.getMinThreshold(), rule.getMaxThreshold())) {
+            if (!isValueOutOfRange(observation.getSleepHours(), rule.getMinThreshold(), rule.getMaxThreshold())) {
 
                 createAlert(observation, elderly, "SLEEP", rule, 
                     observation.getSleepHours().toString() + "小时",

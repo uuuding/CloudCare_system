@@ -474,11 +474,19 @@ const recentActivities = ref([
           healthRecordsCount = observationData.length
           
           // 计算今日新增数量用于趋势显示
-          const today = new Date().toISOString().split('T')[0]
+          const today = new Date().toISOString().split('T')[0] // 格式: 2024-01-15
+          console.log('今日日期:', today)
           const todayRecords = observationData.filter(record => {
             const recordDate = record.observationTime || record.createTime || record.date || record.time
-            return recordDate && recordDate.startsWith(today)
+            if (recordDate) {
+              // 提取日期部分进行比较 (支持 '2024-01-15 08:00:00' 格式)
+              const recordDateOnly = recordDate.split(' ')[0] // 取日期部分
+              console.log('记录日期:', recordDate, '提取日期:', recordDateOnly, '是否匹配:', recordDateOnly === today)
+              return recordDateOnly === today
+            }
+            return false
           })
+          console.log('今日健康记录:', todayRecords)
           todayRecordsCount = todayRecords.length
         } else if (observationData && typeof observationData === 'object') {
           // 如果是对象，可能包含total字段

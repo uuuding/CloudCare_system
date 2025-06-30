@@ -98,7 +98,6 @@ public class ElderlyObservationsController {
             try {
                 // 自动触发预警检查
                 healthAlertService.checkAndGenerateAlerts(observation);
-                System.out.println("预警66666666666666666666666666666666666666666666666666666666666666666666666666666");
                 log.info("观察记录添加成功并完成预警检查，老人ID: {}", observation.getElderlyId());
             } catch (Exception e) {
                 log.error("预警检查失败，老人ID: {}, 错误: {}", observation.getElderlyId(), e.getMessage());
