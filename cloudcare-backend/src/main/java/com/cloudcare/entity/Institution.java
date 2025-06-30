@@ -47,6 +47,10 @@ public class Institution {
     @Schema(description = "简介")
     private String description;
 
+    @Schema(description = "机构状态：运营中、筹备中、暂停服务")
+    @TableField("status")
+    private String status;
+
     @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
@@ -75,5 +79,26 @@ public class Institution {
             return 0.0;
         }
         return (double) getOccupiedBeds() / bedTotal * 100;
+    }
+    
+    /**
+     * 判断机构是否运营中
+     */
+    public boolean isOperating() {
+        return "运营中".equals(this.status);
+    }
+    
+    /**
+     * 判断机构是否筹备中
+     */
+    public boolean isPreparing() {
+        return "筹备中".equals(this.status);
+    }
+    
+    /**
+     * 判断机构是否暂停服务
+     */
+    public boolean isSuspended() {
+        return "暂停服务".equals(this.status);
     }
 }

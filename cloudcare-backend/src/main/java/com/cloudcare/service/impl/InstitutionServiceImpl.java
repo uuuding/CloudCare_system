@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloudcare.entity.Institution;
+import com.cloudcare.enums.InstitutionStatusEnum;
 import com.cloudcare.mapper.InstitutionMapper;
 import com.cloudcare.service.InstitutionService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,29 +35,32 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
     public Page<Institution> selectInstitutionPage(Page<Institution> page, Institution institution) {
         LambdaQueryWrapper<Institution> queryWrapper = new LambdaQueryWrapper<>();
         
-        // 机构名称
-        if (StringUtils.isNotBlank(institution.getName())) {
-            queryWrapper.like(Institution::getName, institution.getName());
-        }
-        
-        // 机构类型
-        if (StringUtils.isNotBlank(institution.getType())) {
-            queryWrapper.eq(Institution::getType, institution.getType());
-        }
-        
-        // 联系人
-        if (StringUtils.isNotBlank(institution.getContactPerson())) {
-            queryWrapper.like(Institution::getContactPerson, institution.getContactPerson());
-        }
-        
-        // 联系电话
-        if (StringUtils.isNotBlank(institution.getContactPhone())) {
-            queryWrapper.like(Institution::getContactPhone, institution.getContactPhone());
-        }
-        
-        // 地址
-        if (StringUtils.isNotBlank(institution.getAddress())) {
-            queryWrapper.like(Institution::getAddress, institution.getAddress());
+        // 添加空值检查
+        if (institution != null) {
+            // 机构名称
+            if (StringUtils.isNotBlank(institution.getName())) {
+                queryWrapper.like(Institution::getName, institution.getName());
+            }
+            
+            // 机构类型
+            if (StringUtils.isNotBlank(institution.getType())) {
+                queryWrapper.eq(Institution::getType, institution.getType());
+            }
+            
+            // 联系人
+            if (StringUtils.isNotBlank(institution.getContactPerson())) {
+                queryWrapper.like(Institution::getContactPerson, institution.getContactPerson());
+            }
+            
+            // 联系电话
+            if (StringUtils.isNotBlank(institution.getContactPhone())) {
+                queryWrapper.like(Institution::getContactPhone, institution.getContactPhone());
+            }
+            
+            // 地址
+            if (StringUtils.isNotBlank(institution.getAddress())) {
+                queryWrapper.like(Institution::getAddress, institution.getAddress());
+            }
         }
         
         // 按创建时间倒序
@@ -78,6 +82,8 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
             institution.setCreateTime(LocalDateTime.now());
             institution.setUpdateTime(LocalDateTime.now());
             
+            // 不设置默认状态，允许为空
+            
             // 校验机构名称唯一性
             if (!checkInstitutionNameUnique(institution)) {
                 log.warn("机构名称已存在: {}", institution.getName());
@@ -86,6 +92,11 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
             
             // 校验床位数据合理性
             if (!validateBedData(institution)) {
+                return false;
+            }
+            
+            // 校验机构状态
+            if (!validateInstitutionStatus(institution)) {
                 return false;
             }
             
@@ -114,6 +125,11 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
                 return false;
             }
             
+            // 校验机构状态
+            if (!validateInstitutionStatus(institution)) {
+                return false;
+            }
+            
             return this.updateById(institution);
         } catch (Exception e) {
             log.error("修改机构信息失败: {}", e.getMessage(), e);
@@ -139,15 +155,33 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
         return true;
     }
 
+    /**
+     * 验证机构状态是否有效
+     */
+    private boolean validateInstitutionStatus(Institution institution) {
+        if (institution.getStatus() == null) {
+            return true; // 允许为空，会设置默认值
+        }
+        
+        // 验证状态值
+        if (institution.getStatus() != null && !InstitutionStatusEnum.isValidValue(institution.getStatus())) {
+            throw new IllegalArgumentException("无效的机构状态值");
+        }
+        
+        return true;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteInstitutionByIds(Long[] institutionIds) {
         try {
             if (institutionIds == null || institutionIds.length == 0) {
-                log.warn("删除机构ID列表为空");
+                log.warn("删除机构ID数组为空");
                 return false;
             }
-            return this.removeByIds(Arrays.asList(institutionIds));
+            
+            List<Long> idList = Arrays.asList(institutionIds);
+            return this.removeByIds(idList);
         } catch (Exception e) {
             log.error("批量删除机构信息失败: {}", e.getMessage(), e);
             return false;
@@ -162,6 +196,7 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
                 log.warn("删除机构ID为空");
                 return false;
             }
+            
             return this.removeById(institutionId);
         } catch (Exception e) {
             log.error("删除机构信息失败: {}", e.getMessage(), e);

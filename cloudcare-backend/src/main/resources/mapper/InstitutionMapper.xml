@@ -15,6 +15,7 @@
         <result column="bed_total" property="bedTotal" />
         <result column="bed_available" property="bedAvailable" />
         <result column="description" property="description" />
+        <result column="status" property="status" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
     </resultMap>
@@ -56,6 +57,7 @@
             bed_total,
             bed_available,
             description,
+            status,
             create_time,
             update_time
         FROM institution_info
@@ -97,6 +99,7 @@
             bed_total,
             bed_available,
             description,
+            status,
             create_time,
             update_time
         FROM institution_info
@@ -117,6 +120,9 @@
             <if test="query.address != null and query.address != ''">
                 AND address LIKE CONCAT('%', #{query.address}, '%')
             </if>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
         </where>
         <![CDATA[
         ORDER BY create_time DESC
@@ -136,6 +142,7 @@
             bed_total,
             bed_available,
             description,
+            status,
             create_time,
             update_time
         FROM institution_info

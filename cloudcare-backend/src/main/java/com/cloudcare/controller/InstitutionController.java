@@ -42,7 +42,8 @@ public class InstitutionController {
             @Parameter(description = "机构类型") @RequestParam(required = false) String type,
             @Parameter(description = "联系人") @RequestParam(required = false) String contactPerson,
             @Parameter(description = "联系电话") @RequestParam(required = false) String contactPhone,
-            @Parameter(description = "地址") @RequestParam(required = false) String address) {
+            @Parameter(description = "地址") @RequestParam(required = false) String address,
+            @Parameter(description = "机构状态：运营中、筹备中、暂停服务") @RequestParam(required = false) String status) {
         
         Page<Institution> page = new Page<>(pageNum, pageSize);
         Institution institution = new Institution();
@@ -51,6 +52,7 @@ public class InstitutionController {
         institution.setContactPerson(contactPerson);
         institution.setContactPhone(contactPhone);
         institution.setAddress(address);
+        institution.setStatus(status);
         
         Page<Institution> result = institutionService.selectInstitutionPage(page, institution);
         return Result.success(result);
