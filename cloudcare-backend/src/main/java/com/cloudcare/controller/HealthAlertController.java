@@ -43,13 +43,30 @@ public class HealthAlertController {
      * 根据老人ID获取预警记录
      */
     @GetMapping("/elderly/{elderlyId}")
-    public Result<List<HealthAlert>> getAlertsByElderlyId(@PathVariable Long elderlyId) {
+    public Result<List<HealthAlert>> getAlertsByElderlyId(@PathVariable String elderlyId) {
         try {
-            List<HealthAlert> alerts = healthAlertService.getAlertsByElderlyId(elderlyId);
+            // 参数验证和转换
+            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId) || "null".equals(elderlyId)) {
+                return Result.error("老人ID不能为空");
+            }
+            
+            Long elderlyIdLong;
+            try {
+                elderlyIdLong = Long.parseLong(elderlyId.trim());
+            } catch (NumberFormatException e) {
+                log.error("老人ID格式错误: {}", elderlyId);
+                return Result.error("老人ID格式错误，请输入有效的数字");
+            }
+            
+            if (elderlyIdLong <= 0) {
+                return Result.error("老人ID必须大于0");
+            }
+            
+            List<HealthAlert> alerts = healthAlertService.getAlertsByElderlyId(elderlyIdLong);
             return Result.success(alerts);
         } catch (Exception e) {
-            log.error("根据老人ID获取预警记录失败", e);
-            return Result.error("获取预警记录失败");
+            log.error("根据老人ID获取预警记录失败，elderlyId: {}, 错误信息: {}", elderlyId, e.getMessage(), e);
+            return Result.error("获取预警记录失败: " + e.getMessage());
         }
     }
     
