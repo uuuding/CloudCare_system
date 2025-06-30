@@ -148,10 +148,38 @@ public interface HealthAlertMapper {
         @Result(property = "observationId", column = "observation_id")
     })
     List<HealthAlert> findByTimeRange(@Param("startTime") LocalDateTime startTime, 
-                                     @Param("endTime") LocalDateTime endTime);
+                                       @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 查询活跃预警数量
+     * 根据预警类型查询预警记录
+     */
+    @Select("SELECT alert_id, elderly_id, elderly_name, alert_type, alert_level, " +
+            "alert_title, alert_description, trigger_value, normal_range, " +
+            "status, created_at, updated_at, resolved_at, resolved_by, " +
+            "resolved_note, observation_id FROM health_alert " +
+            "WHERE alert_type = #{alertType} ORDER BY created_at DESC")
+    @Results({
+        @Result(property = "alertId", column = "alert_id"),
+        @Result(property = "elderlyId", column = "elderly_id"),
+        @Result(property = "elderlyName", column = "elderly_name"),
+        @Result(property = "alertType", column = "alert_type"),
+        @Result(property = "alertLevel", column = "alert_level"),
+        @Result(property = "alertTitle", column = "alert_title"),
+        @Result(property = "alertDescription", column = "alert_description"),
+        @Result(property = "triggerValue", column = "trigger_value"),
+        @Result(property = "normalRange", column = "normal_range"),
+        @Result(property = "status", column = "status"),
+        @Result(property = "createdAt", column = "created_at"),
+        @Result(property = "updatedAt", column = "updated_at"),
+        @Result(property = "resolvedAt", column = "resolved_at"),
+        @Result(property = "resolvedBy", column = "resolved_by"),
+        @Result(property = "resolvedNote", column = "resolved_note"),
+        @Result(property = "observationId", column = "observation_id")
+    })
+    List<HealthAlert> findByAlertType(@Param("alertType") String alertType);
+
+    /**
+     * 根据老人ID和预警类型查询最新预警
      */
     @Select("SELECT COUNT(1) FROM health_alert WHERE status = 'ACTIVE'")
     Long countActive();

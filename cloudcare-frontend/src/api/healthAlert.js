@@ -44,6 +44,14 @@ export function getAlertsByTimeRange(startTime, endTime) {
   })
 }
 
+// 根据预警类型获取预警记录
+export function getAlertsByType(alertType) {
+  return request({
+    url: `/health-alert/type/${alertType}`,
+    method: 'get'
+  })
+}
+
 // 处理预警（标记为已解决）
 export function resolveAlert(alertId, resolvedBy, resolvedNote) {
   return request({
