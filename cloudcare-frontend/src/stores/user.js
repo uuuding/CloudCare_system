@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { login, logout, getUserInfo } from '@/api/auth'
+import { login, logout, getUserInfo, updateUserInfo as updateUserInfoApi } from '@/api/auth'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 
 export const useUserStore = defineStore('user', {
@@ -95,10 +95,26 @@ export const useUserStore = defineStore('user', {
     },
     
     // 更新用户信息
-    updateUserInfo(userInfo) {
-      const { realName, avatar } = userInfo
-      if (realName) this.realName = realName
-      if (avatar) this.avatar = avatar
+    async updateUserInfo(userInfo) {
+      try {
+        const res = await updateUserInfoApi(userInfo)
+        if (res.code === 200) {
+          // 更新本地状态
+          const { realName, avatar, phone, email } = userInfo
+          if (realName) this.realName = realName
+          if (avatar) this.avatar = avatar
+          if (phone) this.phone = phone
+          if (email) this.email = email
+        }
+        return res
+      } catch (error) {
+        throw error
+      }
+    },
+    
+    // 更新头像
+    updateAvatar(avatarUrl) {
+      this.avatar = avatarUrl
     }
   }
 })

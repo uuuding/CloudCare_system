@@ -4,7 +4,23 @@
       <div class="header">
         <h2>个人中心</h2>
       </div>
-      <el-form :model="userInfo" label-width="100px" class="profile-form">
+      
+      <!-- 头像上传区域 -->
+      <div class="avatar-section">
+        <AvatarUpload 
+          v-model="userInfo.avatar" 
+          :size="120"
+          @success="handleAvatarSuccess"
+        />
+        <div class="avatar-info">
+          <h3>{{ userInfo.realName || userInfo.username }}</h3>
+          <p class="user-type">{{ userInfo.userType }}</p>
+        </div>
+      </div>
+      
+      <el-divider />
+      
+      <el-form :model="userInfo" label-width="100px" class="profile-form" ref="formRef">
         <el-form-item label="用户名">
           <el-input v-model="userInfo.username" disabled />
         </el-form-item>
@@ -21,7 +37,9 @@
           <el-input v-model="userInfo.userType" disabled />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="saveUserInfo">保存</el-button>
+          <el-button type="primary" @click="saveUserInfo" :loading="saving">
+            保存
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -31,21 +49,26 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import {getUserInfo, updateUserInfo} from "@/api/auth";
+import { getUserInfo, updateUserInfo } from '@/api/auth'
+import AvatarUpload from '@/components/AvatarUpload.vue'
+import { useUserStore } from '@/stores/user'
 
 const formRef = ref(null)
+const saving = ref(false)
+const userStore = useUserStore()
+
 const userInfo = reactive({
   username: '',
   realName: '',
   phone: '',
   email: '',
-  userType: ''
+  userType: '',
+  avatar: ''
 })
 
 const loadUserInfo = async () => {
   try {
     const res = await getUserInfo()
-    console.log(res)
     if (res && res.data) {
       Object.assign(userInfo, res.data)
     }
@@ -54,13 +77,25 @@ const loadUserInfo = async () => {
   }
 }
 
-const handleSave = async () => {
+const saveUserInfo = async () => {
   try {
+    saving.value = true
     await updateUserInfo(userInfo)
+    
+    // 更新用户状态
+    await userStore.getUserInfo()
+    
     ElMessage.success('保存成功')
   } catch (error) {
     ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
   }
+}
+
+const handleAvatarSuccess = (avatarUrl) => {
+  userInfo.avatar = avatarUrl
+  ElMessage.success('头像更新成功')
 }
 
 onMounted(() => {
@@ -74,6 +109,26 @@ onMounted(() => {
   max-width: 600px;
   margin: 0 auto;
 }
+
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.avatar-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #303133;
+}
+
+.user-type {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
 .profile-form {
   margin-top: 20px;
 }

@@ -64,6 +64,11 @@ server:
   tomcat:
     uri-encoding: UTF-8
 
+# 文件上传配置
+file:
+  upload:
+    path: c:/Users/35933/IdeaProjects/CloudCare_system/uploads
+
 # 日志配置
 logging:
   level:
