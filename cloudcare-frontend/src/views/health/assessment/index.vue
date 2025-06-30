@@ -145,11 +145,13 @@
           />
         </el-form-item>
         
-        <el-form-item label="体检日期" prop="observationDate">
+        <el-form-item label="体检时间" prop="observationDate">
           <el-date-picker
             v-model="importForm.observationDate"
-            type="date"
-            placeholder="请选择体检日期"
+            type="datetime"
+            placeholder="请选择体检时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
           />
         </el-form-item>
@@ -268,6 +270,24 @@ const importForm = ref({
   cough:false,
   notes: ''
 });
+
+// 日期时间格式化函数，避免时区转换问题
+const formatDateToLocal = (dateTime) => {
+  if (!dateTime) return '';
+  // 如果已经是字符串格式，直接返回
+  if (typeof dateTime === 'string') {
+    return dateTime;
+  }
+  // 如果是Date对象，格式化为本地时间字符串
+  const d = new Date(dateTime);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
 
 // 表单验证规则
 const importRules = ref({
@@ -497,7 +517,7 @@ const handleImport = async () => {
     const formData = {
       elderlyId: importForm.value.elderlyId,
       observationTime: importForm.value.observationDate ? 
-        new Date(importForm.value.observationDate).toISOString().split('T')[0] : '',
+        formatDateToLocal(importForm.value.observationDate) : '',
       observationLocation: importForm.value.observationLocation,
       systolicBp: importForm.value.bloodPressure,
       heartRate: importForm.value.heartRate,
@@ -508,6 +528,8 @@ const handleImport = async () => {
       cough: importForm.value.cough,
       notes: importForm.value.notes
     };
+    console.log('原始日期:', importForm.value.observationDate);
+    console.log('格式化后日期:', formData.observationTime);
     console.log(formData.sleepHours)
     
     const response = await addObservation(formData);

@@ -256,8 +256,8 @@ const initAlertTrendChart = async () => {
         startDate.setDate(endDate.getDate() - 6)
     }
     
-    const startDateStr = startDate.toISOString().split('T')[0]
-    const endDateStr = endDate.toISOString().split('T')[0]
+    const startDateStr = startDate.toISOString().split('T')[0] + ' 00:00:00'
+    const endDateStr = endDate.toISOString().split('T')[0] + ' 23:59:59'
     
     const response = await getAlertsByTimeRange(startDateStr, endDateStr)
     const alertData = response.data || []
@@ -844,7 +844,9 @@ const updateMonthlyChart = async () => {
       
       // 计算月份的开始和结束日期
       const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
-      const endDate = new Date(year, month, 0).toISOString().split('T')[0] // 月末日期
+      // 获取月份的最后一天（避免时区影响）
+      const lastDay = new Date(year, month, 0).getDate()
+      const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}` // 月末日期
       
       months.push(`${month}月`)
       
@@ -853,7 +855,7 @@ const updateMonthlyChart = async () => {
         
         if (type === 'alerts') {
           // 获取预警数据
-          const response = await getAlertsByTimeRange(startDate, endDate)
+          const response = await getAlertsByTimeRange(startDate + ' 00:00:00', endDate + ' 23:59:59')
           console.log('预警数据响应:', response, '时间范围:', startDate, 'to', endDate)
           if (response.code === 200) {
             count = response.data?.length || 0
@@ -865,19 +867,51 @@ const updateMonthlyChart = async () => {
           // 获取干预计划数据（按创建时间统计）
           const response = await getInterventionPlanPage({ pageNum: 1, pageSize: 1000 })
           if (response.data && response.data.records) {
-            // 过滤指定时间范围内创建的计划
-            const filteredPlans = response.data.records.filter(plan => {
-              if (!plan.createdTime) return false
-              const createDate = new Date(plan.createdTime).toISOString().split('T')[0]
-              return createDate >= startDate && createDate <= endDate
-            })
-            count = filteredPlans.length
+            // 检查数据时间范围
+            const records = response.data.records
+            const validRecords = records.filter(plan => plan.createdTime)
+            
+            if (validRecords.length === 0) {
+              console.warn('干预计划数据中没有有效的创建时间')
+              count = 0
+            } else {
+              // 获取数据的时间范围用于调试
+              const dataTimeRange = {
+                min: Math.min(...validRecords.map(p => new Date(p.createdTime).getTime())),
+                max: Math.max(...validRecords.map(p => new Date(p.createdTime).getTime()))
+              }
+              
+              // 过滤指定时间范围内创建的计划
+              const filteredPlans = validRecords.filter(plan => {
+                const createDate = new Date(plan.createdTime).toISOString().split('T')[0]
+                // 使用包含边界的日期比较
+                const isAfterStart = createDate >= startDate
+                const isBeforeEnd = createDate <= endDate
+                return isAfterStart && isBeforeEnd
+              })
+              
+              count = filteredPlans.length
+              
+              // 如果没有匹配的数据，提供调试信息
+              if (count === 0 && validRecords.length > 0) {
+                console.info('干预计划时间范围不匹配:', {
+                  查询范围: `${startDate} 到 ${endDate}`,
+                  数据范围: {
+                    最早: new Date(dataTimeRange.min).toISOString().split('T')[0],
+                    最晚: new Date(dataTimeRange.max).toISOString().split('T')[0]
+                  },
+                  总记录数: records.length,
+                  有效记录数: validRecords.length
+                })
+              }
+            }
           } else {
+            console.warn('获取干预计划数据失败:', response)
             count = 0
           }
         } else {
           // 健康评估数据（基于预警数据估算）
-          const response = await getAlertsByTimeRange(startDate, endDate)
+          const response = await getAlertsByTimeRange(startDate + ' 00:00:00', endDate + ' 23:59:59')
           console.log('健康评估基础数据响应:', response, '时间范围:', startDate, 'to', endDate)
           if (response.code === 200) {
             count = Math.floor((response.data?.length || 0) * 1.5) // 假设评估数量是预警的1.5倍
