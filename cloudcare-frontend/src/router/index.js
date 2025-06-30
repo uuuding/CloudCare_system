@@ -198,20 +198,6 @@ const routes = [
     ]
   },
   {
-    path: '/test',
-    component: Layout,
-    redirect: '/test/index',
-    meta: { title: '测试页面', icon: 'Tools' },
-    children: [
-      {
-        path: 'index',
-        name: 'Test',
-        component: () => import('@/views/test/index.vue'),
-        meta: { title: '组件测试', icon: 'Tools' }
-      }
-    ]
-  },
-  {
     path: '/bigdata',
     component: Layout,
     redirect: '/bigdata/index',
