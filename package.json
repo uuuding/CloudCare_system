@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "package-name": "^0.1.0",
     "path-browserify": "^1.0.1"
   }
 }

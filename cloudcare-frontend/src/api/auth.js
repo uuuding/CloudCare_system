@@ -86,3 +86,32 @@ export function updateUserInfo(data) {
     data
   })
 }
+
+/**
+ * 更新用户头像
+ * @param {String} avatar 头像URL
+ * @returns {Promise}
+ */
+export function updateAvatar(avatar) {
+  return request({
+    url: '/user/avatar',
+    method: 'put',
+    params: { avatar }
+  })
+}
+
+/**
+ * 上传文件
+ * @param {FormData} formData 文件数据
+ * @returns {Promise}
+ */
+export function uploadFile(formData) {
+  return request({
+    url: '/upload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

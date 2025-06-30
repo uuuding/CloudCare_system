@@ -51,62 +51,51 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="160">
+        <el-table-column prop="createTime" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="warning" size="small" @click="handleResetPassword(row)">重置密码</el-button>
             <el-button 
-              :type="row.status === 1 ? 'warning' : 'success'" 
+              :type="row.status === 1 ? 'danger' : 'success'" 
               size="small" 
               @click="handleStatusChange(row)"
             >
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
-            <el-button type="info" size="small" @click="handleResetPassword(row)">
-              重置密码
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="pagination.pageNum"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination
+        v-model:current-page="pagination.pageNum"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
+      :title="isEdit ? '编辑医生' : '新增医生'"
       v-model="dialogVisible"
-      :title="dialogTitle"
-      width="500px"
+      width="600px"
       @close="handleDialogClose"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="80px"
-      >
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" :disabled="isEdit" placeholder="请输入用户名" />
+          <el-input v-model="form.username" placeholder="请输入用户名" :disabled="isEdit" />
         </el-form-item>
         <el-form-item label="密码" prop="password" v-if="!isEdit">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" />
@@ -126,7 +115,7 @@
             <el-option label="女" value="女" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
@@ -143,13 +132,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { getUserPage, addUser, updateUser, deleteUser, resetUserPassword, updateUserStatus } from '@/api/user'
-// import { formatDateTime } from '@/utils/date'
 
-// 临时格式化函数
+// 格式化时间函数
 const formatDateTime = (dateTime) => {
   if (!dateTime) return ''
   return new Date(dateTime).toLocaleString('zh-CN')
@@ -187,7 +175,7 @@ const form = reactive({
   email: '',
   gender: '',
   remark: '',
-  userType: 2 // 医生类型
+  userType: 2
 })
 
 // 表单验证规则
@@ -208,61 +196,72 @@ const rules = {
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
   email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ]
 }
 
-// 计算属性
-const dialogTitle = computed(() => isEdit.value ? '编辑医生' : '新增医生')
-
-// 方法
+// 获取数据
 const fetchData = async () => {
-  loading.value = true
   try {
+    loading.value = true
     const params = {
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
-      userType: 2, // 医生用户类型为2
+      userType: 2,
       ...searchForm
     }
+    
     const response = await getUserPage(params)
     if (response.success) {
-      tableData.value = response.data.records
-      pagination.total = response.data.total
+      tableData.value = response.data.records || []
+      pagination.total = response.data.total || 0
+    } else {
+      ElMessage.error('获取数据失败')
     }
   } catch (error) {
+    console.error('获取数据失败:', error)
     ElMessage.error('获取数据失败')
   } finally {
     loading.value = false
   }
 }
 
+// 搜索
 const handleSearch = () => {
   pagination.pageNum = 1
   fetchData()
 }
 
+// 重置
 const handleReset = () => {
   Object.assign(searchForm, {
     username: '',
     phone: '',
     status: null
   })
-  handleSearch()
+  pagination.pageNum = 1
+  fetchData()
 }
 
+// 新增
 const handleAdd = () => {
   isEdit.value = false
-  dialogVisible.value = true
   resetForm()
+  dialogVisible.value = true
 }
 
+// 编辑
 const handleEdit = (row) => {
   isEdit.value = true
+  Object.assign(form, {
+    ...row,
+    password: ''
+  })
   dialogVisible.value = true
-  Object.assign(form, row)
 }
 
+// 删除
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
@@ -289,6 +288,7 @@ const handleDelete = async (row) => {
   }
 }
 
+// 状态切换
 const handleStatusChange = async (row) => {
   const newStatus = row.status === 1 ? 0 : 1
   const action = newStatus === 1 ? '启用' : '禁用'
@@ -318,6 +318,7 @@ const handleStatusChange = async (row) => {
   }
 }
 
+// 重置密码
 const handleResetPassword = async (row) => {
   try {
     await ElMessageBox.confirm(
@@ -343,6 +344,7 @@ const handleResetPassword = async (row) => {
   }
 }
 
+// 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
   
@@ -371,10 +373,12 @@ const handleSubmit = async () => {
   }
 }
 
+// 对话框关闭
 const handleDialogClose = () => {
   resetForm()
 }
 
+// 重置表单
 const resetForm = () => {
   Object.assign(form, {
     userId: null,
@@ -392,12 +396,14 @@ const resetForm = () => {
   }
 }
 
+// 分页大小改变
 const handleSizeChange = (size) => {
   pagination.pageSize = size
   pagination.pageNum = 1
   fetchData()
 }
 
+// 当前页改变
 const handleCurrentChange = (page) => {
   pagination.pageNum = page
   fetchData()
@@ -421,28 +427,20 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-.header h1 {
-  margin: 0;
-  color: #303133;
-}
-
 .search-form {
-  background: #f5f7fa;
+  background: #f5f5f5;
   padding: 20px;
-  border-radius: 4px;
+  border-radius: 8px;
   margin-bottom: 20px;
 }
 
 .table-container {
-  background: white;
-  border-radius: 4px;
-  overflow: hidden;
+  margin-bottom: 20px;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  padding: 20px;
 }
 
 .dialog-footer {
