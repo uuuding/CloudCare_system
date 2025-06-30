@@ -292,20 +292,24 @@ const fetchObservations = async () => {
   const response = await getAllObservations();
   observations.value = response.data;
   filteredObservations.value = observations.value;
-  console.log(filteredObservations)
+  console.log(filteredObservations);
+  // 重新渲染健康状态统计图表
+  renderObservationStats();
 };
 
 const filterObservations = () => {
   const term = searchTerm.value.trim().toLowerCase();
   if (!term) {
     filteredObservations.value = observations.value;
-    return;
+  } else {
+    filteredObservations.value = observations.value.filter(item => {
+      return (item.elderlyId && item.elderlyId.toString().toLowerCase().includes(term)) ||
+             (item.elderlyName && item.elderlyName.toLowerCase().includes(term)) ||
+             (item.observationLocation && item.observationLocation.toLowerCase().includes(term));
+    });
   }
-  filteredObservations.value = observations.value.filter(item => {
-    return (item.elderlyId && item.elderlyId.toString().toLowerCase().includes(term)) ||
-           (item.elderlyName && item.elderlyName.toLowerCase().includes(term)) ||
-           (item.observationLocation && item.observationLocation.toLowerCase().includes(term));
-  });
+  // 重新渲染健康状态统计图表
+  renderObservationStats();
 };
 
 watch(searchTerm, filterObservations);
@@ -376,9 +380,29 @@ const renderLocationMap = async () => {
 
 const renderObservationStats = () => {
   const myChart = echarts.init(document.getElementById('observationStats'));
+  
+  // 统计健康状态分布
+  const healthStats = {
+    healthy: 0,    // 健康
+    attention: 0,  // 注意
+    abnormal: 0    // 异常
+  };
+  
+  // 遍历所有体检记录，统计健康状态
+  filteredObservations.value.forEach(record => {
+    const healthStatus = getOverallHealthStatus(record);
+    if (healthStatus.type === 'success') {
+      healthStats.healthy++;
+    } else if (healthStatus.type === 'warning') {
+      healthStats.attention++;
+    } else if (healthStatus.type === 'danger') {
+      healthStats.abnormal++;
+    }
+  });
+  
   const option = {
     title: {
-      text: '体检记录统计',
+      text: '健康状态分布',
       left: 'center'
     },
     tooltip: {
@@ -388,18 +412,18 @@ const renderObservationStats = () => {
     legend: {
       orient: 'vertical',
       left: 'left',
-      data: ['正常', '异常', '未检查']
+      data: ['健康', '注意', '异常']
     },
     series: [
       {
-        name: '体检记录',
+        name: '健康状态',
         type: 'pie',
         radius: '50%',
         data: [
-          { value: 50, name: '正常' },
-          { value: 30, name: '异常' },
-          { value: 20, name: '未检查' }
-        ],
+          { value: healthStats.healthy, name: '健康', itemStyle: { color: '#67c23a' } },
+          { value: healthStats.attention, name: '注意', itemStyle: { color: '#e6a23c' } },
+          { value: healthStats.abnormal, name: '异常', itemStyle: { color: '#f56c6c' } }
+        ].filter(item => item.value > 0),
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -410,6 +434,12 @@ const renderObservationStats = () => {
       }
     ]
   };
+  
+  // 如果没有数据，显示提示
+  if (healthStats.healthy === 0 && healthStats.attention === 0 && healthStats.abnormal === 0) {
+    option.series[0].data = [{ value: 1, name: '暂无数据', itemStyle: { color: '#ddd' } }];
+  }
+  
   myChart.setOption(option);
 };
 
@@ -423,6 +453,8 @@ const editRecord = (record) => {
 const resetSearch = () => {
   searchTerm.value = '';
   filteredObservations.value = observations.value;
+  // 重新渲染健康状态统计图表
+  renderObservationStats();
 };
 
 const openImportDialog = () => {

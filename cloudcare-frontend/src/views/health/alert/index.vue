@@ -332,6 +332,7 @@ import {
   getAllAlerts,
   getAlertsByStatus,
   getAlertsByLevel,
+  getAlertsByType,
   getAlertsByTimeRange,
   resolveAlert,
   ignoreAlert,
@@ -489,6 +490,8 @@ const searchAlerts = async () => {
       response = await getAlertsByStatus(filterForm.status)
     } else if (filterForm.level) {
       response = await getAlertsByLevel(filterForm.level)
+    } else if (filterForm.type) {
+      response = await getAlertsByType(filterForm.type)
     } else if (filterForm.timeRange && filterForm.timeRange.length === 2) {
       response = await getAlertsByTimeRange(filterForm.timeRange[0], filterForm.timeRange[1])
     } else {

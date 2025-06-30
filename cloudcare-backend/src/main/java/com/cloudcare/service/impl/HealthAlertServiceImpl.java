@@ -276,6 +276,11 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     }
     
     @Override
+    public List<HealthAlert> getAlertsByType(String alertType) {
+        return healthAlertMapper.findByAlertType(alertType);
+    }
+    
+    @Override
     @Transactional
     public boolean resolveAlert(Long alertId, String resolvedBy, String resolvedNote) {
         HealthAlert alert = healthAlertMapper.findById(alertId);
@@ -323,6 +328,30 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         // 按级别统计
         List<Map<String, Object>> levelStats = healthAlertMapper.countByLevel();
         statistics.put("alertsByLevel", levelStats);
+        
+        // 转换级别统计为前端需要的格式
+        // 数据库中的级别：LOW, MEDIUM, HIGH, CRITICAL
+        // 前端期望的级别：INFO(提醒), WARNING(警告), CRITICAL(严重)
+        int criticalCount = 0;
+        int warningCount = 0;
+        int infoCount = 0;
+        
+        for (Map<String, Object> stat : levelStats) {
+            String level = (String) stat.get("level");
+            Long count = (Long) stat.get("count");
+            
+            if ("CRITICAL".equals(level)) {
+                criticalCount = count.intValue();
+            } else if ("HIGH".equals(level)) {
+                warningCount = count.intValue();
+            } else if ("MEDIUM".equals(level) || "LOW".equals(level)) {
+                infoCount += count.intValue();
+            }
+        }
+        
+        statistics.put("criticalCount", criticalCount);
+        statistics.put("warningCount", warningCount);
+        statistics.put("infoCount", infoCount);
         
         // 按类型统计
         List<Map<String, Object>> typeStats = healthAlertMapper.countByType();
