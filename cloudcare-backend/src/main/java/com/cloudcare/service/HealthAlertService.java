@@ -54,6 +54,11 @@ public interface HealthAlertService {
     List<HealthAlert> getAlertsByTimeRange(LocalDateTime startTime, LocalDateTime endTime);
     
     /**
+     * 根据预警类型获取预警记录
+     */
+    List<HealthAlert> getAlertsByType(String alertType);
+    
+    /**
      * 处理预警（标记为已解决）
      */
     boolean resolveAlert(Long alertId, String resolvedBy, String resolvedNote);

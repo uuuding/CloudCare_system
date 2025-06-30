@@ -77,4 +77,23 @@ public interface ServiceScheduleMapper extends BaseMapper<ServiceSchedule> {
             "WHERE ss.status = #{status} AND ss.deleted = 0 " +
             "ORDER BY ss.priority DESC, ss.scheduled_start_time ASC")
     List<ServiceSchedule> selectByStatus(@Param("status") Integer status);
+
+    /**
+     * 查询即将开始的服务（用于短信提醒）
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 服务调度列表
+     */
+    @Select("SELECT ss.*, u1.real_name as elder_name, u2.real_name as staff_name " +
+            "FROM service_schedule ss " +
+            "LEFT JOIN sys_user u1 ON ss.elder_id = u1.user_id " +
+            "LEFT JOIN sys_user u2 ON ss.staff_id = u2.user_id " +
+            "WHERE ss.scheduled_start_time >= #{startTime} " +
+            "AND ss.scheduled_start_time < #{endTime} " +
+            "AND ss.status = 1 " +
+            "AND ss.deleted = 0 " +
+            "ORDER BY ss.scheduled_start_time ASC")
+    List<ServiceSchedule> findUpcomingServices(@Param("startTime") LocalDateTime startTime,
+                                             @Param("endTime") LocalDateTime endTime);
 }
