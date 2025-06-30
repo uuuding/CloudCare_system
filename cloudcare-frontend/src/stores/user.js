@@ -57,13 +57,22 @@ export const useUserStore = defineStore('user', {
           return Promise.reject('验证失败，请重新登录')
         }
         
-        const { userId, username, realName, avatar } = data
+        const { userId, username, realName, avatar, userType } = data
         
         this.userId = userId
         this.username = username
         this.realName = realName
         this.avatar = avatar
-
+        
+        // 根据userType设置角色
+        this.roles = []
+        if (userType === 1) {
+          this.roles = ['ROLE_ADMIN']
+        } else if (userType === 2) {
+          this.roles = ['ROLE_DOCTOR']
+        } else if (userType === 3) {
+          this.roles = ['ROLE_ELDERLY']
+        }
         
         return Promise.resolve(data)
       } catch (error) {
