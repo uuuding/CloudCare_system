@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cloudcare.mapper.InstitutionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloudcare.entity.Institution">
+        <id column="institution_id" property="institutionId" />
+        <result column="name" property="name" />
+        <result column="type" property="type" />
+        <result column="address" property="address" />
+        <result column="contact_person" property="contactPerson" />
+        <result column="contact_phone" property="contactPhone" />
+        <result column="bed_total" property="bedTotal" />
+        <result column="bed_available" property="bedAvailable" />
+        <result column="description" property="description" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 获取机构统计信息 -->
+    <select id="getInstitutionStatistics" resultType="java.util.Map">
+        <![CDATA[
+        SELECT 
+            COUNT(*) AS totalCount,
+            COUNT(CASE WHEN bed_available > 0 THEN 1 END) AS activeCount,
+            COUNT(CASE WHEN bed_available = 0 AND bed_total > 0 THEN 1 END) AS fullCount,
+            COUNT(CASE WHEN bed_total = 0 OR bed_total IS NULL THEN 1 END) AS preparingCount
+        FROM institution_info
+        ]]>
+    </select>
+
+    <!-- 获取床位统计信息 -->
+    <select id="getBedStatistics" resultType="java.util.Map">
+        <![CDATA[
+        SELECT 
+            COALESCE(SUM(bed_total), 0) AS totalBeds,
+            COALESCE(SUM(bed_available), 0) AS availableBeds,
+            COALESCE(SUM(bed_total - bed_available), 0) AS occupiedBeds
+        FROM institution_info
+        WHERE bed_total IS NOT NULL AND bed_available IS NOT NULL
+        ]]>
+    </select>
+
+    <!-- 根据名称模糊查询机构 -->
+    <select id="selectByNameLike" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            institution_id,
+            name,
+            type,
+            address,
+            contact_person,
+            contact_phone,
+            bed_total,
+            bed_available,
+            description,
+            create_time,
+            update_time
+        FROM institution_info
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY create_time DESC
+        ]]>
+    </select>
+
+    <!-- 获取入住率排行榜 -->
+    <select id="getOccupancyRanking" resultType="java.util.Map">
+        <![CDATA[
+        SELECT 
+            institution_id AS institutionId,
+            name,
+            bed_total AS bedTotal,
+            bed_available AS bedAvailable,
+            (bed_total - bed_available) AS occupiedBeds,
+            CASE 
+                WHEN bed_total > 0 THEN ROUND((bed_total - bed_available) * 100.0 / bed_total, 2)
+                ELSE 0
+            END AS occupancyRate
+        FROM institution_info
+        WHERE bed_total IS NOT NULL AND bed_total > 0
+        ORDER BY occupancyRate DESC, bed_total DESC
+        LIMIT #{limit}
+        ]]>
+    </select>
+
+    <!-- 分页查询机构信息列表 -->
+    <select id="selectInstitutionPage" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            institution_id,
+            name,
+            type,
+            address,
+            contact_person,
+            contact_phone,
+            bed_total,
+            bed_available,
+            description,
+            create_time,
+            update_time
+        FROM institution_info
+        ]]>
+        <where>
+            <if test="query.name != null and query.name != ''">
+                AND name LIKE CONCAT('%', #{query.name}, '%')
+            </if>
+            <if test="query.type != null and query.type != ''">
+                AND type = #{query.type}
+            </if>
+            <if test="query.contactPerson != null and query.contactPerson != ''">
+                AND contact_person LIKE CONCAT('%', #{query.contactPerson}, '%')
+            </if>
+            <if test="query.contactPhone != null and query.contactPhone != ''">
+                AND contact_phone LIKE CONCAT('%', #{query.contactPhone}, '%')
+            </if>
+            <if test="query.address != null and query.address != ''">
+                AND address LIKE CONCAT('%', #{query.address}, '%')
+            </if>
+        </where>
+        <![CDATA[
+        ORDER BY create_time DESC
+        ]]>
+    </select>
+
+    <!-- 根据ID查询机构信息详情 -->
+    <select id="selectInstitutionById" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            institution_id,
+            name,
+            type,
+            address,
+            contact_person,
+            contact_phone,
+            bed_total,
+            bed_available,
+            description,
+            create_time,
+            update_time
+        FROM institution_info
+        WHERE institution_id = #{institutionId}
+        ]]>
+    </select>
+
+</mapper>
