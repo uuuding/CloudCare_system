@@ -38,12 +38,16 @@ export function getStaffList() {
 
 /**
  * 获取老人列表
+ * @param {Object} params - 查询参数
+ * @param {number} params.pageSize - 每页数量
+ * @param {number} params.pageNum - 页码
  * @returns {Promise}
  */
-export function getElderList() {
+export function getElderList(params = {}) {
   return request({
     url: '/user/elders',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

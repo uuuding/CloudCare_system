@@ -104,17 +104,27 @@ public class HealthAlertController {
      */
     @GetMapping("/time-range")
     public Result<List<HealthAlert>> getAlertsByTimeRange(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startTime,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endTime) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         try {
-            // 将日期转换为当天的开始和结束时间
-            LocalDateTime startDateTime = startTime.atStartOfDay();
-            LocalDateTime endDateTime = endTime.atTime(23, 59, 59);
-            
-            List<HealthAlert> alerts = healthAlertService.getAlertsByTimeRange(startDateTime, endDateTime);
+            List<HealthAlert> alerts = healthAlertService.getAlertsByTimeRange(startTime, endTime);
             return Result.success(alerts);
         } catch (Exception e) {
             log.error("根据时间范围获取预警记录失败", e);
+            return Result.error("获取预警记录失败");
+        }
+    }
+    
+    /**
+     * 根据预警类型获取预警记录
+     */
+    @GetMapping("/type/{alertType}")
+    public Result<List<HealthAlert>> getAlertsByType(@PathVariable String alertType) {
+        try {
+            List<HealthAlert> alerts = healthAlertService.getAlertsByType(alertType);
+            return Result.success(alerts);
+        } catch (Exception e) {
+            log.error("根据类型获取预警记录失败", e);
             return Result.error("获取预警记录失败");
         }
     }
