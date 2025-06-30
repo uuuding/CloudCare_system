@@ -4,11 +4,13 @@ import com.cloudcare.common.Result;
 import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.service.ElderlyProfileService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/elderly-profile")
 public class ElderlyProfileController {
@@ -50,9 +52,31 @@ public class ElderlyProfileController {
 
 
 @GetMapping("/chronic-diseases/{elderlyId}")
-    public Result<List<ElderlyChronicDisease>> getChronicDiseases(@PathVariable Integer elderlyId) {
-        List<ElderlyChronicDisease> diseases = elderlyProfileService.getChronicDiseasesByElderlyId(elderlyId);
-        return Result.success(diseases);
+    public Result<List<ElderlyChronicDisease>> getChronicDiseases(@PathVariable String elderlyId) {
+        try {
+            // 参数验证和转换
+            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId) || "null".equals(elderlyId)) {
+                return Result.error("老人ID不能为空");
+            }
+            
+            Integer elderlyIdInt;
+            try {
+                elderlyIdInt = Integer.parseInt(elderlyId.trim());
+            } catch (NumberFormatException e) {
+                log.error("老人ID格式错误: {}", elderlyId);
+                return Result.error("老人ID格式错误，请输入有效的数字");
+            }
+            
+            if (elderlyIdInt <= 0) {
+                return Result.error("老人ID必须大于0");
+            }
+            
+            List<ElderlyChronicDisease> diseases = elderlyProfileService.getChronicDiseasesByElderlyId(elderlyIdInt);
+            return Result.success(diseases);
+        } catch (Exception e) {
+            log.error("获取既往病史失败，elderlyId: {}, 错误信息: {}", elderlyId, e.getMessage(), e);
+            return Result.error("获取既往病史失败: " + e.getMessage());
+        }
     }
 
     // 删除老人档案

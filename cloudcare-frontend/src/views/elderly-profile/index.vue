@@ -114,9 +114,16 @@
     <el-dialog v-model="caseEntryDialogVisible" title="录入病例" width="600px">
       <el-form :model="caseEntry" :rules="caseEntryFormRules" label-width="100px" ref="caseEntryFormRef">
 
-        <!-- 老人ID -->
-        <el-form-item label="老人ID" prop="elderlyId">
-          <el-input v-model="caseEntry.elderlyId" placeholder="请输入老人ID" />
+        <!-- 选择老人 -->
+        <el-form-item label="选择老人" prop="elderlyId">
+          <el-select v-model="caseEntry.elderlyId" placeholder="请选择老人" filterable>
+            <el-option 
+              v-for="elderly in elderlyProfiles" 
+              :key="elderly.id" 
+              :label="`${elderly.name} (ID: ${elderly.id})`" 
+              :value="elderly.id"
+            />
+          </el-select>
         </el-form-item>
 
         <!-- 疾病名称 -->

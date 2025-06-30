@@ -25,7 +25,11 @@
         </div>
 
         <el-table :data="filteredObservations" style="width: 100%" stripe border>
-        <el-table-column label="老人ID" prop="elderlyId" width="80" align="center"></el-table-column>
+        <el-table-column label="老人ID" prop="elderlyId" width="80" align="center">
+          <template #default="scope">
+            {{ scope.row.elderlyId || scope.row.id }}
+          </template>
+        </el-table-column>
         <el-table-column label="体检时间" prop="observationTime" width="120" align="center">
           <template #default="scope">
             <div style="font-size: 12px; line-height: 1.2;">
@@ -116,8 +120,15 @@
     <!-- 添加健康记录对话框 -->
     <el-dialog v-model="importDialogVisible" title="添加健康记录" width="600px">
       <el-form :model="importForm" :rules="importRules" ref="importFormRef" label-width="120px">
-        <el-form-item label="老人ID" prop="elderlyId">
-          <el-input v-model="importForm.elderlyId" placeholder="请输入老人ID" />
+        <el-form-item label="选择老人" prop="elderlyId">
+          <el-select v-model="importForm.elderlyId" placeholder="请选择老人" filterable>
+            <el-option 
+              v-for="elderly in elderlyList" 
+              :key="elderly.id" 
+              :label="`${elderly.name} (ID: ${elderly.id})`" 
+              :value="elderly.id"
+            />
+          </el-select>
         </el-form-item>
         
         <el-form-item label="老人姓名" prop="elderlyName">
@@ -228,12 +239,14 @@ import {
   getAllObservations,
   addObservation
 } from '@/api/elderlyObservations';
+import { getAllElderlyProfiles } from '@/api/elderlyProfile';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const searchTerm = ref('');
 const observations = ref([]);
 const filteredObservations = ref([]);
 const locationStats = ref([]);
+const elderlyList = ref([]);
 
 // 添加记录功能相关变量
 const importDialogVisible = ref(false);
@@ -297,8 +310,20 @@ const filterObservations = () => {
 
 watch(searchTerm, filterObservations);
 
+// 加载老人列表
+const loadElderlyList = async () => {
+  try {
+    const response = await getAllElderlyProfiles();
+    elderlyList.value = response.data || [];
+  } catch (error) {
+    console.error('加载老人列表失败:', error);
+    ElMessage.error('加载老人列表失败');
+  }
+};
+
 onMounted(() => {
   fetchObservations();
+  loadElderlyList();
   renderLocationMap();
   renderObservationStats();
 });
