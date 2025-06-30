@@ -50,7 +50,7 @@ const routes = [
     path: '/health',
     component: Layout,
     redirect: '/health/alert',
-    meta: { title: '健康管理模块', icon: 'FirstAidKit' },
+    meta: { title: '健康管理模块', icon: 'MagicStick' },
     children: [
       {
         path: 'alert',
@@ -62,7 +62,7 @@ const routes = [
         path: 'assessment',
         name: 'HealthAssessment',
         component: () => import('@/views/health/assessment/index.vue'),
-        meta: { title: '健康评估', icon: 'DataAnalysis' }
+        meta: { title: '健康评估', icon: 'TrendCharts' }
       }
     ]
   },
@@ -70,7 +70,7 @@ const routes = [
     path: '/intervention',
     component: Layout,
     redirect: '/intervention/plan',
-    meta: { title: '干预管理模块', icon: 'Operation' },
+    meta: { title: '干预管理模块', icon: 'Tools' },
     children: [
       {
         path: 'plan',
@@ -91,7 +91,7 @@ const routes = [
     path: '/medical',
     component: Layout,
     redirect: '/medical/appointment',
-    meta: { title: '医疗服务模块', icon: 'Stethoscope' },
+    meta: { title: '医疗服务模块', icon: 'FirstAidKit' },
     children: [
       {
         path: 'appointment',
@@ -117,19 +117,19 @@ const routes = [
         path: 'institution',
         name: 'Institution',
         component: () => import('@/views/elderly-service/institution/index.vue'),
-        meta: { title: '机构管理', icon: 'OfficeBuilding' }
+        meta: { title: '机构管理', icon: 'Office' }
       },
       {
         path: 'service-schedule',
         name: 'ServiceSchedule',
         component: () => import('@/views/elderly-service/service-schedule/index.vue'),
-        meta: { title: '服务调度', icon: 'Timer' }
+        meta: { title: '服务调度', icon: 'Clock' }
       },
       {
         path: 'geo-fence',
         name: 'GeoFence',
         component: () => import('@/views/elderly-service/geo-fence/index.vue'),
-        meta: { title: '电子围栏', icon: 'LocationInformation' }
+        meta: { title: '电子围栏', icon: 'Location' }
       },
       {
         path: 'family-interaction',
@@ -206,7 +206,7 @@ const routes = [
         path: 'index',
         name: 'Bigdata',
         component: () => import('@/views/bigdata/index.vue'),
-        meta: { title: '大数据决策分析', icon: 'DataLine' }
+        meta: { title: '大数据决策分析', icon: 'TrendCharts' }
       }
     ]
   },
