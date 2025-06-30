@@ -10,9 +10,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户控制器
@@ -58,17 +61,6 @@ public class UserController {
             @Parameter(description = "新密码") @RequestParam String newPassword) {
         User user = userService.getCurrentUser();
         boolean result = userService.updatePassword(user.getUserId(), oldPassword, newPassword);
-        return Result.success(result);
-    }
-
-    /**
-     * 更新用户头像
-     */
-    @PutMapping("/avatar")
-    @Operation(summary = "更新用户头像", description = "更新当前登录用户的头像")
-    public Result<Boolean> updateAvatar(@Parameter(description = "头像URL") @RequestParam String avatar) {
-        User user = userService.getCurrentUser();
-        boolean result = userService.updateAvatar(user.getUserId(), avatar);
         return Result.success(result);
     }
 
@@ -186,5 +178,29 @@ public class UserController {
     public Result<List<User>> getStaffList() {
         List<User> staff = userService.getUsersByType(4);
         return Result.success(staff);
+    }
+
+    /**
+     * 更新用户头像
+     */
+    @PutMapping("/avatar")
+    @Operation(summary = "更新用户头像", description = "更新当前用户的头像")
+    public Result<Boolean> updateAvatar(@RequestBody Map<String, String> request) {
+        String avatar = request.get("avatar");
+        if (avatar == null || avatar.trim().isEmpty()) {
+            return Result.error("头像URL不能为空");
+        }
+        
+        // 获取当前登录用户ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userService.getUserByUsername(username);
+        
+        if (currentUser == null) {
+            return Result.error("用户不存在");
+        }
+        
+        boolean result = userService.updateAvatar(currentUser.getUserId(), avatar);
+        return Result.success(result, "头像更新成功");
     }
 }

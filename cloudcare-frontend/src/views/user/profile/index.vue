@@ -50,6 +50,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUserInfo, updateUserInfo } from '@/api/auth'
+import * as userApi from '@/api/user'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { useUserStore } from '@/stores/user'
 
@@ -83,7 +84,7 @@ const saveUserInfo = async () => {
     await updateUserInfo(userInfo)
     
     // 更新用户状态
-    await userStore.getUserInfo()
+    await userStore.getInfo()
     
     ElMessage.success('保存成功')
   } catch (error) {
@@ -93,9 +94,20 @@ const saveUserInfo = async () => {
   }
 }
 
-const handleAvatarSuccess = (avatarUrl) => {
+const handleAvatarSuccess = async (avatarUrl) => {
+  console.log('头像上传成功:', avatarUrl)
   userInfo.avatar = avatarUrl
-  ElMessage.success('头像更新成功')
+  
+  // 立即更新用户头像到数据库
+  try {
+    await userApi.updateAvatar(avatarUrl)
+    // 更新store中的头像
+    await userStore.getInfo()
+    ElMessage.success('头像更新成功')
+  } catch (error) {
+    console.error('更新头像失败:', error)
+    ElMessage.error('头像更新失败')
+  }
 }
 
 onMounted(() => {
