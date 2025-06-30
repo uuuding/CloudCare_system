@@ -197,7 +197,7 @@ public interface HealthAlertMapper {
             "alert_title, alert_description, trigger_value, normal_range, " +
             "status, created_at, updated_at, resolved_at, resolved_by, " +
             "resolved_note, observation_id FROM health_alert " +
-            "WHERE elderly_id = #{elderlyId} AND alert_type = #{alertType} " +
+            "WHERE elderly_id = #{elderlyId} AND alert_type = #{alertType} AND status = 'ACTIVE' " +
             "ORDER BY created_at DESC LIMIT 1")
     @Results({
         @Result(property = "alertId", column = "alert_id"),

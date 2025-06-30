@@ -42,11 +42,15 @@ public class ServiceScheduleController {
             @Parameter(description = "老人ID") @RequestParam(required = false) Long elderId,
             @Parameter(description = "服务人员ID") @RequestParam(required = false) Long staffId,
             @Parameter(description = "状态") @RequestParam(required = false) Integer status,
-            @Parameter(description = "开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @Parameter(description = "结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+            @Parameter(description = "开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startTime,
+            @Parameter(description = "结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endTime) {
+        
+        // 将日期转换为当天的开始和结束时间（如果提供了日期参数）
+        LocalDateTime actualStartTime = startTime != null ? startTime.toLocalDate().atStartOfDay() : null;
+        LocalDateTime actualEndTime = endTime != null ? endTime.toLocalDate().atTime(23, 59, 59) : null;
         
         Page<ServiceSchedule> page = serviceScheduleService.getSchedulePage(
-                current, size, serviceName, serviceType, elderId, staffId, status, startTime, endTime);
+                current, size, serviceName, serviceType, elderId, staffId, status, actualStartTime, actualEndTime);
         return Result.success(page);
     }
 
@@ -123,9 +127,13 @@ public class ServiceScheduleController {
     @GetMapping("/time-range")
     @Operation(summary = "按时间范围查询调度", description = "根据时间范围查询服务调度列表")
     public Result<List<ServiceSchedule>> getSchedulesByTimeRange(
-            @Parameter(description = "开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @Parameter(description = "结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<ServiceSchedule> schedules = serviceScheduleService.getSchedulesByTimeRange(startTime, endTime);
+            @Parameter(description = "开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startTime,
+            @Parameter(description = "结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endTime) {
+        // 将日期转换为当天的开始和结束时间
+        LocalDateTime actualStartTime = startTime.toLocalDate().atStartOfDay();
+        LocalDateTime actualEndTime = endTime.toLocalDate().atTime(23, 59, 59);
+        
+        List<ServiceSchedule> schedules = serviceScheduleService.getSchedulesByTimeRange(actualStartTime, actualEndTime);
         return Result.success(schedules);
     }
 
