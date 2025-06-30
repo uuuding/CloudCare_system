@@ -199,7 +199,12 @@ public interface HealthAlertRuleMapper {
                 sql.append("AND alert_type = #{alertType} ");
             }
             
-            sql.append("ORDER BY alert_level DESC");
+            sql.append("ORDER BY CASE alert_level ");
+            sql.append("WHEN 'CRITICAL' THEN 1 ");
+            sql.append("WHEN 'HIGH' THEN 2 ");
+            sql.append("WHEN 'MEDIUM' THEN 3 ");
+            sql.append("WHEN 'LOW' THEN 4 ");
+            sql.append("ELSE 5 END ASC");
             return sql.toString();
         }
     }

@@ -71,11 +71,9 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     
     private void checkTemperature(ElderlyObservations observation, ElderlyProfile elderly, Integer age, String gender) {
         if (observation.getBodyTemperature() == null) return;
-
-
         
         List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("TEMPERATURE");
-        System.out.println(rules.toString() + "9999999999999999999999999999999999999999999999999999999999999");
+        
         for (HealthAlertRule rule : rules) {
             if (isValueOutOfRange(observation.getBodyTemperature(), rule.getMinThreshold(), rule.getMaxThreshold())) {
                 createAlert(observation, elderly, "TEMPERATURE", rule, 
@@ -87,15 +85,16 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     }
     
     private void checkBloodPressure(ElderlyObservations observation, ElderlyProfile elderly, Integer age, String gender) {
-        if (observation.getSystolicBp() == null) return;
-        
-        List<HealthAlertRule> rules = healthAlertRuleMapper.findApplicableRules("BLOOD_PRESSURE");
-        for (HealthAlertRule rule : rules) {
-            if (isValueOutOfRange(observation.getSystolicBp().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
-                createAlert(observation, elderly, "BLOOD_PRESSURE", rule, 
-                    observation.getSystolicBp().toString() + "mmHg", 
-                    "90-140mmHg");
-                break;
+        // 只检查收缩压（最高血压）
+        if (observation.getSystolicBp() != null) {
+            List<HealthAlertRule> systolicRules = healthAlertRuleMapper.findApplicableRules("BLOOD_PRESSURE_SYSTOLIC");
+            for (HealthAlertRule rule : systolicRules) {
+                if (isValueOutOfRange(observation.getSystolicBp().doubleValue(), rule.getMinThreshold(), rule.getMaxThreshold())) {
+                    createAlert(observation, elderly, "BLOOD_PRESSURE", rule, 
+                        observation.getSystolicBp().toString() + "mmHg", 
+                        "90-140mmHg");
+                    break;
+                }
             }
         }
     }
@@ -145,8 +144,19 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     }
     
     private boolean isValueOutOfRange(Double value, Double minThreshold, Double maxThreshold) {
-        if (minThreshold != null && value < minThreshold) return true;
-        if (maxThreshold != null && value > maxThreshold) return true;
+        // 如果只有最小阈值，表示值应该大于等于最小阈值
+        if (minThreshold != null && maxThreshold == null) {
+            return value < minThreshold;
+        }
+        // 如果只有最大阈值，表示值应该小于等于最大阈值
+        if (minThreshold == null && maxThreshold != null) {
+            return value > maxThreshold;
+        }
+        // 如果有范围阈值，表示值应该在范围内
+        if (minThreshold != null && maxThreshold != null) {
+            return value < minThreshold || value > maxThreshold;
+        }
+        // 如果都没有阈值，则不算异常
         return false;
     }
     
@@ -356,25 +366,35 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         log.info("开始初始化默认预警规则");
         
-        // 体温预警规则
-        createDefaultRule("高体温预警", "TEMPERATURE", "HIGH", 37.5, null, "老人{name}体温异常，当前体温{value}，请及时关注");
-        createDefaultRule("低体温预警", "TEMPERATURE", "MEDIUM", null, 36.0, "老人{name}体温偏低，当前体温{value}，请注意保暖");
+        // 体温预警规则 - 按照SQL文件的正确配置
+        createDefaultRule("体温过低-严重", "TEMPERATURE", "CRITICAL", null, 35.0, "体温严重偏低：{value}°C，正常范围：36.0-37.5°C，请立即就医！");
+        createDefaultRule("体温过低-中等", "TEMPERATURE", "MEDIUM", 35.0, 36.0, "体温偏低：{value}°C，正常范围：36.0-37.5°C，请注意保暖");
+        createDefaultRule("体温过高-中等", "TEMPERATURE", "MEDIUM", 37.5, 38.5, "体温偏高：{value}°C，正常范围：36.0-37.5°C，请注意休息");
+        createDefaultRule("体温过高-严重", "TEMPERATURE", "HIGH", 38.5, 39.5, "体温过高：{value}°C，正常范围：36.0-37.5°C，建议就医");
+        createDefaultRule("体温过高-危急", "TEMPERATURE", "CRITICAL", 39.5, null, "体温危急：{value}°C，正常范围：36.0-37.5°C，请立即就医！");
         
-        // 血压预警规则
-        createDefaultRule("高血压预警", "BLOOD_PRESSURE", "HIGH", 140.0, null, "老人{name}血压偏高，当前血压{value}，建议就医检查");
-        createDefaultRule("低血压预警", "BLOOD_PRESSURE", "MEDIUM", null, 90.0, "老人{name}血压偏低，当前血压{value}，请注意休息");
+        // 血压预警规则 - 只检查收缩压（最高血压）
+        createDefaultRule("血压过低-严重", "BLOOD_PRESSURE_SYSTOLIC", "HIGH", null, 90.0, "血压过低：{value}mmHg，正常范围：90-140mmHg，请注意监测");
+        createDefaultRule("血压过高-中等", "BLOOD_PRESSURE_SYSTOLIC", "MEDIUM", 140.0, 160.0, "血压偏高：{value}mmHg，正常范围：90-140mmHg，请注意饮食");
+        createDefaultRule("血压过高-严重", "BLOOD_PRESSURE_SYSTOLIC", "HIGH", 160.0, 180.0, "血压过高：{value}mmHg，正常范围：90-140mmHg，建议就医");
+        createDefaultRule("血压过高-危急", "BLOOD_PRESSURE_SYSTOLIC", "CRITICAL", 180.0, null, "血压危急：{value}mmHg，正常范围：90-140mmHg，请立即就医！");
         
-        // 心率预警规则
-        createDefaultRule("心率过快预警", "HEART_RATE", "HIGH", 100.0, null, "老人{name}心率过快，当前心率{value}，请及时关注");
-        createDefaultRule("心率过慢预警", "HEART_RATE", "MEDIUM", null, 60.0, "老人{name}心率过慢，当前心率{value}，请注意观察");
+        // 心率预警规则 - 按照SQL文件的正确配置
+        createDefaultRule("心率过低-严重", "HEART_RATE", "HIGH", null, 50.0, "心率过低：{value}次/分，正常范围：60-100次/分，建议就医");
+        createDefaultRule("心率过低-中等", "HEART_RATE", "MEDIUM", 50.0, 60.0, "心率偏低：{value}次/分，正常范围：60-100次/分，请注意监测");
+        createDefaultRule("心率过高-中等", "HEART_RATE", "MEDIUM", 100.0, 120.0, "心率偏高：{value}次/分，正常范围：60-100次/分，请注意休息");
+        createDefaultRule("心率过高-严重", "HEART_RATE", "HIGH", 120.0, 150.0, "心率过高：{value}次/分，正常范围：60-100次/分，建议就医");
+        createDefaultRule("心率过高-危急", "HEART_RATE", "CRITICAL", 150.0, null, "心率危急：{value}次/分，正常范围：60-100次/分，请立即就医！");
         
-        // BMI预警规则
-        createDefaultRule("体重过重预警", "BMI", "MEDIUM", 24.9, null, "老人{name}体重偏重，当前BMI{value}，建议控制饮食");
-        createDefaultRule("体重过轻预警", "BMI", "MEDIUM", null, 18.5, "老人{name}体重偏轻，当前BMI{value}，建议增加营养");
+        // BMI预警规则 - 按照SQL文件的正确配置
+        createDefaultRule("BMI过低-中等", "BMI", "MEDIUM", null, 18.5, "BMI偏低：{value}，正常范围：18.5-24.9，建议增加营养");
+        createDefaultRule("BMI过高-中等", "BMI", "MEDIUM", 24.9, 28.0, "BMI偏高：{value}，正常范围：18.5-24.9，建议控制饮食");
+        createDefaultRule("BMI过高-严重", "BMI", "HIGH", 28.0, 32.0, "BMI过高：{value}，正常范围：18.5-24.9，建议就医咨询");
+        createDefaultRule("BMI过高-危急", "BMI", "CRITICAL", 32.0, null, "BMI严重超标：{value}，正常范围：18.5-24.9，请立即就医！");
         
         // 睡眠预警规则
-        createDefaultRule("睡眠不足预警", "SLEEP", "MEDIUM", null, 7.0, "老人{name}睡眠不足，当前睡眠{value}，建议改善睡眠质量");
-        createDefaultRule("睡眠过多预警", "SLEEP", "LOW", 9.0, null, "老人{name}睡眠时间过长，当前睡眠{value}，请关注身体状况");
+        createDefaultRule("睡眠不足预警", "SLEEP", "MEDIUM", null, 7.0, "睡眠不足：{value}小时，建议睡眠7-9小时，请改善睡眠质量");
+        createDefaultRule("睡眠过多预警", "SLEEP", "LOW", 9.0, null, "睡眠时间过长：{value}小时，建议睡眠7-9小时，请关注身体状况");
         
         log.info("默认预警规则初始化完成");
     }

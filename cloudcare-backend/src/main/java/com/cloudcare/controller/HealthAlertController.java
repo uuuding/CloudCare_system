@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -103,10 +104,14 @@ public class HealthAlertController {
      */
     @GetMapping("/time-range")
     public Result<List<HealthAlert>> getAlertsByTimeRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endTime) {
         try {
-            List<HealthAlert> alerts = healthAlertService.getAlertsByTimeRange(startTime, endTime);
+            // 将日期转换为当天的开始和结束时间
+            LocalDateTime startDateTime = startTime.atStartOfDay();
+            LocalDateTime endDateTime = endTime.atTime(23, 59, 59);
+            
+            List<HealthAlert> alerts = healthAlertService.getAlertsByTimeRange(startDateTime, endDateTime);
             return Result.success(alerts);
         } catch (Exception e) {
             log.error("根据时间范围获取预警记录失败", e);
