@@ -10,6 +10,7 @@ import com.cloudcare.mapper.HealthAlertMapper;
 import com.cloudcare.mapper.HealthAlertRuleMapper;
 import com.cloudcare.service.HealthAlertService;
 import com.cloudcare.service.InterventionPlanService;
+import com.cloudcare.service.SmsNotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,9 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     
     @Autowired
     private InterventionPlanService interventionPlanService;
+    
+    @Autowired
+    private SmsNotificationService smsNotificationService;
     
     @Override
     @Transactional
@@ -186,6 +190,14 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         healthAlertMapper.insert(alert);
         log.info("为老人{}创建{}级别{}预警", elderly.getName(), rule.getAlertLevel(), alertType);
+        
+        // 发送健康预警短信通知
+        try {
+            smsNotificationService.sendHealthAlertNotification(alert);
+            log.info("为老人{}发送健康预警短信通知成功", elderly.getName());
+        } catch (Exception e) {
+            log.error("为老人{}发送健康预警短信通知失败: {}", elderly.getName(), e.getMessage(), e);
+        }
         
         // 自动创建干预方案
         try {

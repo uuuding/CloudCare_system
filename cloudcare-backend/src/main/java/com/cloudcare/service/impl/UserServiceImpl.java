@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloudcare.entity.User;
 import com.cloudcare.mapper.UserMapper;
 import com.cloudcare.service.UserService;
+import com.cloudcare.service.SmsNotificationService;
 import com.cloudcare.utils.JwtUtil;
 import com.cloudcare.utils.SecurityUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private SmsNotificationService smsNotificationService;
 
     @Value("${cloudcare.default-password:123456}")
     private String defaultPassword;
@@ -103,7 +107,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setCreateBy("system");
         user.setDeleted(0); // 未删除
         
-        return save(user);
+        boolean result = save(user);
+        
+        // 注册成功后发送欢迎短信
+        if (result && StringUtils.isNotBlank(user.getPhone())) {
+            try {
+                smsNotificationService.sendWelcomeNotification(user);
+                log.info("为用户{}发送注册欢迎短信成功", user.getUsername());
+            } catch (Exception e) {
+                log.error("为用户{}发送注册欢迎短信失败: {}", user.getUsername(), e.getMessage(), e);
+            }
+        }
+        
+        return result;
     }
 
     @Override

@@ -7,6 +7,10 @@ import com.cloudcare.dto.MedicalAppointmentQueryDTO;
 import com.cloudcare.entity.MedicalAppointment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 医疗预约Mapper接口
@@ -33,4 +37,22 @@ public interface MedicalAppointmentMapper extends BaseMapper<MedicalAppointment>
      * @return 预约详情
      */
     MedicalAppointment selectAppointmentById(@Param("appointmentId") Long appointmentId);
+
+    /**
+     * 查询即将开始的预约（用于短信提醒）
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 预约列表
+     */
+    @Select("SELECT ma.*, ep.name as elderly_name " +
+            "FROM medical_appointment ma " +
+            "LEFT JOIN elderly_profile ep ON ma.elder_id = ep.elder_id " +
+            "WHERE ma.appointment_time >= #{startTime} " +
+            "AND ma.appointment_time < #{endTime} " +
+            "AND ma.status = 1 " +
+            "AND ma.deleted = 0 " +
+            "ORDER BY ma.appointment_time ASC")
+    List<MedicalAppointment> findUpcomingAppointments(@Param("startTime") LocalDateTime startTime,
+                                                     @Param("endTime") LocalDateTime endTime);
 }
