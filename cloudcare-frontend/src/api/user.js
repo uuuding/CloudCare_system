@@ -120,3 +120,16 @@ export function updateUserStatus(userId, status) {
     method: 'put'
   })
 }
+
+/**
+ * 更新用户头像
+ * @param {String} avatar 头像URL
+ * @returns {Promise}
+ */
+export function updateAvatar(avatar) {
+  return request({
+    url: '/user/avatar',
+    method: 'put',
+    data: { avatar }
+  })
+}
