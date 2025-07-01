@@ -69,6 +69,15 @@ file:
   upload:
     path: uploads
 
+# 短信配置
+sms:
+  username: uuuding
+  password: cfef28b28d3f4bada9b5420e51b35ff3
+  api-url: http://api.smsbao.com/sms
+  query-url: http://api.smsbao.com/query
+  enabled: true
+  signature: "【云护CloudCare平台】"
+
 # 日志配置
 logging:
   level:
