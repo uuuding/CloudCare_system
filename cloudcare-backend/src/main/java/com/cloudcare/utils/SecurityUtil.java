@@ -8,6 +8,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 /**
  * 安全工具类
@@ -124,5 +125,42 @@ public class SecurityUtil {
             return "";
         }
         return request.getQueryString();
+    }
+
+    /**
+     * 获取当前登录用户ID
+     *
+     * @return 当前登录用户ID
+     */
+    public static Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            // 这里需要根据实际的UserDetails实现来获取用户ID
+            // 如果UserDetails实现类中包含用户ID，可以强转后获取
+            // 暂时返回null，实际使用时需要根据具体实现调整
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * 获取当前会话ID
+     *
+     * @return 会话ID
+     */
+    public static String getSessionId() {
+        HttpServletRequest request = getRequest();
+        if (request == null) {
+            return "";
+        }
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return "";
+        }
+        return session.getId();
     }
 }

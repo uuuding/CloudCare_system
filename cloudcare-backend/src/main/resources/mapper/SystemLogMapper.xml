@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cloudcare.mapper.SystemLogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloudcare.entity.SystemLog">
+        <id column="id" property="id" />
+        <result column="level" property="level" />
+        <result column="module" property="module" />
+        <result column="username" property="username" />
+        <result column="user_id" property="userId" />
+        <result column="operation" property="operation" />
+        <result column="content" property="content" />
+        <result column="request_url" property="requestUrl" />
+        <result column="request_method" property="requestMethod" />
+        <result column="request_params" property="requestParams" />
+        <result column="response_status" property="responseStatus" />
+        <result column="response_time" property="responseTime" />
+        <result column="ip_address" property="ipAddress" />
+        <result column="user_agent" property="userAgent" />
+        <result column="session_id" property="sessionId" />
+        <result column="stack_trace" property="stackTrace" />
+        <result column="business_id" property="businessId" />
+        <result column="business_type" property="businessType" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 分页查询系统日志 -->
+    <select id="selectLogPage" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            id,
+            level,
+            module,
+            username,
+            user_id,
+            operation,
+            content,
+            request_url,
+            request_method,
+            request_params,
+            response_status,
+            response_time,
+            ip_address,
+            user_agent,
+            session_id,
+            stack_trace,
+            business_id,
+            business_type,
+            create_time,
+            update_time
+        FROM system_log
+        ]]>
+        <where>
+            <if test="level != null and level != ''">
+                AND level = #{level}
+            </if>
+            <if test="module != null and module != ''">
+                AND module = #{module}
+            </if>
+            <if test="username != null and username != ''">
+                AND username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    operation LIKE CONCAT('%', #{keyword}, '%')
+                    OR content LIKE CONCAT('%', #{keyword}, '%')
+                    OR request_url LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="startTime != null">
+                AND create_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                <![CDATA[
+                AND create_time <= #{endTime}
+                ]]>
+            </if>
+        </where>
+        <![CDATA[
+        ORDER BY create_time DESC
+        ]]>
+    </select>
+
+    <!-- 获取日志统计信息 -->
+    <select id="getLogStats" resultType="java.util.Map">
+        <![CDATA[
+        SELECT 
+            SUM(CASE WHEN level = 'INFO' THEN 1 ELSE 0 END) as info,
+            SUM(CASE WHEN level = 'WARN' THEN 1 ELSE 0 END) as warn,
+            SUM(CASE WHEN level = 'ERROR' THEN 1 ELSE 0 END) as error,
+            SUM(CASE WHEN level = 'DEBUG' THEN 1 ELSE 0 END) as debug,
+            COUNT(*) as total
+        FROM system_log
+        WHERE create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        ]]>
+    </select>
+
+    <!-- 清空所有日志 -->
+    <delete id="clearAllLogs">
+        <![CDATA[
+        DELETE FROM system_log
+        ]]>
+    </delete>
+
+    <!-- 获取日志级别选项 -->
+    <select id="getLogLevels" resultType="java.lang.String">
+        <![CDATA[
+        SELECT DISTINCT level 
+        FROM system_log 
+        WHERE level IS NOT NULL
+        ORDER BY 
+            CASE level
+                WHEN 'DEBUG' THEN 1
+                WHEN 'INFO' THEN 2
+                WHEN 'WARN' THEN 3
+                WHEN 'ERROR' THEN 4
+                ELSE 5
+            END
+        ]]>
+    </select>
+
+    <!-- 获取模块选项 -->
+    <select id="getLogModules" resultType="java.lang.String">
+        <![CDATA[
+        SELECT DISTINCT module 
+        FROM system_log 
+        WHERE module IS NOT NULL
+        ORDER BY module
+        ]]>
+    </select>
+
+    <!-- 获取最近日志 -->
+    <select id="getRecentLogs" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            id,
+            level,
+            module,
+            username,
+            user_id,
+            operation,
+            content,
+            request_url,
+            request_method,
+            ip_address,
+            create_time
+        FROM system_log
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+        ]]>
+    </select>
+
+    <!-- 获取日志趋势数据 -->
+    <select id="getLogTrend" resultType="java.util.Map">
+        <![CDATA[
+        SELECT 
+            DATE(create_time) as date,
+            level,
+            COUNT(*) as count
+        FROM system_log
+        WHERE create_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        GROUP BY DATE(create_time), level
+        ORDER BY date DESC, level
+        ]]>
+    </select>
+
+    <!-- 根据业务ID和类型查询日志 -->
+    <select id="getLogsByBusiness" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT 
+            id,
+            level,
+            module,
+            username,
+            operation,
+            content,
+            create_time
+        FROM system_log
+        WHERE business_id = #{businessId}
+        ]]>
+        <if test="businessType != null and businessType != ''">
+            AND business_type = #{businessType}
+        </if>
+        <![CDATA[
+        ORDER BY create_time DESC
+        ]]>
+    </select>
+
+</mapper>
