@@ -1,11 +1,5 @@
 <template>
   <div class="dashboard-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1>云护理管理系统</h1>
-      <p class="page-description">智慧养老，贴心守护每一位老人的健康与安全</p>
-    </div>
-
     <!-- 欢迎信息 -->
     <el-row :gutter="20">
       <el-col :span="24">
@@ -672,8 +666,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .dashboard-container {
-  padding: 20px;
-  background-color: #f5f5f5;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
   min-height: 100vh;
 }
 
@@ -685,28 +679,27 @@ onBeforeUnmount(() => {
 }
 
 .page-header h1 {
-  font-size: 36px;
-  font-weight: bold;
-  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 600;
+  color: #1a365d;
   margin: 0 0 8px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .page-description {
-  font-size: 18px;
-  color: #7f8c8d;
+  font-size: 16px;
+  color: #64748b;
   margin: 0;
   line-height: 1.5;
 }
 
 .welcome-card {
-  margin-bottom: 20px;
-  background-image: linear-gradient(to right, #1890ff, #36cfc9);
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
 }
 
 .welcome-info {
@@ -719,13 +712,14 @@ onBeforeUnmount(() => {
 }
 
 .welcome-text h2 {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   font-size: 24px;
+  font-weight: 600;
 }
 
 .welcome-text p {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   opacity: 0.9;
 }
 
@@ -737,53 +731,56 @@ onBeforeUnmount(() => {
 }
 
 .date-info .date {
-  font-size: 16px;
+  font-size: 15px;
   margin: 0;
+  opacity: 0.9;
 }
 
 .date-info .time {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 5px 0 0 0;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 4px 0 0 0;
 }
 
 .weather-info {
   display: flex;
   align-items: center;
-  font-size: 18px;
+  font-size: 16px;
+  opacity: 0.9;
 }
 
 .weather-info .el-icon {
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 /* 统计卡片样式 */
 .stats-row {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
 }
 
 .stat-content {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 24px;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -793,65 +790,67 @@ onBeforeUnmount(() => {
 }
 
 .elderly-card .stat-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .alert-card .stat-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 .health-card .stat-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
 .device-card .stat-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
 .stat-info h3 {
   font-size: 28px;
-  font-weight: bold;
+  font-weight: 700;
   margin: 0 0 4px 0;
-  color: #2c3e50;
+  color: #1e293b;
 }
 
 .stat-info p {
   font-size: 14px;
-  color: #7f8c8d;
+  color: #64748b;
   margin: 0 0 8px 0;
+  font-weight: 500;
 }
 
 .trend {
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
   font-weight: 500;
 }
 
 .trend.positive {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #dbeafe;
+  color: #1d4ed8;
 }
 
 .trend.negative {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #fef2f2;
+  color: #dc2626;
 }
 
 .trend.info {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  background-color: #f1f5f9;
+  color: #475569;
 }
 
 /* 快捷操作样式 */
 .quick-actions-row {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .quick-actions-card {
-  border-radius: 12px;
+  border-radius: 16px;
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
 }
 
 .card-header {
@@ -860,37 +859,38 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e293b;
 }
 
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 20px;
-  padding: 20px 0;
+  gap: 16px;
+  padding: 24px 0;
 }
 
 .action-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 20px 16px;
   border-radius: 12px;
-  background: #fff;
-  border: 2px solid #f0f0f0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: #409eff;
+  background: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
 }
 
 .action-icon {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -900,45 +900,47 @@ onBeforeUnmount(() => {
 }
 
 .action-icon.health {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .action-icon.user {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 .action-icon.device {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
 .action-icon.intervention {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
 .action-icon.report {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
 .action-icon.medical {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
 }
 
 .action-item span {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #2c3e50;
+  color: #475569;
+  text-align: center;
 }
 
 /* 内容区域样式 */
 .content-row {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .announcement-card,
 .activity-card {
-  border-radius: 12px;
+  border-radius: 16px;
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
   height: 400px;
 }
 
@@ -950,7 +952,7 @@ onBeforeUnmount(() => {
 
 .announcement-item {
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .announcement-item:last-child {
@@ -962,17 +964,17 @@ onBeforeUnmount(() => {
   align-items: center;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e293b;
 }
 
 .announcement-title .el-icon {
   margin-right: 8px;
-  color: #409eff;
+  color: #3b82f6;
 }
 
 .announcement-content {
   font-size: 14px;
-  color: #666;
+  color: #64748b;
   line-height: 1.5;
   margin: 0 0 8px 0;
   display: -webkit-box;
@@ -985,14 +987,14 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
 }
 
 .activity-item {
   display: flex;
   align-items: flex-start;
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .activity-item:last-child {
@@ -1002,7 +1004,7 @@ onBeforeUnmount(() => {
 .activity-icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1012,23 +1014,23 @@ onBeforeUnmount(() => {
 }
 
 .activity-icon.health {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .activity-icon.user {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 .activity-icon.device {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
 .activity-icon.medical {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
 }
 
 .activity-icon.intervention {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
 .activity-content {
@@ -1038,20 +1040,20 @@ onBeforeUnmount(() => {
 .activity-title {
   font-size: 14px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e293b;
   margin: 0 0 4px 0;
 }
 
 .activity-desc {
   font-size: 13px;
-  color: #666;
+  color: #64748b;
   margin: 0 0 8px 0;
   line-height: 1.4;
 }
 
 .activity-time {
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
 }
 
 /* 响应式设计 */

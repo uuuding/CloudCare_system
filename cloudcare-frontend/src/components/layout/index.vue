@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <div class="sidebar-container" :class="{'is-collapse': isCollapse}">
       <div class="logo-container">
-        <img src="@/assets/logo.svg" alt="Logo" class="logo" />
+        <img src="@/assets/logo.png" alt="Logo" class="logo" />
         <h1 class="title">云护CloudCare</h1>
       </div>
       
