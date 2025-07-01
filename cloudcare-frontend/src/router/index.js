@@ -229,19 +229,7 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/bigdata',
-    component: Layout,
-    redirect: '/bigdata/index',
-    children: [
-      {
-        path: 'index',
-        name: 'Bigdata',
-        component: () => import('@/views/bigdata/index.vue'),
-        meta: { title: '大数据决策分析', icon: 'TrendCharts' }
-      }
-    ]
-  },
+
   {
     path: '/help',
     component: Layout,
