@@ -133,4 +133,26 @@ public interface SmsService {
      * @return 发送结果
      */
     boolean sendEmergencyAlert(String phone, String elderlyName, String alertType, String alertDescription);
+    
+    /**
+     * 获取短信发送记录
+     * 
+     * @param phone 手机号（可选）
+     * @param status 发送状态（可选）
+     * @param type 短信类型（可选）
+     * @param startTime 开始时间（可选）
+     * @param endTime 结束时间（可选）
+     * @param page 页码
+     * @param size 每页大小
+     * @return 分页结果
+     */
+    Map<String, Object> getSendRecords(String phone, String status, String type, 
+                                      String startTime, String endTime, int page, int size);
+    
+    /**
+     * 获取短信发送统计
+     * 
+     * @return 统计信息
+     */
+    Map<String, Object> getSendStats();
 }

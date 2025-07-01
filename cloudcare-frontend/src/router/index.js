@@ -166,6 +166,38 @@ const routes = [
     ]
   },
   {
+    path: '/sms',
+    component: Layout,
+    redirect: '/sms/send',
+    meta: { title: '短信管理', icon: 'Message' },
+    children: [
+      {
+        path: 'send',
+        name: 'SmsSend',
+        component: () => import('@/views/sms/send/index.vue'),
+        meta: { title: '短信发送', icon: 'Promotion' }
+      },
+      {
+        path: 'template',
+        name: 'SmsTemplate',
+        component: () => import('@/views/sms/template/index.vue'),
+        meta: { title: '短信模板', icon: 'Document' }
+      },
+      {
+        path: 'record',
+        name: 'SmsRecord',
+        component: () => import('@/views/sms/record/index.vue'),
+        meta: { title: '发送记录', icon: 'List' }
+      },
+      {
+        path: 'balance',
+        name: 'SmsBalance',
+        component: () => import('@/views/sms/balance/index.vue'),
+        meta: { title: '余额查询', icon: 'Coin' }
+      }
+    ]
+  },
+  {
     path: '/user',
     component: Layout,
     redirect: '/user/elder-account',
