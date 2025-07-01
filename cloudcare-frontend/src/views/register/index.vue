@@ -79,7 +79,7 @@
           <el-select v-model="registerForm.userType" placeholder="请选择用户类型" style="width: 100%">
             <el-option label="老人" value="3" />
             <el-option label="医生" value="2" />
-            <el-option label="普通用户" value="1" />
+            <el-option label="管理用户" value="1" />
           </el-select>
         </el-form-item>
         

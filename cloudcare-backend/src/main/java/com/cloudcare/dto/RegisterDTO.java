@@ -24,6 +24,6 @@ public class RegisterDTO {
     @Schema(description = "手机号")
     private String phone;
 
-    @Schema(description = "用户类型（1：普通，2：医生，3：老人）")
+    @Schema(description = "用户类型（1：管理，2：医生，3：老人）")
     private int userType;
 }

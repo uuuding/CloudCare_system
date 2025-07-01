@@ -337,14 +337,15 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         for (Map<String, Object> stat : levelStats) {
             String level = (String) stat.get("level");
-            Long count = (Long) stat.get("count");
+            Object countObj = stat.get("count");
+            int count = convertToInt(countObj);
             
             if ("CRITICAL".equals(level)) {
-                criticalCount = count.intValue();
+                criticalCount = count;
             } else if ("HIGH".equals(level)) {
-                warningCount = count.intValue();
+                warningCount = count;
             } else if ("MEDIUM".equals(level) || "LOW".equals(level)) {
-                infoCount += count.intValue();
+                infoCount += count;
             }
         }
         
@@ -481,5 +482,38 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         log.info("批量预警检查完成，共处理 {} 条观察记录", processedCount);
         return processedCount;
+    }
+    
+    /**
+     * 安全转换Object到int类型
+     * 支持Long、BigDecimal、Integer等数值类型
+     */
+    private int convertToInt(Object obj) {
+        if (obj == null) {
+            return 0;
+        }
+        if (obj instanceof Long) {
+            return ((Long) obj).intValue();
+        }
+        if (obj instanceof java.math.BigDecimal) {
+            return ((java.math.BigDecimal) obj).intValue();
+        }
+        if (obj instanceof Integer) {
+            return (Integer) obj;
+        }
+        if (obj instanceof Number) {
+            return ((Number) obj).intValue();
+        }
+        // 如果是字符串，尝试解析
+        if (obj instanceof String) {
+            try {
+                return Integer.parseInt((String) obj);
+            } catch (NumberFormatException e) {
+                log.warn("无法解析字符串为数字: {}", obj);
+                return 0;
+            }
+        }
+        log.warn("未知的数据类型: {}", obj.getClass().getName());
+        return 0;
     }
 }
