@@ -46,6 +46,19 @@ public class Result<T> implements Serializable {
     /**
      * 成功返回结果
      *
+     * @return 通用返回结果
+     */
+    public static <T> Result<T> success() {
+        Result<T> result = new Result<>();
+        result.setSuccess(true);
+        result.setCode(ResultCode.SUCCESS);
+        result.setMessage("操作成功");
+        return result;
+    }
+
+    /**
+     * 成功返回结果
+     *
      * @param data 返回数据
      * @return 通用返回结果
      */

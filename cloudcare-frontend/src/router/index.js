@@ -244,6 +244,19 @@ const routes = [
     ]
   },
   {
+    path: '/system-log',
+    component: Layout,
+    redirect: '/system-log/index',
+    children: [
+      {
+        path: 'index',
+        name: 'SystemLog',
+        component: () => import('@/views/system-log/index.vue'),
+        meta: { title: '系统日志', icon: 'Document' }
+      }
+    ]
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404.vue'),
     meta: { title: '404', isPublic: true },
