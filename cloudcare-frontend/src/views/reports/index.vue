@@ -9,7 +9,7 @@
     <!-- 智能分析助手抽屉 -->
     <el-drawer
       v-model="assistantDrawerVisible"
-      title="智能化数据分析助手"
+      title="DeepSeek智能化数据分析助手"
       direction="rtl"
       size="40%"
       :before-close="handleDrawerClose"

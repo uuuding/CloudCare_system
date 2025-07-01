@@ -97,7 +97,7 @@
         <el-card class="quick-actions-card">
           <template #header>
             <div class="card-header">
-              <span>快捷操作</span>
+              <span>常用操作</span>
               <el-icon><Operation /></el-icon>
             </div>
           </template>
