@@ -29,10 +29,18 @@ public class SmsController {
      */
     @PostMapping("/send")
     @Operation(summary = "发送普通短信", description = "发送普通短信")
-    public Result<Boolean> sendSms(
-            @Parameter(description = "手机号") @RequestParam String phone,
-            @Parameter(description = "短信内容") @RequestParam String content) {
+    public Result<Boolean> sendSms(@RequestBody Map<String, String> request) {
         try {
+            String phone = request.get("phone");
+            String content = request.get("content");
+            
+            if (phone == null || phone.trim().isEmpty()) {
+                return Result.error("手机号不能为空");
+            }
+            if (content == null || content.trim().isEmpty()) {
+                return Result.error("短信内容不能为空");
+            }
+            
             boolean result = smsService.sendSms(phone, content);
             return result ? Result.success(true, "短信发送成功") : Result.error("短信发送失败");
         } catch (Exception e) {
@@ -46,10 +54,18 @@ public class SmsController {
      */
     @PostMapping("/send/batch")
     @Operation(summary = "批量发送短信", description = "批量发送短信")
-    public Result<Boolean> sendBatchSms(
-            @Parameter(description = "手机号列表（逗号分隔）") @RequestParam String phones,
-            @Parameter(description = "短信内容") @RequestParam String content) {
+    public Result<Boolean> sendBatchSms(@RequestBody Map<String, String> request) {
         try {
+            String phones = request.get("phones");
+            String content = request.get("content");
+            
+            if (phones == null || phones.trim().isEmpty()) {
+                return Result.error("手机号列表不能为空");
+            }
+            if (content == null || content.trim().isEmpty()) {
+                return Result.error("短信内容不能为空");
+            }
+            
             boolean result = smsService.sendBatchSms(phones, content);
             return result ? Result.success(true, "批量短信发送成功") : Result.error("批量短信发送失败");
         } catch (Exception e) {
@@ -63,11 +79,20 @@ public class SmsController {
      */
     @PostMapping("/send/template")
     @Operation(summary = "根据模板发送短信", description = "根据模板发送短信")
-    public Result<Boolean> sendTemplateSms(
-            @Parameter(description = "手机号") @RequestParam String phone,
-            @Parameter(description = "模板代码") @RequestParam String templateCode,
-            @Parameter(description = "模板参数") @RequestBody(required = false) Map<String, Object> params) {
+    public Result<Boolean> sendTemplateSms(@RequestBody Map<String, Object> request) {
         try {
+            String phone = (String) request.get("phone");
+            String templateCode = (String) request.get("templateCode");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> params = (Map<String, Object>) request.get("params");
+            
+            if (phone == null || phone.trim().isEmpty()) {
+                return Result.error("手机号不能为空");
+            }
+            if (templateCode == null || templateCode.trim().isEmpty()) {
+                return Result.error("模板代码不能为空");
+            }
+            
             SmsTemplateEnum template = SmsTemplateEnum.getByCode(templateCode);
             if (template == null) {
                 return Result.error("模板不存在");
@@ -78,6 +103,50 @@ public class SmsController {
         } catch (Exception e) {
             log.error("发送模板短信异常", e);
             return Result.error("模板短信发送异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 批量发送模板短信
+     */
+    @PostMapping("/send/template/batch")
+    @Operation(summary = "批量发送模板短信", description = "批量发送模板短信")
+    public Result<Boolean> sendBatchTemplateSms(@RequestBody Map<String, Object> request) {
+        try {
+            String phones = (String) request.get("phones");
+            String templateCode = (String) request.get("templateCode");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> params = (Map<String, Object>) request.get("params");
+            
+            if (phones == null || phones.trim().isEmpty()) {
+                return Result.error("手机号列表不能为空");
+            }
+            if (templateCode == null || templateCode.trim().isEmpty()) {
+                return Result.error("模板代码不能为空");
+            }
+            
+            SmsTemplateEnum template = SmsTemplateEnum.getByCode(templateCode);
+            if (template == null) {
+                return Result.error("模板不存在");
+            }
+            
+            // 分割手机号并逐个发送
+            String[] phoneArray = phones.split(",");
+            boolean allSuccess = true;
+            for (String phone : phoneArray) {
+                phone = phone.trim();
+                if (!phone.isEmpty()) {
+                    boolean result = smsService.sendTemplateSms(phone, template, params);
+                    if (!result) {
+                        allSuccess = false;
+                    }
+                }
+            }
+            
+            return allSuccess ? Result.success(true, "批量模板短信发送成功") : Result.error("部分模板短信发送失败");
+        } catch (Exception e) {
+            log.error("批量发送模板短信异常", e);
+            return Result.error("批量模板短信发送异常: " + e.getMessage());
         }
     }
     
@@ -171,6 +240,43 @@ public class SmsController {
         } catch (Exception e) {
             log.error("发送就诊提醒异常", e);
             return Result.error("就诊提醒发送异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取短信发送记录
+     */
+    @GetMapping("/records")
+    @Operation(summary = "获取短信发送记录", description = "分页获取短信发送记录")
+    public Result<Map<String, Object>> getSendRecords(
+            @Parameter(description = "手机号") @RequestParam(required = false) String phone,
+            @Parameter(description = "发送状态") @RequestParam(required = false) String status,
+            @Parameter(description = "短信类型") @RequestParam(required = false) String type,
+            @Parameter(description = "开始时间") @RequestParam(required = false) String startTime,
+            @Parameter(description = "结束时间") @RequestParam(required = false) String endTime,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size) {
+        try {
+            Map<String, Object> result = smsService.getSendRecords(phone, status, type, startTime, endTime, page, size);
+            return Result.success(result, "查询成功");
+        } catch (Exception e) {
+            log.error("查询发送记录异常", e);
+            return Result.error("查询发送记录异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取短信发送统计
+     */
+    @GetMapping("/stats")
+    @Operation(summary = "获取短信发送统计", description = "获取今日短信发送统计信息")
+    public Result<Map<String, Object>> getSendStats() {
+        try {
+            Map<String, Object> stats = smsService.getSendStats();
+            return Result.success(stats, "查询成功");
+        } catch (Exception e) {
+            log.error("查询发送统计异常", e);
+            return Result.error("查询发送统计异常: " + e.getMessage());
         }
     }
     
