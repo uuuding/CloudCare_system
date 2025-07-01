@@ -558,16 +558,21 @@ public class SmsServiceImpl implements SmsService {
             Map<String, Object> todayStats = smsRecordMapper.getTodayStats();
             
             if (todayStats != null) {
-                Long todaySent = (Long) todayStats.get("todaySent");
-                Long todaySuccess = (Long) todayStats.get("todaySuccess");
-                Long todayFailed = (Long) todayStats.get("todayFailed");
+                // 数据库查询返回的可能是Long或BigDecimal类型，需要安全转换
+                Object todaySentObj = todayStats.get("todaySent");
+                Object todaySuccessObj = todayStats.get("todaySuccess");
+                Object todayFailedObj = todayStats.get("todayFailed");
                 
-                stats.put("todaySent", todaySent != null ? todaySent.intValue() : 0);
-                stats.put("todaySuccess", todaySuccess != null ? todaySuccess.intValue() : 0);
-                stats.put("todayFailed", todayFailed != null ? todayFailed.intValue() : 0);
+                int todaySent = convertToInt(todaySentObj);
+                int todaySuccess = convertToInt(todaySuccessObj);
+                int todayFailed = convertToInt(todayFailedObj);
+                
+                stats.put("todaySent", todaySent);
+                stats.put("todaySuccess", todaySuccess);
+                stats.put("todayFailed", todayFailed);
                 
                 // 计算成功率
-                if (todaySent != null && todaySent > 0 && todaySuccess != null) {
+                if (todaySent > 0) {
                     BigDecimal successRate = BigDecimal.valueOf(todaySuccess)
                             .divide(BigDecimal.valueOf(todaySent), 4, RoundingMode.HALF_UP)
                             .multiply(BigDecimal.valueOf(100));
@@ -592,5 +597,38 @@ public class SmsServiceImpl implements SmsService {
         }
         
         return stats;
+    }
+    
+    /**
+     * 安全转换Object到int类型
+     * 支持Long、BigDecimal、Integer等数值类型
+     */
+    private int convertToInt(Object obj) {
+        if (obj == null) {
+            return 0;
+        }
+        if (obj instanceof Long) {
+            return ((Long) obj).intValue();
+        }
+        if (obj instanceof BigDecimal) {
+            return ((BigDecimal) obj).intValue();
+        }
+        if (obj instanceof Integer) {
+            return (Integer) obj;
+        }
+        if (obj instanceof Number) {
+            return ((Number) obj).intValue();
+        }
+        // 如果是字符串，尝试解析
+        if (obj instanceof String) {
+            try {
+                return Integer.parseInt((String) obj);
+            } catch (NumberFormatException e) {
+                log.warn("无法解析字符串为数字: {}", obj);
+                return 0;
+            }
+        }
+        log.warn("未知的数据类型: {}", obj.getClass().getName());
+        return 0;
     }
 }

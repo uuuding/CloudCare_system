@@ -86,7 +86,7 @@
             </el-statistic>
           </el-col>
           <el-col :span="6">
-            <el-statistic title="发送成功" :value="stats.successCount" suffix="条">
+            <el-statistic title="发送成功" :value="stats.todaySent" suffix="条">
               <template #prefix>
                 <el-icon style="vertical-align: -0.125em; color: #67c23a">
                   <CircleCheck />
@@ -104,7 +104,7 @@
             </el-statistic>
           </el-col>
           <el-col :span="6">
-            <el-statistic title="成功率" :value="stats.successRate" suffix="%" :precision="1">
+            <el-statistic title="成功率" :value="stats.successRate" :precision="1">
               <template #prefix>
                 <el-icon style="vertical-align: -0.125em; color: #409eff">
                   <TrendCharts />
