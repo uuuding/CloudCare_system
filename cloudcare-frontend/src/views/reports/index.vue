@@ -1,5 +1,47 @@
 <template>
-  <div class="reports-container">
+  <div class="reports-container">    
+    <!-- 智能分析助手入口 -->
+    <div class="assistant-fab" @click="assistantDrawerVisible = true">
+      <el-icon><ChatDotRound /></el-icon>
+      <span>智能分析</span>
+    </div>
+
+    <!-- 智能分析助手抽屉 -->
+    <el-drawer
+      v-model="assistantDrawerVisible"
+      title="智能化数据分析助手"
+      direction="rtl"
+      size="40%"
+      :before-close="handleDrawerClose"
+    >
+      <div class="assistant-chat-container">
+        <div class="chat-history">
+                    <div v-for="(message, index) in chatHistory" :key="index" :class="['chat-message', message.role]">
+            <div class="message-bubble">
+              <div v-if="message.role === 'assistant'" class="role-label assistant-label">AI助手</div>
+              <div v-if="message.role === 'user'" class="role-label user-label">您</div>
+                                          <div v-if="message.loading" class="loading-indicator">
+                <span>正在思考中....</span>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+              <div v-else class="message-content" v-html="message.htmlContent || message.content"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <el-input
+            v-model="chatInput"
+            placeholder="请输入您关心的数据分析问题..."
+            @keyup.enter="handleAssistantChat"
+            clearable
+          ></el-input>
+          <el-button class="send-button" type="primary" @click="handleAssistantChat" :loading="assistantLoading">发送</el-button>
+        </div>
+      </div>
+    </el-drawer>
+
     <!-- 页面标题 -->
     <div class="page-header">
       <h1>报表统计与分析</h1>
@@ -170,12 +212,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { User, Warning, Document, Monitor } from '@element-plus/icons-vue'
+import { User, Warning, Document, Monitor, ChatDotRound } from '@element-plus/icons-vue'
 import { getAllAlerts, getAlertStatistics, getAlertsByTimeRange } from '@/api/healthAlert'
 import { getTemplateUsageStatistics, getInterventionTemplatePage } from '@/api/intervention/template'
 import { getAllElderlyProfiles } from '@/api/elderlyProfile'
 import { getDeviceList } from '@/api/device'
 import { getInterventionPlanPage } from '@/api/intervention/plan'
+import { chatWithDeepSeek } from '@/api/deepseek'
 // 移除不再使用的执行统计接口
 // import { getExecutionStatsByDateRange } from '@/api/intervention/execution'
 
@@ -198,6 +241,170 @@ const activeTab = ref('alerts')
 const alertStats = ref([])
 const interventionStats = ref([])
 const deviceStats = ref([])
+
+// DeepSeek Test Data
+const userInput = ref('')
+const apiResponse = ref('')
+const loading = ref(false)
+
+// 智能分析助手相关数据
+const assistantDrawerVisible = ref(false)
+const assistantLoading = ref(false)
+const chatInput = ref('')
+const chatHistory = ref([
+  { role: 'assistant', content: '您好！我是您的智能化数据分析助手，我可以根据当前页面的统计数据为您提供分析和解答。' }
+])
+const isFirstChat = ref(true)
+const sessionId = ref('')
+
+
+const handleAssistantChat = async () => {
+  if (!chatInput.value.trim()) return
+
+    const userMessage = { role: 'user', content: chatInput.value };
+  chatHistory.value.push(userMessage);
+  const currentChatInput = chatInput.value;
+  chatInput.value = '';
+  assistantLoading.value = true;
+
+  // 添加一个临时的加载中消息
+  const loadingMessage = {
+    role: 'assistant',
+    content: '正在思考中...',
+    loading: true // 自定义一个加载状态
+  };
+  chatHistory.value.push(loadingMessage);
+
+  try {
+    const requestPayload = {
+      messages: [
+        ...chatHistory.value.slice(-10) // 只发送最近10条消息以控制上下文长度
+      ],
+      model: 'deepseek-chat',
+      temperature: 0.7,
+      max_tokens: 2048,
+      stream: false
+    }
+
+        // 生成或使用现有 sessionId
+    if (!sessionId.value) {
+      sessionId.value = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+    }
+    requestPayload.sessionId = sessionId.value
+    console.log(isFirstChat.value)
+
+    // 如果是第一次对话，附加页面统计数据和系统提示
+    if (isFirstChat.value) {
+      const pageStatistics = {
+        '总览统计': overviewStats.value,
+        '预警统计表': alertStats.value,
+        '干预统计表': interventionStats.value,
+        '设备统计表': deviceStats.value,
+        // 未来可以添加图表的原始数据
+      }
+
+      console.log(pageStatistics)
+      // 将统计数据添加到请求中
+      requestPayload.statistics = pageStatistics
+      // 更新系统消息，告知模型如何使用这些数据
+      const systemPrompt = {
+        role: 'system', 
+        content: `你是一位资深的医疗数据分析专家，擅长从医疗管理系统中的统计数据中提取关键信息，判断整体健康趋势和潜在风险，并提供针对性的运营优化和干预建议。\n\n请根据用户提供的后台系统统计数据，完成以下任务：\n\n
+        1. 解读数据：清晰地解读各类统计指标，揭示数据反映的趋势或异常。\n
+        2. 识别风险：精准判断健康管理中的潜在风险，如慢性病高发、异常指标集中等。\n
+        3. 提供建议：基于数据提出具体、可行的建议，包括：\n - 重点人群管理：为特定风险群体制定管理策略。\n - 运营优化：改进提醒机制、完善系统功能等。\n - 数据质量：提出数据采集或质量的改进建议。\n
+        4. 明确优先级：指明需要立即处理的风险项和重点关注领域。\n\n
+        输出格式要求：请使用 Markdown 格式进行排版，但是不要输出markdown总的大标题。确保内容清晰、美观。特别注意换行。必须包含以下部分：\n\n
+        1.数据分析结果\n- 总览统计：数据统计结果说明了...\n\n
+        2.变化趋势分析\n- 趋势分析：数据变化趋势体现了...\n\n
+        3.潜在风险与异常\n1. ...\n2. ...\n\n
+        4.优化建议\n- 重点人群管理：...\n- 运营改进：...\n\n
+        5.是否需要立即处理\n- 是/否：...（请明确说明理由）`
+      }
+
+      const statsText = `以下是当前页面的统计数据，请结合分析：\n` +
+          '```\n' + JSON.stringify(pageStatistics, null, 2) + '\n```';
+
+      const userMessageWithStats = {
+        role: 'user',
+        content: currentChatInput + '\n\n' + statsText
+      };
+
+      requestPayload.messages = [
+        systemPrompt,
+        ...chatHistory.value.slice(-9), // +1 = 10 条消息
+        userMessageWithStats
+      ]
+
+      isFirstChat.value = false
+    }
+
+    const res = await chatWithDeepSeek(requestPayload)
+    if (res.data && res.data.choices && res.data.choices.length > 0) {
+      const assistantResponse = res.data.choices[0].message.content;
+      // Simple markdown to HTML conversion
+      let htmlContent = assistantResponse
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n- /g, '<br>• ')
+        .replace(/\n/g, '<br>');
+
+            // 移除加载中消息，并添加助手的实际回复
+      chatHistory.value.pop();
+      const assistantMessage = { role: 'assistant', content: assistantResponse, htmlContent };
+      chatHistory.value.push(assistantMessage);
+    } else {
+            chatHistory.value.pop(); // 移除加载中消息
+      const errorMessage = { role: 'assistant', content: '抱歉，未能获取有效响应。' };
+      chatHistory.value.push(errorMessage);
+    }
+  } catch (error) {
+    console.error('Assistant API call failed:', error)
+        chatHistory.value.pop(); // 移除加载中消息
+    const errorMessage = { role: 'assistant', content: '抱歉，与助手通信时发生错误。' };
+    chatHistory.value.push(errorMessage);
+  } finally {
+    assistantLoading.value = false
+  }
+}
+
+const handleDrawerClose = (done) => {
+  // 如果需要，可以在这里添加确认逻辑
+  done()
+}
+
+const handleDeepSeekChat = async () => {
+  if (!userInput.value.trim()) {
+    return
+  }
+  loading.value = true
+  apiResponse.value = ''
+  try {
+    const requestPayload = {
+      messages: [
+        { content: 'You are a helpful assistant', role: 'system' },
+        { content: userInput.value, role: 'user' }
+      ],
+      model: 'deepseek-chat',
+      temperature: 0.7,
+      max_tokens: 1024,
+      stream: false
+    }
+    const res = await chatWithDeepSeek(requestPayload)
+    if (res.data && res.data.choices && res.data.choices.length > 0) {
+      apiResponse.value = res.data.choices[0].message.content
+    } else {
+      apiResponse.value = '未能获取有效响应。'
+    }
+  } catch (error) {
+    console.error('DeepSeek API call failed:', error)
+    apiResponse.value = 'API 调用失败。请查看控制台获取更多信息。'
+  } finally {
+    loading.value = false
+  }
+}
 
 // 图表引用
 const alertTrendChart = ref(null)
@@ -1229,6 +1436,24 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.deepseek-test-section {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.response-area {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 .reports-container {
   padding: 24px;
   background: #f5f7fa;
@@ -1427,20 +1652,230 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+  .deepseek-test-section {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .response-area {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
   .reports-container {
     padding: 16px;
   }
-  
+
   .page-header h1 {
     font-size: 24px;
   }
-  
+
   .chart-container {
     padding: 16px;
   }
-  
+
   .chart {
     height: 250px;
   }
+}
+
+.assistant-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 100px;
+  width: 60px;
+  height: 60px;
+  background-color: #409EFF;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1000;
+
+  .el-icon {
+    font-size: 24px;
+  }
+
+  span {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.assistant-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-history {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: #f7f7f7;
+}
+
+.chat-message {
+  margin-bottom: 16px;
+  display: flex;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-message.assistant {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+}
+
+.chat-message.user .message-bubble {
+  background-color: #409EFF;
+  color: white;
+  border-top-right-radius: 4px;
+}
+
+.chat-message.assistant .message-bubble {
+  background-color: #FFFFFF;
+  color: #303133;
+  border: 1px solid #e4e7ed;
+  border-top-left-radius: 4px;
+}
+
+.role-label {
+  font-size: 0.8em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.user-label {
+  color: #5c5c5c; /* 深灰色字体 */
+}
+
+.assistant-label {
+  color: #007bff; /* 蓝色字体 */
+}
+
+.message-content {
+  font-size: 1em;
+  line-height: 1.4;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  span {
+    margin-right: 8px;
+    color: #999;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    background-color: #999;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+    &:nth-child(1) { animation-delay: -0.32s; }
+    &:nth-child(2) { animation-delay: -0.16s; }
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-top: 1px solid #e4e7ed;
+  background-color: #ffffff;
+}
+
+.chat-input-area .el-input {
+  flex-grow: 1;
+}
+
+.chat-input-area .send-button {
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+
+
+.assistant-fab-header {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #409EFF;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.assistant-fab-header:hover {
+  background-color: #66b1ff;
+}
+
+/* 抽屉标题样式 */
+:deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e7ed;
+  background-color: #fafafa;
+}
+
+:deep(.el-drawer__title) {
+  color: #303133;
+  font-weight: 600;
+}
+
+/* 美化聊天记录滚动条 */
+.chat-history::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-history::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 6px;
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>
