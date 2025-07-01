@@ -54,15 +54,6 @@ export const smsApi = {
     })
   },
 
-  // 获取发送记录
-  getSendRecords(params) {
-    return request({
-      url: '/sms/records',
-      method: 'get',
-      params
-    })
-  },
-
   // 获取发送统计
   getSendStats() {
     return request({
