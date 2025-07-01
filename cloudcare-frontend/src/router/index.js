@@ -243,6 +243,19 @@ const routes = [
     ]
   },
   {
+    path: '/help',
+    component: Layout,
+    redirect: '/help/index',
+    children: [
+      {
+        path: 'index',
+        name: 'Help',
+        component: () => import('@/views/help/index.vue'),
+        meta: { title: '使用帮助', icon: 'QuestionFilled' }
+      }
+    ]
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404.vue'),
     meta: { title: '404', isPublic: true },
