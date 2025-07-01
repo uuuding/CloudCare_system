@@ -117,7 +117,7 @@ const routes = [
         path: 'institution',
         name: 'Institution',
         component: () => import('@/views/elderly-service/institution/index.vue'),
-        meta: { title: '机构管理', icon: 'Office' }
+        meta: { title: '机构管理', icon: 'House' }
       },
       {
         path: 'service-schedule',
