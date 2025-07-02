@@ -235,14 +235,17 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
 import {
   deleteObservation,
   getAllObservations,
   addObservation
 } from '@/api/elderlyObservations';
-import { getAllElderlyProfiles } from '@/api/elderlyProfile';
+import { getAllElderlyProfiles, getChronicDiseasesByElderlyId } from '@/api/elderlyProfile';
 import { ElMessage, ElMessageBox } from 'element-plus';
+
+const router = useRouter();
 
 const searchTerm = ref('');
 const observations = ref([]);
@@ -463,9 +466,38 @@ const renderObservationStats = () => {
   myChart.setOption(option);
 };
 
-const viewDetails = (id) => {
-  // 跳转到体检记录详情页面
-};
+const viewDetails = async (row) => {
+  try {
+    // 获取老人档案信息
+    const elderlyProfileResponse = await getAllElderlyProfiles()
+    const elderlyProfile = elderlyProfileResponse.data?.find(profile => profile.id === row.elderlyId)
+    
+    if (!elderlyProfile) {
+      ElMessage.error('未找到老人档案信息')
+      return
+    }
+    
+    // 获取老人疾病信息
+    const chronicDiseasesResponse = await getChronicDiseasesByElderlyId(row.elderlyId)
+    const chronicDiseases = chronicDiseasesResponse.data || []
+    
+    // 跳转到老人画像分析页面，传递数据
+    router.push({
+      name: 'ElderlyProfileAnalysis',
+      params: {
+        id: row.elderlyId
+      },
+      query: {
+        observationData: encodeURIComponent(JSON.stringify(row)),
+        elderlyProfile: encodeURIComponent(JSON.stringify(elderlyProfile)),
+        chronicDiseases: encodeURIComponent(JSON.stringify(chronicDiseases))
+      }
+    })
+  } catch (error) {
+    console.error('获取数据失败:', error)
+    ElMessage.error('获取数据失败，请重试')
+  }
+}
 
 const editRecord = (record) => {
 };

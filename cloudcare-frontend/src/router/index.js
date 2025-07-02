@@ -63,6 +63,13 @@ const routes = [
         name: 'HealthAssessment',
         component: () => import('@/views/health/assessment/index.vue'),
         meta: { title: '健康评估', icon: 'TrendCharts' }
+      },
+      {
+        path: 'profile-analysis/:id',
+        name: 'ElderlyProfileAnalysis',
+        component: () => import('@/views/health/profile-analysis/index.vue'),
+        meta: { title: '老人画像分析', icon: 'DataAnalysis' },
+        hidden: true
       }
     ]
   },
