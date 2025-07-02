@@ -1,0 +1,79 @@
+# GPS电子围栏系统配置
+gps:
+  # GPS数据处理配置
+  data:
+    # 数据保留天数
+    retention-days: 30
+    # 批量处理大小
+    batch-size: 100
+    # 是否启用数据压缩
+    enable-compression: true
+    
+  # 围栏检测配置
+  fence:
+    # 检测精度（米）
+    accuracy-threshold: 10
+    # 最小检测间隔（秒）
+    min-check-interval: 30
+    # 围栏状态缓存时间（分钟）
+    cache-duration: 5
+    
+  # 告警配置
+  alert:
+    # 是否启用短信告警
+    sms-enabled: true
+    # 是否启用应用推送
+    app-push-enabled: true
+    # 告警重复发送间隔（分钟）
+    repeat-interval: 30
+    # 最大重试次数
+    max-retry-count: 3
+    
+  # 设备绑定配置
+  device:
+    # 设备绑定缓存时间（小时）
+    binding-cache-hours: 24
+    # 是否允许一个设备绑定多个老人
+    allow-multiple-binding: false
+    
+  # 定时任务配置
+  schedule:
+    # 数据清理任务执行时间（cron表达式）
+    data-cleanup-cron: "0 0 2 * * ?"
+    # 未发送告警处理任务执行间隔（分钟）
+    unsent-alert-interval: 5
+    
+# 短信服务配置（示例）
+sms:
+  # 短信服务提供商
+  provider: aliyun
+  # 访问密钥
+  access-key: your-access-key
+  access-secret: your-access-secret
+  # 短信模板
+  templates:
+    fence-exit: "SMS_TEMPLATE_001"
+    fence-enter: "SMS_TEMPLATE_002"
+  # 签名
+  sign-name: "老人关爱系统"
+  
+# 推送服务配置（示例）
+push:
+  # 推送服务提供商
+  provider: jpush
+  # 应用密钥
+  app-key: your-app-key
+  master-secret: your-master-secret
+  # 推送环境
+  environment: production
+  
+# 缓存配置
+cache:
+  # Redis配置
+  redis:
+    # GPS设备绑定缓存前缀
+    device-binding-prefix: "gps:device:binding:"
+    # 围栏状态缓存前缀
+    fence-status-prefix: "gps:fence:status:"
+    # 缓存过期时间（秒）
+    default-ttl: 3600
