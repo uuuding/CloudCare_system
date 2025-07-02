@@ -21,6 +21,17 @@ export function getAllElderlyProfiles() {
 }
 
 /**
+ * 获取老人列表（用于下拉选择）
+ * @returns {Promise}
+ */
+export function getElderlyList() {
+  return request({
+    url: '/elderly-profile/list',
+    method: 'get'
+  })
+}
+
+/**
  * 获取老人既往病史
  * @param {Number} elderlyId 老人ID
  * @returns {Promise}

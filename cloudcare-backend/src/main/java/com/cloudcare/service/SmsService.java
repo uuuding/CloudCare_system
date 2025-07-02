@@ -155,4 +155,18 @@ public interface SmsService {
      * @return 统计信息
      */
     Map<String, Object> getSendStats();
+    
+    /**
+     * 发送围栏告警短信
+     * 
+     * @param phone 手机号
+     * @param elderlyName 老人姓名
+     * @param fenceName 围栏名称
+     * @param eventType 事件类型（enter/exit）
+     * @param eventTime 事件时间
+     * @param location 位置信息
+     * @return 发送结果
+     */
+    boolean sendFenceAlert(String phone, String elderlyName, String fenceName, 
+                          String eventType, String eventTime, String location);
 }

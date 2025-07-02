@@ -25,6 +25,13 @@ public class ElderlyProfileController {
         return Result.success(elderlyProfiles); // 使用 Result 封装返回数据
     }
 
+    // 获取老人列表（用于下拉选择）
+    @GetMapping("/list")
+    public Result<List<ElderlyProfile>> getElderlyList() {
+        List<ElderlyProfile> elderlyProfiles = elderlyProfileService.getAllElderlyProfiles();
+        return Result.success(elderlyProfiles);
+    }
+
     // 根据条件查询老人档案
     @GetMapping("/search")
     public List<ElderlyProfile> searchElderlyProfiles(String name, int age) {

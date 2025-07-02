@@ -631,4 +631,60 @@ public class SmsServiceImpl implements SmsService {
         log.warn("未知的数据类型: {}", obj.getClass().getName());
         return 0;
     }
+    
+    @Override
+    public boolean sendFenceAlert(String phone, String elderlyName, String fenceName, 
+                                 String eventType, String eventTime, String location) {
+        if (!smsConfig.isEnabled()) {
+            log.warn("短信服务未启用");
+            return false;
+        }
+        
+        if (!isValidPhone(phone)) {
+            log.error("手机号格式不正确: {}", phone);
+            return false;
+        }
+        
+        try {
+            // 构建围栏告警短信内容
+            String eventTypeText = "exit".equals(eventType) ? "离开" : "进入";
+            String content = String.format(
+                "【老人关爱系统】提醒：%s于%s%s了%s围栏，当前位置：%s。如有疑问请及时联系。",
+                elderlyName, eventTime, eventTypeText, fenceName, location
+            );
+            
+            log.info("发送围栏告警短信: 手机号={}, 老人={}, 围栏={}, 事件={}", 
+                    phone, elderlyName, fenceName, eventType);
+            
+            // 发送短信
+            boolean success = sendSms(phone, content);
+            
+            // 记录发送结果
+            String params = String.format(
+                "elderlyName=%s,fenceName=%s,eventType=%s,eventTime=%s,location=%s",
+                elderlyName, fenceName, eventType, eventTime, location
+            );
+            
+            saveSmsRecord(phone, content, "fence_alert", "FENCE_ALERT", "围栏告警", 
+                         success ? "success" : "failed", null, 
+                         success ? null : "发送失败", params);
+            
+            return success;
+            
+        } catch (Exception e) {
+            log.error("发送围栏告警短信失败: phone={}, elderlyName={}, fenceName={}", 
+                     phone, elderlyName, fenceName, e);
+            
+            // 记录失败信息
+            String params = String.format(
+                "elderlyName=%s,fenceName=%s,eventType=%s,eventTime=%s,location=%s",
+                elderlyName, fenceName, eventType, eventTime, location
+            );
+            
+            saveSmsRecord(phone, "围栏告警短信", "fence_alert", "FENCE_ALERT", "围栏告警", 
+                         "failed", null, e.getMessage(), params);
+            
+            return false;
+        }
+    }
 }

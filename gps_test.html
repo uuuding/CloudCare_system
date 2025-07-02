@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS电子围栏系统测试页面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .success {
+            background-color: #27ae60;
+        }
+        .success:hover {
+            background-color: #229954;
+        }
+        .warning {
+            background-color: #f39c12;
+        }
+        .warning:hover {
+            background-color: #e67e22;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .preset-buttons {
+            margin-bottom: 20px;
+        }
+        .preset-buttons button {
+            background-color: #95a5a6;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .preset-buttons button:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ GPS电子围栏系统测试页面</h1>
+        
+        <div class="grid">
+            <!-- GPS数据推送测试 -->
+            <div>
+                <h2>📡 GPS数据推送测试</h2>
+                
+                <div class="preset-buttons">
+                    <button type="button" onclick="loadPresetData('home')">家庭位置</button>
+                    <button type="button" onclick="loadPresetData('hospital')">医院位置</button>
+                    <button type="button" onclick="loadPresetData('park')">公园位置</button>
+                    <button type="button" onclick="loadPresetData('moving')">移动轨迹</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="serverUrl">服务器地址:</label>
+                    <input type="text" id="serverUrl" value="http://8.137.152.246:8080/api/gps/push">
+                </div>
+                
+                <div class="form-group">
+                    <label for="method">Method:</label>
+                    <select id="method">
+                        <option value="status">status</option>
+                        <option value="alarm">alarm</option>
+                        <option value="PushTest">PushTest</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="serialNumber">Serial Number:</label>
+                    <input type="text" id="serialNumber" value="">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gpsData">GPS数据 (JSON数组):</label>
+                    <textarea id="gpsData" placeholder='[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","GpsTime":1506399055758,"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]'></textarea>
+                </div>
+                
+                <button onclick="sendGpsData()">发送GPS数据</button>
+                <button onclick="generateSerialNumber()" class="warning">生成序列号</button>
+                
+                <div id="gpsResult" class="result" style="display:none;"></div>
+            </div>
+            
+            <!-- 设备绑定测试 -->
+            <div>
+                <h2>🔗 设备绑定测试</h2>
+                
+                <div class="form-group">
+                    <label for="bindUrl">绑定接口地址:</label>
+                    <input type="text" id="bindUrl" value="http://8.137.152.246:8080/api/gps/bind">
+                </div>
+                
+                <div class="form-group">
+                    <label for="macid">设备编号 (Macid):</label>
+                    <input type="text" id="macid" value="123456" placeholder="设备IMEI号">
+                </div>
+                
+                <div class="form-group">
+                    <label for="elderlyId">老人ID:</label>
+                    <input type="number" id="elderlyId" value="1" placeholder="老人在系统中的ID">
+                </div>
+                
+                <button onclick="bindDevice()" class="success">绑定设备</button>
+                
+                <div id="bindResult" class="result" style="display:none;"></div>
+            </div>
+        </div>
+        
+        <!-- 围栏管理测试 -->
+        <div class="container">
+            <h2>🏠 围栏管理测试</h2>
+            
+            <div class="grid">
+                <div>
+                    <h3>创建圆形围栏</h3>
+                    
+                    <div class="form-group">
+                        <label for="fenceUrl">围栏接口地址:</label>
+                        <input type="text" id="fenceUrl" value="http://8.137.152.246:8080/api/geo-fence">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fenceElderlyId">老人ID:</label>
+                        <input type="number" id="fenceElderlyId" value="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fenceName">围栏名称:</label>
+                        <input type="text" id="fenceName" value="家庭安全区域">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="centerLat">中心点纬度:</label>
+                        <input type="number" id="centerLat" value="22.69937" step="0.000001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="centerLon">中心点经度:</label>
+                        <input type="number" id="centerLon" value="114.12503" step="0.000001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="radius">半径 (米):</label>
+                        <input type="number" id="radius" value="500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emergencyContacts">紧急联系人:</label>
+                        <input type="text" id="emergencyContacts" value="13800138000,13900139000" placeholder="多个手机号用逗号分隔">
+                    </div>
+                    
+                    <button onclick="createFence()" class="success">创建围栏</button>
+                </div>
+                
+                <div>
+                    <h3>查询围栏和事件</h3>
+                    
+                    <div class="form-group">
+                        <label for="queryElderlyId">查询老人ID:</label>
+                        <input type="number" id="queryElderlyId" value="1">
+                    </div>
+                    
+                    <button onclick="queryFences()">查询围栏</button>
+                    <button onclick="queryEvents()">查询事件</button>
+                    <button onclick="queryLatestLocation()" class="warning">查询最新位置</button>
+                </div>
+            </div>
+            
+            <div id="fenceResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 生成序列号
+        function generateSerialNumber() {
+            const serialNumber = Date.now().toString();
+            document.getElementById('serialNumber').value = serialNumber;
+        }
+        
+        // 预设GPS数据
+        function loadPresetData(type) {
+            const presets = {
+                home: {
+                    data: '[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","GpsTime":' + Date.now() + ',"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]',
+                    description: '家庭位置（深圳）'
+                },
+                hospital: {
+                    data: '[{"Macid":"123456","Lat":"22.70123","Lon":"114.12789","GpsTime":' + Date.now() + ',"Speed":5,"Dir":45,"Stats":"online","Value":"normal"}]',
+                    description: '医院位置'
+                },
+                park: {
+                    data: '[{"Macid":"123456","Lat":"22.69654","Lon":"114.12234","GpsTime":' + Date.now() + ',"Speed":2,"Dir":90,"Stats":"online","Value":"normal"}]',
+                    description: '公园位置'
+                },
+                moving: {
+                    data: '[{"Macid":"123456","Lat":"22.69800","Lon":"114.12600","GpsTime":' + Date.now() + ',"Speed":15,"Dir":180,"Stats":"online","Value":"moving"}]',
+                    description: '移动中'
+                }
+            };
+            
+            const preset = presets[type];
+            if (preset) {
+                document.getElementById('gpsData').value = preset.data;
+                generateSerialNumber();
+                showResult('gpsResult', `已加载预设数据: ${preset.description}`, 'info');
+            }
+        }
+        
+        // 发送GPS数据
+        async function sendGpsData() {
+            const url = document.getElementById('serverUrl').value;
+            const method = document.getElementById('method').value;
+            const serialNumber = document.getElementById('serialNumber').value;
+            const gpsData = document.getElementById('gpsData').value;
+            
+            if (!serialNumber) {
+                showResult('gpsResult', '请先生成序列号', 'error');
+                return;
+            }
+            
+            if (!gpsData) {
+                showResult('gpsResult', '请输入GPS数据', 'error');
+                return;
+            }
+            
+            try {
+                // 验证JSON格式
+                JSON.parse(gpsData);
+                
+                const formData = new FormData();
+                formData.append('method', method);
+                formData.append('serialNumber', serialNumber);
+                formData.append('data', gpsData);
+                
+                showResult('gpsResult', '正在发送GPS数据...', 'info');
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('gpsResult', `发送成功！\n响应: ${result}\n期望响应: ${serialNumber}\n匹配: ${result === serialNumber ? '✅' : '❌'}`, 'success');
+                } else {
+                    showResult('gpsResult', `发送失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('gpsResult', `发送失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 绑定设备
+        async function bindDevice() {
+            const url = document.getElementById('bindUrl').value;
+            const macid = document.getElementById('macid').value;
+            const elderlyId = document.getElementById('elderlyId').value;
+            
+            if (!macid || !elderlyId) {
+                showResult('bindResult', '请填写设备编号和老人ID', 'error');
+                return;
+            }
+            
+            try {
+                showResult('bindResult', '正在绑定设备...', 'info');
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        macid: macid,
+                        elderlyId: parseInt(elderlyId)
+                    })
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('bindResult', `绑定成功！\n响应: ${result}`, 'success');
+                } else {
+                    showResult('bindResult', `绑定失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('bindResult', `绑定失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 创建围栏
+        async function createFence() {
+            const url = document.getElementById('fenceUrl').value;
+            const elderlyId = document.getElementById('fenceElderlyId').value;
+            const fenceName = document.getElementById('fenceName').value;
+            const centerLat = document.getElementById('centerLat').value;
+            const centerLon = document.getElementById('centerLon').value;
+            const radius = document.getElementById('radius').value;
+            const emergencyContacts = document.getElementById('emergencyContacts').value;
+            
+            if (!elderlyId || !fenceName || !centerLat || !centerLon || !radius) {
+                showResult('fenceResult', '请填写所有必填字段', 'error');
+                return;
+            }
+            
+            try {
+                showResult('fenceResult', '正在创建围栏...', 'info');
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        elderlyId: parseInt(elderlyId),
+                        fenceName: fenceName,
+                        fenceType: 'circle',
+                        centerLat: parseFloat(centerLat),
+                        centerLon: parseFloat(centerLon),
+                        radius: parseFloat(radius),
+                        status: 1,
+                        enterAlert: 0,
+                        exitAlert: 1,
+                        alertType: 'sms',
+                        emergencyContacts: emergencyContacts
+                    })
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('fenceResult', `围栏创建成功！\n响应: ${result}`, 'success');
+                } else {
+                    showResult('fenceResult', `围栏创建失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('fenceResult', `围栏创建失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 查询围栏
+        async function queryFences() {
+            const elderlyId = document.getElementById('queryElderlyId').value;
+            const url = `http://8.137.152.246:8080/api/geo-fence/elderly/${elderlyId}`;
+            
+            try {
+                showResult('fenceResult', '正在查询围栏...', 'info');
+                
+                const response = await fetch(url);
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('fenceResult', `围栏查询成功！\n响应: ${result}`, 'success');
+                } else {
+                    showResult('fenceResult', `围栏查询失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('fenceResult', `围栏查询失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 查询事件
+        async function queryEvents() {
+            const elderlyId = document.getElementById('queryElderlyId').value;
+            const url = `http://8.137.152.246:8080/api/geo-fence/events/${elderlyId}`;
+            
+            try {
+                showResult('fenceResult', '正在查询事件...', 'info');
+                
+                const response = await fetch(url);
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('fenceResult', `事件查询成功！\n响应: ${result}`, 'success');
+                } else {
+                    showResult('fenceResult', `事件查询失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('fenceResult', `事件查询失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 查询最新位置
+        async function queryLatestLocation() {
+            const elderlyId = document.getElementById('queryElderlyId').value;
+            const url = `http://8.137.152.246:8080/api/geo-fence/location/${elderlyId}`;
+            
+            try {
+                showResult('fenceResult', '正在查询最新位置...', 'info');
+                
+                const response = await fetch(url);
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('fenceResult', `位置查询成功！\n响应: ${result}`, 'success');
+                } else {
+                    showResult('fenceResult', `位置查询失败！\n状态码: ${response.status}\n响应: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('fenceResult', `位置查询失败！\n错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 显示结果
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+        
+        // 页面加载时生成序列号
+        window.onload = function() {
+            generateSerialNumber();
+        };
+    </script>
+</body>
+</html>
