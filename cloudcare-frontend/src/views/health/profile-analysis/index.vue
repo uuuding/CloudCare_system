@@ -36,9 +36,9 @@
               <span class="value">{{ observationData?.observationLocation || '-' }}</span>
             </div>
           </div>
-          
+
           <div class="vital-signs">
-            <h4>生命体征</h4>
+            <h4>身体指标</h4>
             <div class="signs-grid">
               <div class="sign-item">
                 <span class="sign-label">体温</span>
@@ -82,11 +82,11 @@
           <div class="disease-history" v-if="chronicDiseases?.length">
             <h4>既往病史</h4>
             <div class="disease-list">
-              <el-tag 
-                v-for="disease in chronicDiseases" 
-                :key="disease.id"
-                :type="getDiseaseTagType(disease.diseaseCategory)"
-                class="disease-tag"
+              <el-tag
+                  v-for="disease in chronicDiseases"
+                  :key="disease.id"
+                  :type="getDiseaseTagType(disease.diseaseCategory)"
+                  class="disease-tag"
               >
                 {{ disease.diseaseName }}
               </el-tag>
@@ -106,6 +106,18 @@
       </div>
     </div>
 
+    <!-- 画像分析图部分 -->
+    <div class="profile-chart-section">
+      <div class="profile-chart-card">
+        <div class="card-header">
+          <h3>老人健康画像分析</h3>
+        </div>
+        <div class="chart-container">
+          <div id="wordCloudChart" style="width: 100%; height: 300px;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 下部分：HMM预测结果 -->
     <div class="lower-section">
       <div class="prediction-card">
@@ -116,7 +128,7 @@
             刷新预测
           </el-button>
         </div>
-        
+
         <div class="prediction-content" v-loading="predictionLoading">
           <div class="current-state">
             <div class="state-item">
@@ -126,7 +138,7 @@
               </el-tag>
             </div>
             <div class="state-item">
-              <span class="state-label">预测状态：</span>
+              <span class="state-label">下一状态预测结果：</span>
               <el-tag :type="getStateTagType(predictedState)" size="large" class="state-tag">
                 {{ predictedState }}
               </el-tag>
@@ -136,19 +148,19 @@
           <div class="scores-section">
             <h4>各状态评分</h4>
             <div class="scores-grid">
-              <div 
-                v-for="(score, state) in stateScores" 
-                :key="state"
-                class="score-item"
+              <div
+                  v-for="(score, state) in stateScores"
+                  :key="state"
+                  class="score-item"
               >
                 <div class="score-header">
                   <span class="score-state">{{ state }}</span>
                   <span class="score-value">{{ (score * 100).toFixed(1) }}%</span>
                 </div>
-                <el-progress 
-                  :percentage="score * 100" 
-                  :color="getProgressColor(state)"
-                  :stroke-width="8"
+                <el-progress
+                    :percentage="score * 100"
+                    :color="getProgressColor(state)"
+                    :stroke-width="8"
                 />
               </div>
             </div>
@@ -184,6 +196,7 @@ const predictionLoading = ref(false)
 onMounted(async () => {
   await initializeData()
   initRadarChart()
+  initProfileChart()
   await performPrediction()
 })
 
@@ -192,7 +205,7 @@ const initializeData = async () => {
   try {
     // 从路由query参数获取数据
     const queryData = route.query
-    
+
     if (queryData.observationData) {
       observationData.value = JSON.parse(decodeURIComponent(queryData.observationData))
     }
@@ -202,13 +215,13 @@ const initializeData = async () => {
     if (queryData.chronicDiseases) {
       chronicDiseases.value = JSON.parse(decodeURIComponent(queryData.chronicDiseases))
     }
-    
+
     // 如果没有从query获取到数据，显示警告
     if (!observationData.value) {
       ElMessage.warning('数据获取失败，请重新进入')
       return
     }
-    
+
     // 计算当前健康状态
     currentState.value = calculateCurrentHealthState()
   } catch (error) {
@@ -220,18 +233,18 @@ const initializeData = async () => {
 // 计算当前健康状态
 const calculateCurrentHealthState = () => {
   if (!observationData.value) return '未知'
-  
+
   let abnormalCount = 0
   const obs = observationData.value
-  
+
   // 检查各项指标
   if (obs.bodyTemperature && (obs.bodyTemperature < 36.0 || obs.bodyTemperature > 37.2)) abnormalCount++
   if (obs.systolicBp && (obs.systolicBp < 90 || obs.systolicBp > 139)) abnormalCount++
   if (obs.heartRate && (obs.heartRate < 60 || obs.heartRate > 100)) abnormalCount++
-  
+
   const bmi = calculateBMI()
   if (bmi && (bmi < 18.5 || bmi > 23.9)) abnormalCount++
-  
+
   if (abnormalCount === 0) return '健康'
   if (abnormalCount === 1) return '注意'
   return '异常'
@@ -248,7 +261,7 @@ const calculateBMI = () => {
 // 执行HMM预测
 const performPrediction = async () => {
   if (!observationData.value) return
-  
+
   predictionLoading.value = true
   try {
     // 构造HMM请求数据
@@ -257,17 +270,17 @@ const performPrediction = async () => {
       diseaseCount: calculateDiseaseCount(),
       currentState: currentState.value
     }
-    
+
     // 获取预测结果
     const [predictResponse, scoresResponse] = await Promise.all([
       predictNextState(hmmData),
       getStateScores(hmmData)
     ])
-    
+
     if (predictResponse.code === 200) {
       predictedState.value = predictResponse.data.nextState
     }
-    
+
     if (scoresResponse.code === 200) {
       stateScores.value = scoresResponse.data
     }
@@ -282,24 +295,24 @@ const performPrediction = async () => {
 // 将观察数据转换为HMM所需的数组格式
 const convertToObservationArray = () => {
   if (!observationData.value) return [0, 0, 0, 0, 0]
-  
+
   const obs = observationData.value
   const observation = []
-  
+
   // 体温 (0: 正常, 1: 轻微异常, 2: 严重异常)
   if (obs.bodyTemperature) {
     if (obs.bodyTemperature >= 36.0 && obs.bodyTemperature <= 37.2) observation.push(0)
     else if (obs.bodyTemperature > 37.2 && obs.bodyTemperature <= 38.0) observation.push(1)
     else observation.push(2)
   } else observation.push(0)
-  
+
   // 血压
   if (obs.systolicBp) {
     if (obs.systolicBp >= 90 && obs.systolicBp <= 139) observation.push(0)
     else if (obs.systolicBp >= 140 && obs.systolicBp <= 159) observation.push(1)
     else observation.push(2)
   } else observation.push(0)
-  
+
   // BMI
   const bmi = calculateBMI()
   if (bmi) {
@@ -307,28 +320,28 @@ const convertToObservationArray = () => {
     else if (bmi >= 24.0 && bmi <= 27.9) observation.push(1)
     else observation.push(2)
   } else observation.push(0)
-  
+
   // 心率
   if (obs.heartRate) {
     if (obs.heartRate >= 60 && obs.heartRate <= 100) observation.push(0)
     else if (obs.heartRate > 100 && obs.heartRate <= 120) observation.push(1)
     else observation.push(2)
   } else observation.push(0)
-  
+
   // 睡眠时长
   if (obs.sleepHours) {
     if (obs.sleepHours >= 7 && obs.sleepHours <= 9) observation.push(0)
     else if (obs.sleepHours >= 6 && obs.sleepHours < 7) observation.push(1)
     else observation.push(2)
   } else observation.push(0)
-  
+
   return observation
 }
 
 // 计算疾病数量
 const calculateDiseaseCount = () => {
   if (!chronicDiseases.value?.length) return [0, 0, 0]
-  
+
   const count = [0, 0, 0] // A类, B类, C类
   chronicDiseases.value.forEach(disease => {
     switch (disease.diseaseCategory) {
@@ -346,7 +359,7 @@ const calculateDiseaseCount = () => {
         break
     }
   })
-  
+
   return count
 }
 
@@ -354,62 +367,62 @@ const calculateDiseaseCount = () => {
 const initRadarChart = () => {
   const chartDom = document.getElementById('radarChart')
   if (!chartDom) return
-  
+
   const myChart = echarts.init(chartDom)
-  
+
   // 标准健康数据（绿色基准线）- 基于最佳健康值计算
   const generateStandardData = () => {
     // 使用各指标的最佳值来计算标准分数
     const standardScores = []
-    
+
     // 体温指标：36.6°C（最佳体温）
     standardScores.push(100)
-    
+
     // 血压指标：120mmHg（最佳收缩压）
     standardScores.push(100)
-    
+
     // 心率指标：75bpm（最佳心率）
     standardScores.push(100)
-    
+
     // BMI指标：21.2（最佳BMI）
     standardScores.push(100)
-    
+
     // 睡眠质量：8小时（最佳睡眠时间）
     standardScores.push(100)
-    
+
     // 整体状态：所有指标都是最佳值
     standardScores.push(100)
-    
+
     return standardScores
   }
-  
+
   const standardData = generateStandardData()
-  
+
   // 阈值数据（红色警戒线）- 基于临界值计算
   const generateThresholdData = () => {
     const thresholdScores = []
-    
+
     // 体温阈值：37.2°C（发热临界点）
     thresholdScores.push(75)
-    
+
     // 血压阈值：140mmHg（高血压临界点）
     thresholdScores.push(75)
-    
+
     // 心率阈值：100bpm（心动过速临界点）
     thresholdScores.push(75)
-    
+
     // BMI阈值：24.0（超重临界点）
     thresholdScores.push(75)
-    
+
     // 睡眠阈值：6小时（睡眠不足临界点）
     thresholdScores.push(75)
-    
+
     // 整体阈值状态
     thresholdScores.push(75)
-    
+
     return thresholdScores
   }
-  
+
   const option = {
     title: {
       text: '健康指标六维对比分析',
@@ -421,27 +434,27 @@ const initRadarChart = () => {
       }
     },
     tooltip: {
-       trigger: 'item',
-       backgroundColor: 'rgba(0, 0, 0, 0.8)',
-       borderColor: '#409EFF',
-       borderWidth: 1,
-       textStyle: {
-         color: '#fff',
-         fontSize: 12
-       },
-       triggerOn: 'mousemove',
-       enterable: true,
-       formatter: function(params) {
-         const indicators = ['体温指标', '血压指标', '心率指标', 'BMI指标', '睡眠质量', '整体状态']
-         let result = `<div style="padding: 8px;">`
-         result += `<div style="font-weight: bold; margin-bottom: 6px; color: ${params.color};">${params.seriesName} - ${params.name}</div>`
-         params.value.forEach((value, index) => {
-           result += `<div style="margin: 2px 0;">${indicators[index]}: <span style="font-weight: bold;">${value}%</span></div>`
-         })
-         result += `</div>`
-         return result
-       }
-     },
+      trigger: 'item',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      borderColor: '#409EFF',
+      borderWidth: 1,
+      textStyle: {
+        color: '#fff',
+        fontSize: 12
+      },
+      triggerOn: 'mousemove',
+      enterable: true,
+      formatter: function(params) {
+        const indicators = ['体温指标', '血压指标', '心率指标', 'BMI指标', '睡眠质量', '整体状态']
+        let result = `<div style="padding: 8px;">`
+        result += `<div style="font-weight: bold; margin-bottom: 6px; color: ${params.color};">${params.seriesName} - ${params.name}</div>`
+        params.value.forEach((value, index) => {
+          result += `<div style="margin: 2px 0;">${indicators[index]}: <span style="font-weight: bold;">${value}%</span></div>`
+        })
+        result += `</div>`
+        return result
+      }
+    },
     legend: {
       data: ['标准指标', '阈值指标', '当前状态'],
       top: 30,
@@ -452,52 +465,52 @@ const initRadarChart = () => {
       }
     },
     radar: {
-        indicator: [
-          { name: '体温指标', max: 100, min: 0 },
-          { name: '血压指标', max: 100, min: 0 },
-          { name: '心率指标', max: 100, min: 0 },
-          { name: 'BMI指标', max: 100, min: 0 },
-          { name: '睡眠质量', max: 100, min: 0 },
-          { name: '整体状态', max: 100, min: 0 }
-        ],
-        center: ['50%', '55%'],
-        radius: '65%',
-        splitNumber: 3,
-        shape: 'polygon',
-        axisName: {
-          color: '#333',
-          fontSize: 13,
-          fontWeight: '500'
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#ccc'
-          }
-        },
-        splitLine: {
-          lineStyle: {
-            color: '#e0e0e0',
-            width: 1
-          }
-        },
-        splitArea: {
-          show: true,
-          areaStyle: {
-            color: ['rgba(250, 250, 250, 0.1)', 'rgba(200, 200, 200, 0.1)']
-          }
-        },
-        axisLabel: {
-           show: true,
-           fontSize: 11,
-           color: '#666',
-           fontWeight: '500',
-           formatter: function(value) {
-             if (value === 50) return '50%'
-             if (value === 100) return '100%'
-             return ''
-           }
-         }
+      indicator: [
+        { name: '体温指标', max: 100, min: 0 },
+        { name: '血压指标', max: 100, min: 0 },
+        { name: '心率指标', max: 100, min: 0 },
+        { name: 'BMI指标', max: 100, min: 0 },
+        { name: '睡眠质量', max: 100, min: 0 },
+        { name: '整体状态', max: 100, min: 0 }
+      ],
+      center: ['50%', '55%'],
+      radius: '65%',
+      splitNumber: 3,
+      shape: 'polygon',
+      axisName: {
+        color: '#333',
+        fontSize: 13,
+        fontWeight: '500'
       },
+      axisLine: {
+        lineStyle: {
+          color: '#ccc'
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#e0e0e0',
+          width: 1
+        }
+      },
+      splitArea: {
+        show: true,
+        areaStyle: {
+          color: ['rgba(250, 250, 250, 0.1)', 'rgba(200, 200, 200, 0.1)']
+        }
+      },
+      axisLabel: {
+        show: true,
+        fontSize: 11,
+        color: '#666',
+        fontWeight: '500',
+        formatter: function(value) {
+          if (value === 50) return '50%'
+          if (value === 100) return '100%'
+          return ''
+        }
+      }
+    },
     series: [{
       name: '健康指标对比',
       type: 'radar',
@@ -548,9 +561,9 @@ const initRadarChart = () => {
       ]
     }]
   }
-  
+
   myChart.setOption(option)
-  
+
   // 响应式处理
   window.addEventListener('resize', () => {
     myChart.resize()
@@ -561,16 +574,16 @@ const initRadarChart = () => {
 // 动态健康指标计算算法
 const generateRadarData = () => {
   if (!observationData.value) return [60, 60, 60, 60, 60, 60]
-  
+
   const obs = observationData.value
   const data = []
-  
+
   // 体温指标动态计算 (36.0-37.2°C为最佳)
   if (obs.bodyTemperature) {
     const temp = obs.bodyTemperature
     const optimal = 36.6 // 最佳体温
     const normalRange = 0.6 // 正常范围±0.6°C
-    
+
     if (temp >= 36.0 && temp <= 37.2) {
       // 在正常范围内，根据与最佳值的距离计算分数
       const deviation = Math.abs(temp - optimal)
@@ -583,12 +596,12 @@ const generateRadarData = () => {
       data.push(Math.round(score))
     }
   } else data.push(50)
-  
+
   // 血压指标动态计算 (90-139 mmHg为正常)
   if (obs.systolicBp) {
     const bp = obs.systolicBp
     const optimal = 120 // 最佳收缩压
-    
+
     if (bp >= 90 && bp <= 139) {
       // 正常范围内，根据与最佳值的距离计算
       const deviation = Math.abs(bp - optimal)
@@ -605,12 +618,12 @@ const generateRadarData = () => {
       data.push(Math.round(score))
     }
   } else data.push(50)
-  
+
   // 心率指标动态计算 (60-100 bpm为正常)
   if (obs.heartRate) {
     const hr = obs.heartRate
     const optimal = 75 // 最佳心率
-    
+
     if (hr >= 60 && hr <= 100) {
       // 正常范围内
       const deviation = Math.abs(hr - optimal)
@@ -627,12 +640,12 @@ const generateRadarData = () => {
       data.push(Math.round(score))
     }
   } else data.push(50)
-  
+
   // BMI指标动态计算 (18.5-23.9为正常)
   const bmi = calculateBMI()
   if (bmi) {
     const optimal = 21.2 // 最佳BMI
-    
+
     if (bmi >= 18.5 && bmi <= 23.9) {
       // 正常范围内
       const deviation = Math.abs(bmi - optimal)
@@ -650,12 +663,12 @@ const generateRadarData = () => {
       data.push(Math.round(score))
     }
   } else data.push(50)
-  
+
   // 睡眠质量动态计算 (7-9小时为最佳)
   if (obs.sleepHours) {
     const sleep = obs.sleepHours
     const optimal = 8 // 最佳睡眠时间
-    
+
     if (sleep >= 7 && sleep <= 9) {
       // 最佳范围内
       const deviation = Math.abs(sleep - optimal)
@@ -673,23 +686,202 @@ const generateRadarData = () => {
       data.push(Math.round(score))
     }
   } else data.push(50)
-  
+
   // 整体状态 - 加权平均，考虑各指标重要性
   const weights = [0.2, 0.25, 0.2, 0.15, 0.2] // 体温、血压、心率、BMI、睡眠的权重
   let weightedSum = 0
   let totalWeight = 0
-  
+
   data.forEach((score, index) => {
     if (score > 0) { // 只计算有效数据
       weightedSum += score * weights[index]
       totalWeight += weights[index]
     }
   })
-  
+
   const overallScore = totalWeight > 0 ? weightedSum / totalWeight : 50
   data.push(Math.round(overallScore))
-  
+
   return data
+}
+
+// 初始化画像分析图
+const initProfileChart = () => {
+  const chartDom = document.getElementById('wordCloudChart')
+  if (!chartDom) return
+
+  const myChart = echarts.init(chartDom)
+
+  // 生成画像分析数据
+  const generateProfileData = () => {
+    const words = []
+
+    // 基于老人基本信息生成词汇
+    if (elderlyProfile.value) {
+      const profile = elderlyProfile.value
+      if (profile.age) {
+        if (profile.age >= 80) words.push({ name: '高龄老人', value: 90 })
+        else if (profile.age >= 70) words.push({ name: '老年人', value: 80 })
+        else words.push({ name: '中老年', value: 70 })
+      }
+
+      if (profile.gender === '男') words.push({ name: '男性', value: 60 })
+      else if (profile.gender === '女') words.push({ name: '女性', value: 60 })
+    }
+
+    // 基于健康状态生成词汇
+    if (currentState.value) {
+      switch (currentState.value) {
+        case '健康':
+          words.push({ name: '身体健康', value: 100 })
+          words.push({ name: '状态良好', value: 85 })
+          break
+        case '注意':
+          words.push({ name: '需要关注', value: 95 })
+          words.push({ name: '轻微异常', value: 80 })
+          break
+        case '异常':
+          words.push({ name: '健康异常', value: 100 })
+          words.push({ name: '需要治疗', value: 90 })
+          break
+      }
+    }
+
+    // 基于慢性疾病生成词汇
+    if (chronicDiseases.value?.length) {
+      chronicDiseases.value.forEach(disease => {
+        words.push({ name: disease.diseaseName, value: 75 })
+
+        switch (disease.diseaseCategory) {
+          case 'A':
+          case '重病':
+            words.push({ name: '重症患者', value: 85 })
+            break
+          case 'B':
+          case '中度病':
+            words.push({ name: '慢性病', value: 70 })
+            break
+          case 'C':
+          case '轻病':
+            words.push({ name: '轻症', value: 55 })
+            break
+        }
+      })
+    }
+
+    // 基于生理指标生成词汇
+    if (observationData.value) {
+      const obs = observationData.value
+
+      // 体温相关
+      if (obs.bodyTemperature) {
+        if (obs.bodyTemperature > 37.2) words.push({ name: '发热', value: 80 })
+        else words.push({ name: '体温正常', value: 65 })
+      }
+
+      // 血压相关
+      if (obs.systolicBp) {
+        if (obs.systolicBp > 140) words.push({ name: '高血压', value: 85 })
+        else if (obs.systolicBp < 90) words.push({ name: '低血压', value: 75 })
+        else words.push({ name: '血压正常', value: 60 })
+      }
+
+      // 心率相关
+      if (obs.heartRate) {
+        if (obs.heartRate > 100) words.push({ name: '心动过速', value: 80 })
+        else if (obs.heartRate < 60) words.push({ name: '心动过缓', value: 75 })
+        else words.push({ name: '心率正常', value: 55 })
+      }
+
+      // BMI相关
+      const bmi = calculateBMI()
+      if (bmi) {
+        const bmiValue = parseFloat(bmi)
+        if (bmiValue > 24) words.push({ name: '超重', value: 70 })
+        else if (bmiValue < 18.5) words.push({ name: '偏瘦', value: 65 })
+        else words.push({ name: '体重正常', value: 50 })
+      }
+
+      // 睡眠相关
+      if (obs.sleepHours) {
+        if (obs.sleepHours < 6) words.push({ name: '睡眠不足', value: 75 })
+        else if (obs.sleepHours > 9) words.push({ name: '睡眠过多', value: 60 })
+        else words.push({ name: '睡眠良好', value: 50 })
+      }
+
+      // 咳嗽相关
+      if (obs.cough) words.push({ name: '咳嗽症状', value: 70 })
+    }
+
+    // 添加一些通用的老人画像词汇
+    words.push(
+        { name: '居家养老', value: 45 },
+        { name: '定期体检', value: 40 },
+        { name: '健康监测', value: 50 },
+        { name: '医疗保健', value: 55 },
+        { name: '生活照料', value: 35 },
+        { name: '康复护理', value: 40 }
+    )
+
+    return words
+  }
+
+  const option = {
+    title: {
+      text: '老人健康画像分析',
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        return `${params.name}: ${params.value} (${params.percent}%)`
+      }
+    },
+    series: [{
+      type: 'pie',
+      radius: ['20%', '70%'],
+      center: ['50%', '50%'],
+      roseType: 'area',
+      itemStyle: {
+        borderRadius: 8
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}',
+        fontSize: 12,
+        fontWeight: 'bold'
+      },
+      labelLine: {
+        show: true,
+        length: 10,
+        length2: 20
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      },
+      data: generateProfileData().map(item => ({
+        name: item.name,
+        value: item.value
+      }))
+    }]
+  }
+
+  myChart.setOption(option)
+
+  // 响应式处理
+  window.addEventListener('resize', () => {
+    myChart.resize()
+  })
 }
 
 // 工具函数
@@ -927,6 +1119,16 @@ const refreshPrediction = () => {
 
 .chart-container {
   padding: 20px;
+}
+
+.profile-chart-section {
+  margin: 20px 0;
+}
+
+.profile-chart-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .lower-section {
