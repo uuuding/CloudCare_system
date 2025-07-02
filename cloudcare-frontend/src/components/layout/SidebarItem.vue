@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!item.hidden">
+  <div v-if="!item.hidden && hasPermission(item)">
     <!-- 没有子菜单的情况 -->
     <template v-if="hasOneShowingChild(item.children, item) && (!onlyOneChild.children || onlyOneChild.noShowingChildren) && !item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
@@ -8,7 +8,7 @@
             <component :is="onlyOneChild.meta.icon" />
           </el-icon>
           <template #title>
-            <span>{{ onlyOneChild.meta.title }}</span>
+            <span>{{ onlyOneChild.meta && onlyOneChild.meta.title }}</span>
           </template>
         </el-menu-item>
       </app-link>
@@ -20,12 +20,13 @@
         <el-icon v-if="item.meta && item.meta.icon">
           <component :is="item.meta.icon" />
         </el-icon>
-        <span>{{ item.meta.title }}</span>
+        <span>{{ item.meta && item.meta.title }}</span>
       </template>
       
       <!-- 递归渲染子菜单 -->
       <sidebar-item
         v-for="child in item.children"
+        v-show="hasPermission(child)"
         :key="child.path"
         :item="child"
         :is-nest="true"
@@ -39,8 +40,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { isExternal } from '@/utils/validate'
+import { useUserStore } from '@/stores/user'
 import AppLink from './Link.vue'
 import path from 'path-browserify'
+
+// 用户状态
+const userStore = useUserStore()
 
 const props = defineProps({
   item: {
@@ -64,10 +69,18 @@ const props = defineProps({
 // 唯一子菜单
 const onlyOneChild = ref(null)
 
+// 检查是否有权限访问菜单项
+const hasPermission = (item) => {
+  if (item.meta && item.meta.roles) {
+    return userStore.roles && userStore.roles.some(role => item.meta.roles.includes(role))
+  }
+  return true
+}
+
 // 判断是否只有一个显示的子菜单
 const hasOneShowingChild = (children = [], parent) => {
   const showingChildren = children.filter(item => {
-    if (item.hidden) {
+    if (item.hidden || !hasPermission(item)) {
       return false
     } else {
       // 临时设置
