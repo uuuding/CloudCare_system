@@ -37,7 +37,10 @@
             @keyup.enter="handleAssistantChat"
             clearable
           ></el-input>
-          <el-button class="send-button" type="primary" @click="handleAssistantChat" :loading="assistantLoading">发送</el-button>
+          <div class="button-group">
+            <el-button class="clear-button" size="small" @click="clearChatHistory" title="清除对话历史">清除</el-button>
+            <el-button class="send-button" type="primary" @click="handleAssistantChat" :loading="assistantLoading">发送</el-button>
+          </div>
         </div>
       </div>
     </el-drawer>
@@ -251,11 +254,55 @@ const loading = ref(false)
 const assistantDrawerVisible = ref(false)
 const assistantLoading = ref(false)
 const chatInput = ref('')
-const chatHistory = ref([
-  { role: 'assistant', content: '您好！我是您的智能化数据分析助手，我可以根据当前页面的统计数据为您提供分析和解答。' }
-])
-const isFirstChat = ref(true)
-const sessionId = ref('')
+
+// 从sessionStorage加载聊天历史
+const loadChatHistory = () => {
+  try {
+    const saved = sessionStorage.getItem('reports_chat_history')
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.warn('加载聊天历史失败:', error)
+  }
+  return [{ role: 'assistant', content: '您好！我是您的智能化数据分析助手，我可以根据当前页面的统计数据为您提供分析和解答。' }]
+}
+
+// 保存聊天历史到sessionStorage
+const saveChatHistory = (history) => {
+  try {
+    sessionStorage.setItem('reports_chat_history', JSON.stringify(history))
+  } catch (error) {
+    console.warn('保存聊天历史失败:', error)
+  }
+}
+
+// 从sessionStorage加载其他状态
+const loadChatState = () => {
+  try {
+    const savedState = sessionStorage.getItem('reports_chat_state')
+    if (savedState) {
+      return JSON.parse(savedState)
+    }
+  } catch (error) {
+    console.warn('加载聊天状态失败:', error)
+  }
+  return { isFirstChat: true, sessionId: '' }
+}
+
+// 保存聊天状态到sessionStorage
+const saveChatState = (state) => {
+  try {
+    sessionStorage.setItem('reports_chat_state', JSON.stringify(state))
+  } catch (error) {
+    console.warn('保存聊天状态失败:', error)
+  }
+}
+
+const chatHistory = ref(loadChatHistory())
+const chatState = loadChatState()
+const isFirstChat = ref(chatState.isFirstChat)
+const sessionId = ref(chatState.sessionId)
 
 
 const handleAssistantChat = async () => {
@@ -263,6 +310,8 @@ const handleAssistantChat = async () => {
 
     const userMessage = { role: 'user', content: chatInput.value };
   chatHistory.value.push(userMessage);
+  // 保存用户消息到sessionStorage
+  saveChatHistory(chatHistory.value);
   const currentChatInput = chatInput.value;
   chatInput.value = '';
   assistantLoading.value = true;
@@ -289,6 +338,8 @@ const handleAssistantChat = async () => {
         // 生成或使用现有 sessionId
     if (!sessionId.value) {
       sessionId.value = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+      // 保存新的sessionId
+      saveChatState({ isFirstChat: isFirstChat.value, sessionId: sessionId.value })
     }
     requestPayload.sessionId = sessionId.value
     console.log(isFirstChat.value)
@@ -309,17 +360,23 @@ const handleAssistantChat = async () => {
       // 更新系统消息，告知模型如何使用这些数据
       const systemPrompt = {
         role: 'system', 
-        content: `你是一位资深的医疗数据分析专家，擅长从医疗管理系统中的统计数据中提取关键信息，判断整体健康趋势和潜在风险，并提供针对性的运营优化和干预建议。\n\n请根据用户提供的后台系统统计数据，完成以下任务：\n\n
+        content: `你是一位资深的医疗数据分析专家，擅长从医疗管理系统中的统计数据中提取关键信息，判断整体健康趋势和潜在风险，并提供针对性的运营优化和干预建议。\n\n
+        请根据用户提供的任务，判断是否涉及医疗数据分析。如果是，按照以下要求进行回答；如果不是，请根据实际问题提供简洁和针对性的解答：\n\n
+
+        **如果任务是医疗数据分析**，请根据用户提供的后台系统统计数据，完成以下任务：
         1. 解读数据：清晰地解读各类统计指标，揭示数据反映的趋势或异常。\n
         2. 识别风险：精准判断健康管理中的潜在风险，如慢性病高发、异常指标集中等。\n
         3. 提供建议：基于数据提出具体、可行的建议，包括：\n - 重点人群管理：为特定风险群体制定管理策略。\n - 运营优化：改进提醒机制、完善系统功能等。\n - 数据质量：提出数据采集或质量的改进建议。\n
         4. 明确优先级：指明需要立即处理的风险项和重点关注领域。\n\n
-        输出格式要求：请使用 Markdown 格式进行排版，但是不要输出markdown总的大标题。确保内容清晰、美观。特别注意换行。必须包含以下部分：\n\n
+        输出格式要求：请使用 Markdown 格式进行排版，但是不要输出markdown总的大标题。确保内容清晰、美观,特别注意换行。须包含以下部分：\n\n
         1.数据分析结果\n- 总览统计：数据统计结果说明了...\n\n
         2.变化趋势分析\n- 趋势分析：数据变化趋势体现了...\n\n
         3.潜在风险与异常\n1. ...\n2. ...\n\n
         4.优化建议\n- 重点人群管理：...\n- 运营改进：...\n\n
-        5.是否需要立即处理\n- 是/否：...（请明确说明理由）`
+        5.是否需要立即处理\n- 是/否：...（请明确说明理由）
+
+        **如果任务不涉及医疗数据分析**，请根据实际问题提供简洁、具体的解答，并避免使用上述格式。
+        输出格式要求：请使用 Markdown 进行排版，你可以根据用户实际问题进行发挥，不需要再进行数据分析工作，同时不必给出不进行数据分析的原因`
       }
 
       const statsText = `以下是当前页面的统计数据，请结合分析：\n` +
@@ -337,6 +394,8 @@ const handleAssistantChat = async () => {
       ]
 
       isFirstChat.value = false
+      // 保存isFirstChat状态
+      saveChatState({ isFirstChat: isFirstChat.value, sessionId: sessionId.value })
     }
 
     const res = await chatWithDeepSeek(requestPayload)
@@ -355,16 +414,22 @@ const handleAssistantChat = async () => {
       chatHistory.value.pop();
       const assistantMessage = { role: 'assistant', content: assistantResponse, htmlContent };
       chatHistory.value.push(assistantMessage);
+      // 保存助手回复到sessionStorage
+      saveChatHistory(chatHistory.value);
     } else {
             chatHistory.value.pop(); // 移除加载中消息
       const errorMessage = { role: 'assistant', content: '抱歉，未能获取有效响应。' };
       chatHistory.value.push(errorMessage);
+      // 保存错误消息到sessionStorage
+      saveChatHistory(chatHistory.value);
     }
   } catch (error) {
     console.error('Assistant API call failed:', error)
         chatHistory.value.pop(); // 移除加载中消息
     const errorMessage = { role: 'assistant', content: '抱歉，与助手通信时发生错误。' };
     chatHistory.value.push(errorMessage);
+    // 保存错误消息到sessionStorage
+    saveChatHistory(chatHistory.value);
   } finally {
     assistantLoading.value = false
   }
@@ -373,6 +438,20 @@ const handleAssistantChat = async () => {
 const handleDrawerClose = (done) => {
   // 如果需要，可以在这里添加确认逻辑
   done()
+}
+
+// 清除聊天历史（可在用户登出时调用）
+const clearChatHistory = () => {
+  try {
+    sessionStorage.removeItem('reports_chat_history')
+    sessionStorage.removeItem('reports_chat_state')
+    // 重置为初始状态
+    chatHistory.value = [{ role: 'assistant', content: '您好！我是您的智能化数据分析助手，我可以根据当前页面的统计数据为您提供分析和解答。' }]
+    isFirstChat.value = true
+    sessionId.value = ''
+  } catch (error) {
+    console.warn('清除聊天历史失败:', error)
+  }
 }
 
 const handleDeepSeekChat = async () => {
@@ -1821,9 +1900,31 @@ onUnmounted(() => {
   flex-grow: 1;
 }
 
-.chat-input-area .send-button {
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: 16px;
   flex-shrink: 0;
+}
+
+.clear-button {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+  color: white;
+  height: 32px;
+  padding: 0 15px;
+}
+
+.clear-button:hover {
+  background-color: #f78989;
+  border-color: #f78989;
+}
+
+.send-button {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 15px;
 }
 
 
