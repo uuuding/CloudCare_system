@@ -132,6 +132,18 @@ const routes = [
         meta: { title: '电子围栏', icon: 'Location' }
       },
       {
+        path: 'gps-alarm',
+        name: 'GpsAlarm',
+        component: () => import('@/views/elderly-service/gps-alarm/index.vue'),
+        meta: { title: 'GPS报警监控', icon: 'Warning' }
+      },
+      {
+        path: 'gps-device',
+        name: 'GpsDevice',
+        component: () => import('@/views/elderly-service/gps-device/index.vue'),
+        meta: { title: 'GPS设备管理', icon: 'Monitor' }
+      },
+      {
         path: 'family-interaction',
         name: 'FamilyInteraction',
         component: () => import('@/views/elderly-service/family-interaction/index.vue'),
@@ -240,6 +252,20 @@ const routes = [
         name: 'Help',
         component: () => import('@/views/help/index.vue'),
         meta: { title: '使用帮助', icon: 'QuestionFilled' }
+      }
+    ]
+  },
+  {
+    path: '/test',
+    component: Layout,
+    redirect: '/test/gps-push',
+    meta: { title: '测试工具', icon: 'Tools' },
+    children: [
+      {
+        path: 'gps-push',
+        name: 'GpsPushTest',
+        component: () => import('@/views/test/gps-push-test.vue'),
+        meta: { title: 'GPS推送测试', icon: 'Connection' }
       }
     ]
   },
