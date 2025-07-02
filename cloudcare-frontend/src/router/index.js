@@ -24,12 +24,19 @@ const routes = [
     path: '/',
     component: Layout,
     redirect: '/dashboard',
+    meta: { title: '首页', icon: 'HomeFilled' },
     children: [
       {
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '首页', icon: 'HomeFilled' }
+      },
+      {
+        path: 'doctor-dashboard',
+        name: 'DoctorDashboard',
+        component: () => import('@/views/dashboard/doctor.vue'),
+        meta: { title: '医生首页', icon: 'HomeFilled' }
       }
     ]
   },
@@ -214,13 +221,13 @@ const routes = [
         path: 'elder-account',
         name: 'ElderAccount',
         component: () => import('@/views/user/elder-account/index.vue'),
-        meta: { title: '老人账号管理', icon: 'Avatar' }
+        meta: { title: '老人账号管理', icon: 'Avatar', roles: ['ROLE_ADMIN'] }
       },
       {
         path: 'doctor-account',
         name: 'DoctorAccount',
         component: () => import('@/views/user/doctor-account/index.vue'),
-        meta: { title: '医生账号管理', icon: 'UserFilled' }
+        meta: { title: '医生账号管理', icon: 'UserFilled', roles: ['ROLE_ADMIN'] }
       },
       {
         path: 'admin-user',
@@ -288,14 +295,20 @@ const whiteList = ['/login', '/register', '/404']
 router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - 云护理系统` : '云护理系统'
-  
+
   // 判断是否有token
   const hasToken = getToken()
-  
+
   if (hasToken) {
     // 如果已登录，则不允许访问登录页
     if (to.path === '/login') {
-      next({ path: '/' })
+      const userStore = useUserStore()
+      // 根据用户类型跳转到对应的仪表盘
+      if (userStore.userType === 2) {
+        next({ path: '/doctor-dashboard' })
+      } else {
+        next({ path: '/dashboard' })
+      }
     } else {
       // 判断token是否过期
       if (isTokenExpired()) {
@@ -308,8 +321,18 @@ router.beforeEach(async (to, from, next) => {
         // 判断是否已获取用户信息
         const userStore = useUserStore()
         const hasRoles = userStore.roles && userStore.roles.length > 0
-        
+
         if (hasRoles) {
+          // 根据用户类型进行仪表盘重定向
+          if ((to.path === '/' || to.path === '/dashboard') && userStore.userType === 2) {
+            next('/doctor-dashboard')
+            return
+          }
+          if (to.path === '/doctor-dashboard' && userStore.userType !== 2) {
+            next('/dashboard')
+            return
+          }
+          
           // 判断是否有权限访问
           if (hasPermission(userStore.roles, to)) {
             next()
@@ -320,7 +343,17 @@ router.beforeEach(async (to, from, next) => {
           try {
             // 获取用户信息
             await userStore.getInfo()
-            
+
+            // 根据用户类型进行仪表盘重定向
+            if ((to.path === '/' || to.path === '/dashboard') && userStore.userType === 2) {
+              next('/doctor-dashboard')
+              return
+            }
+            if (to.path === '/doctor-dashboard' && userStore.userType !== 2) {
+              next('/dashboard')
+              return
+            }
+
             // 判断是否有权限访问
             if (hasPermission(userStore.roles, to)) {
               next()

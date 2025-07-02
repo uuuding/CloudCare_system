@@ -9,10 +9,11 @@ export const useUserStore = defineStore('user', {
     username: '',
     realName: '',
     avatar: '',
+    userType: null,
     roles: [],
     permissions: []
   }),
-  
+
   getters: {
     isLogin: (state) => !!state.token,
     isAdmin: (state) => state.roles.includes('ROLE_ADMIN'),
@@ -21,7 +22,7 @@ export const useUserStore = defineStore('user', {
     isElderly: (state) => state.roles.includes('ROLE_ELDERLY'),
     isFamily: (state) => state.roles.includes('ROLE_FAMILY')
   },
-  
+
   actions: {
     // 登录
     async login(userInfo) {
@@ -46,24 +47,25 @@ export const useUserStore = defineStore('user', {
         return Promise.reject(error)
       }
     },
-    
+
     // 获取用户信息
     async getInfo() {
       try {
         const res = await getUserInfo()
         const { data } = res
-        
+
         if (!data) {
           return Promise.reject('验证失败，请重新登录')
         }
-        
+
         const { userId, username, realName, avatar, userType } = data
-        
+
         this.userId = userId
         this.username = username
         this.realName = realName
         this.avatar = avatar
-        
+        this.userType = userType
+
         // 根据userType设置角色
         this.roles = []
         if (userType === 1) {
@@ -73,13 +75,13 @@ export const useUserStore = defineStore('user', {
         } else if (userType === 3) {
           this.roles = ['ROLE_ELDERLY']
         }
-        
+
         return Promise.resolve(data)
       } catch (error) {
         return Promise.reject(error)
       }
     },
-    
+
     // 退出登录
     async logout() {
       try {
@@ -90,7 +92,7 @@ export const useUserStore = defineStore('user', {
         return Promise.reject(error)
       }
     },
-    
+
     // 重置token
     resetToken() {
       this.token = ''
@@ -98,11 +100,12 @@ export const useUserStore = defineStore('user', {
       this.username = ''
       this.realName = ''
       this.avatar = ''
+      this.userType = null
       this.roles = []
       this.permissions = []
       removeToken()
     },
-    
+
     // 更新用户信息
     async updateUserInfo(userInfo) {
       try {
@@ -120,7 +123,7 @@ export const useUserStore = defineStore('user', {
         throw error
       }
     },
-    
+
     // 更新头像
     updateAvatar(avatarUrl) {
       this.avatar = avatarUrl

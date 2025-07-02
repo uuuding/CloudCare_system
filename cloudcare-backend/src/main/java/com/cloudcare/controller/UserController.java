@@ -199,16 +199,16 @@ public class UserController {
         if (avatar == null || avatar.trim().isEmpty()) {
             return Result.error("头像URL不能为空");
         }
-        
+
         // 获取当前登录用户ID
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User currentUser = userService.getUserByUsername(username);
-        
+
         if (currentUser == null) {
             return Result.error("用户不存在");
         }
-        
+
         boolean result = userService.updateAvatar(currentUser.getUserId(), avatar);
         return Result.success(result, "头像更新成功");
     }

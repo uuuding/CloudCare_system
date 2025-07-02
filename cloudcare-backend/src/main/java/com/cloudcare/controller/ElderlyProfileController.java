@@ -33,12 +33,13 @@ public class ElderlyProfileController {
 
     // 更新老人档案
     @PutMapping("/update")
-    public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile, @RequestBody(required = false) List<ElderlyChronicDisease> chronicDiseases) {
+    public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile,
+            @RequestBody(required = false) List<ElderlyChronicDisease> chronicDiseases) {
         elderlyProfileService.updateProfile(elderlyProfile, chronicDiseases);
         return Result.success(true);
     }
 
-@PostMapping("/add")
+    @PostMapping("/add")
     public Result<Boolean> addElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
         boolean success = elderlyProfileService.addProfile(elderlyProfile);
         return Result.success(success);
@@ -50,15 +51,15 @@ public class ElderlyProfileController {
         return Result.success(success);
     }
 
-
-@GetMapping("/chronic-diseases/{elderlyId}")
+    @GetMapping("/chronic-diseases/{elderlyId}")
     public Result<List<ElderlyChronicDisease>> getChronicDiseases(@PathVariable String elderlyId) {
         try {
             // 参数验证和转换
-            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId) || "null".equals(elderlyId)) {
+            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId)
+                    || "null".equals(elderlyId)) {
                 return Result.error("老人ID不能为空");
             }
-            
+
             Integer elderlyIdInt;
             try {
                 elderlyIdInt = Integer.parseInt(elderlyId.trim());
@@ -66,11 +67,11 @@ public class ElderlyProfileController {
                 log.error("老人ID格式错误: {}", elderlyId);
                 return Result.error("老人ID格式错误，请输入有效的数字");
             }
-            
+
             if (elderlyIdInt <= 0) {
                 return Result.error("老人ID必须大于0");
             }
-            
+
             List<ElderlyChronicDisease> diseases = elderlyProfileService.getChronicDiseasesByElderlyId(elderlyIdInt);
             return Result.success(diseases);
         } catch (Exception e) {

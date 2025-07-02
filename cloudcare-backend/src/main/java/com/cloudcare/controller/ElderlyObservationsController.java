@@ -18,7 +18,7 @@ public class ElderlyObservationsController {
 
     @Autowired
     private ElderlyObservationsService observationsService;
-    
+
     @Autowired
     private HealthAlertService healthAlertService;
 
@@ -35,10 +35,11 @@ public class ElderlyObservationsController {
     public Result<List<ElderlyObservations>> getObservationsByElderlyId(@PathVariable String elderlyId) {
         try {
             // 参数验证和转换
-            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId) || "null".equals(elderlyId)) {
+            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId)
+                    || "null".equals(elderlyId)) {
                 return Result.error("老人ID不能为空");
             }
-            
+
             int elderlyIdInt;
             try {
                 elderlyIdInt = Integer.parseInt(elderlyId.trim());
@@ -46,12 +47,13 @@ public class ElderlyObservationsController {
                 log.error("老人ID格式错误: {}", elderlyId);
                 return Result.error("老人ID格式错误，请输入有效的数字");
             }
-            
+
             if (elderlyIdInt <= 0) {
                 return Result.error("老人ID必须大于0");
             }
-            
-            List<ElderlyObservations> list = observationsService.getObservationsByElderlyIdOrderByTimeDesc(elderlyIdInt);
+
+            List<ElderlyObservations> list = observationsService
+                    .getObservationsByElderlyIdOrderByTimeDesc(elderlyIdInt);
             return Result.success(list);
         } catch (Exception e) {
             log.error("获取体检记录失败，elderlyId: {}, 错误信息: {}", elderlyId, e.getMessage(), e);
@@ -62,14 +64,15 @@ public class ElderlyObservationsController {
     // 根据时间范围查询老人体检记录
     @GetMapping("/by-elderly/{elderlyId}/range")
     public Result<List<ElderlyObservations>> getObservationsByTimeRange(@PathVariable String elderlyId,
-                                                                       @RequestParam String startTime,
-                                                                       @RequestParam String endTime) {
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
         try {
             // 参数验证和转换
-            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId) || "null".equals(elderlyId)) {
+            if (elderlyId == null || elderlyId.trim().isEmpty() || "undefined".equals(elderlyId)
+                    || "null".equals(elderlyId)) {
                 return Result.error("老人ID不能为空");
             }
-            
+
             int elderlyIdInt;
             try {
                 elderlyIdInt = Integer.parseInt(elderlyId.trim());
@@ -77,15 +80,17 @@ public class ElderlyObservationsController {
                 log.error("老人ID格式错误: {}", elderlyId);
                 return Result.error("老人ID格式错误，请输入有效的数字");
             }
-            
+
             if (elderlyIdInt <= 0) {
                 return Result.error("老人ID必须大于0");
             }
-            
-            List<ElderlyObservations> list = observationsService.getObservationsByElderlyIdAndTimeRange(elderlyIdInt, startTime, endTime);
+
+            List<ElderlyObservations> list = observationsService.getObservationsByElderlyIdAndTimeRange(elderlyIdInt,
+                    startTime, endTime);
             return Result.success(list);
         } catch (Exception e) {
-            log.error("根据时间范围查询体检记录失败，elderlyId: {}, startTime: {}, endTime: {}, 错误信息: {}", elderlyId, startTime, endTime, e.getMessage(), e);
+            log.error("根据时间范围查询体检记录失败，elderlyId: {}, startTime: {}, endTime: {}, 错误信息: {}", elderlyId, startTime,
+                    endTime, e.getMessage(), e);
             return Result.error("查询体检记录失败: " + e.getMessage());
         }
     }

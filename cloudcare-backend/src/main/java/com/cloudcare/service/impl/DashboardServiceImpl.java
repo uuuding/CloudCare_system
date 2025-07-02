@@ -17,7 +17,6 @@ import java.util.*;
 @Service
 public class DashboardServiceImpl implements DashboardService {
 
-
     /**
      * 获取天气信息
      *
