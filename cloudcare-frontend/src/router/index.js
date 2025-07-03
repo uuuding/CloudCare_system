@@ -24,19 +24,12 @@ const routes = [
     path: '/',
     component: Layout,
     redirect: '/dashboard',
-    meta: { title: '首页', icon: 'HomeFilled' },
     children: [
       {
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '首页', icon: 'HomeFilled' }
-      },
-      {
-        path: 'doctor-dashboard',
-        name: 'DoctorDashboard',
-        component: () => import('@/views/dashboard/doctor.vue'),
-        meta: { title: '医生首页', icon: 'HomeFilled' }
       }
     ]
   },
@@ -302,13 +295,7 @@ router.beforeEach(async (to, from, next) => {
   if (hasToken) {
     // 如果已登录，则不允许访问登录页
     if (to.path === '/login') {
-      const userStore = useUserStore()
-      // 根据用户类型跳转到对应的仪表盘
-      if (userStore.userType === 2) {
-        next({ path: '/doctor-dashboard' })
-      } else {
-        next({ path: '/dashboard' })
-      }
+      next({ path: '/dashboard' })
     } else {
       // 判断token是否过期
       if (isTokenExpired()) {
@@ -323,16 +310,6 @@ router.beforeEach(async (to, from, next) => {
         const hasRoles = userStore.roles && userStore.roles.length > 0
 
         if (hasRoles) {
-          // 根据用户类型进行仪表盘重定向
-          if ((to.path === '/' || to.path === '/dashboard') && userStore.userType === 2) {
-            next('/doctor-dashboard')
-            return
-          }
-          if (to.path === '/doctor-dashboard' && userStore.userType !== 2) {
-            next('/dashboard')
-            return
-          }
-          
           // 判断是否有权限访问
           if (hasPermission(userStore.roles, to)) {
             next()
