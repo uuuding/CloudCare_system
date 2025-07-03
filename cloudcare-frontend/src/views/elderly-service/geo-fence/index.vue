@@ -25,7 +25,13 @@
     <!-- 围栏列表 -->
     <el-card class="fence-list-card">
       <template #header>
-        <span>围栏列表</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>围栏列表</span>
+          <el-button type="info" @click="showAllEventsDialog = true">
+            <el-icon><List /></el-icon>
+            查看所有事件
+          </el-button>
+        </div>
       </template>
       
       <el-table :data="fenceList" v-loading="loading" stripe>
@@ -120,7 +126,20 @@
         </el-form-item>
         
         <el-form-item label="中心坐标" prop="centerCoordinates" v-if="fenceForm.fenceType === 'circle'">
-          <el-input v-model="fenceForm.centerCoordinates" placeholder="格式：经度,纬度 如：116.404,39.915" />
+          <el-input 
+            v-model="fenceForm.centerCoordinates" 
+            placeholder="格式：经度,纬度 如：114.125,22.699"
+          >
+            <template #append>
+              <el-button @click="getCurrentLocation" :loading="gettingLocation">
+                <el-icon><Location /></el-icon>
+                获取当前位置
+              </el-button>
+            </template>
+          </el-input>
+          <div class="form-tip">
+            提示：点击"获取当前位置"按钮可自动填入当前地理位置坐标
+          </div>
         </el-form-item>
         
         <el-form-item label="半径(米)" prop="radius" v-if="fenceForm.fenceType === 'circle'">
@@ -293,13 +312,155 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 所有围栏事件对话框 -->
+    <el-dialog
+      v-model="showAllEventsDialog"
+      title="所有围栏事件记录"
+      width="1200px"
+      :close-on-click-modal="false"
+    >
+      <!-- 筛选条件 -->
+      <div class="event-filters">
+        <el-form :model="eventFilters" inline>
+          <el-form-item label="老人选择">
+            <el-select
+              v-model="eventFilters.elderlyId"
+              placeholder="选择老人"
+              clearable
+              style="width: 150px"
+              @change="loadAllEvents"
+            >
+              <el-option label="全部" :value="null" />
+              <el-option
+                v-for="elderly in elderlyList"
+                :key="elderly.id"
+                :label="elderly.name"
+                :value="elderly.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="事件类型">
+            <el-select
+              v-model="eventFilters.eventType"
+              placeholder="选择事件类型"
+              clearable
+              style="width: 120px"
+              @change="loadAllEvents"
+            >
+              <el-option label="全部" :value="null" />
+              <el-option label="进入" value="enter" />
+              <el-option label="离开" value="exit" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="时间范围">
+            <el-date-picker
+              v-model="eventFilters.dateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              @change="loadAllEvents"
+              style="width: 350px"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadAllEvents">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="resetEventFilters">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 事件列表 -->
+      <el-table
+        v-loading="allEventsLoading"
+        :data="allEventList"
+        style="width: 100%"
+        height="400"
+      >
+        <el-table-column prop="eventTime" label="事件时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.eventTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="elderlyName" label="老人姓名" width="120" />
+        <el-table-column prop="fenceName" label="围栏名称" width="150" />
+        <el-table-column prop="eventType" label="事件类型" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.eventType === 'enter' ? 'success' : 'danger'">
+              {{ row.eventType === 'enter' ? '进入' : '离开' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="coordinates" label="位置坐标" width="200">
+          <template #default="{ row }">
+            {{ row.lat }}, {{ row.lon }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="macid" label="设备MAC" width="150" />
+        <el-table-column prop="alertSent" label="告警状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.alertSent === 1 ? 'success' : 'warning'">
+              {{ row.alertSent === 1 ? '已发送' : '未发送' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="isRead" label="读取状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isRead === 1 ? 'info' : 'danger'">
+              {{ row.isRead === 1 ? '已读' : '未读' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.isRead === 0"
+              size="small"
+              type="primary"
+              @click="markEventAsRead(row)"
+            >
+              标记已读
+            </el-button>
+            <span v-else class="text-gray-400">已读</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-container" style="margin-top: 20px;">
+        <el-pagination
+          v-model:current-page="eventCurrentPage"
+          v-model:page-size="eventPageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="eventTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleEventSizeChange"
+          @current-change="handleEventCurrentChange"
+        />
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showAllEventsDialog = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Link } from '@element-plus/icons-vue'
+import { Plus, Refresh, Link, Location, List, Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
 import * as geoFenceApi from '@/api/geoFence'
 import * as elderlyApi from '@/api/elderlyProfile'
@@ -308,22 +469,31 @@ import * as elderlyApi from '@/api/elderlyProfile'
 const loading = ref(false)
 const saving = ref(false)
 const eventsLoading = ref(false)
+const allEventsLoading = ref(false)
 const showCreateDialog = ref(false)
 const showEventsDialog = ref(false)
+const showAllEventsDialog = ref(false)
 const showBindDialog = ref(false)
 const binding = ref(false)
 const bindingsLoading = ref(false)
 const editingFence = ref(null)
+const gettingLocation = ref(false)
 
 // 分页数据
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
+// 事件分页数据
+const eventCurrentPage = ref(1)
+const eventPageSize = ref(10)
+const eventTotal = ref(0)
+
 // 列表数据
 const fenceList = ref([])
 const elderlyList = ref([])
 const eventList = ref([])
+const allEventList = ref([])
 const deviceBindings = ref([])
 
 // 表单数据
@@ -342,6 +512,13 @@ const fenceForm = reactive({
 const bindForm = reactive({
   macid: '',
   elderlyId: null
+})
+
+// 事件筛选条件
+const eventFilters = reactive({
+  elderlyId: null,
+  eventType: null,
+  dateRange: null
 })
 
 // 表单验证规则
@@ -427,9 +604,29 @@ const saveFence = async () => {
     await fenceFormRef.value.validate()
     saving.value = true
     
+    // 准备提交数据
+    const submitData = { ...fenceForm }
+    
+    // 处理圆形围栏的坐标数据：将centerCoordinates拆分为centerLat和centerLon
+    if (submitData.fenceType === 'circle' && submitData.centerCoordinates) {
+      const coords = submitData.centerCoordinates.split(',')
+      if (coords.length === 2) {
+        submitData.centerLon = parseFloat(coords[0].trim())
+        submitData.centerLat = parseFloat(coords[1].trim())
+      }
+      // 删除centerCoordinates字段，因为后端不需要这个字段
+      delete submitData.centerCoordinates
+    }
+    
+    // 处理多边形围栏的坐标数据
+    if (submitData.fenceType === 'polygon' && submitData.polygonCoordinates) {
+      submitData.coordinates = submitData.polygonCoordinates
+      delete submitData.polygonCoordinates
+    }
+    
     const response = editingFence.value 
-      ? await geoFenceApi.updateFence(editingFence.value.id, fenceForm)
-      : await geoFenceApi.createFence(fenceForm)
+      ? await geoFenceApi.updateFence(editingFence.value.id, submitData)
+      : await geoFenceApi.createFence(submitData)
     
     if (response.success) {
       ElMessage.success(editingFence.value ? '更新成功' : '创建成功')
@@ -448,16 +645,23 @@ const saveFence = async () => {
 
 const editFence = (fence) => {
   editingFence.value = fence
+  
+  // 处理中心坐标：将centerLat和centerLon组合成centerCoordinates格式
+  let centerCoordinates = ''
+  if (fence.fenceType === 'circle' && fence.centerLat && fence.centerLon) {
+    centerCoordinates = `${fence.centerLon},${fence.centerLat}`
+  }
+  
   Object.assign(fenceForm, {
-    fenceName: fence.fenceName,
-    elderlyId: fence.elderlyId,
-    fenceType: fence.fenceType,
-    centerCoordinates: fence.centerCoordinates,
-    radius: fence.radius,
-    polygonCoordinates: fence.polygonCoordinates,
-    alertType: fence.alertType,
-    emergencyContacts: fence.emergencyContacts,
-    description: fence.description
+    fenceName: fence.fenceName || '',
+    elderlyId: fence.elderlyId || null,
+    fenceType: fence.fenceType || 'circle',
+    centerCoordinates: centerCoordinates,
+    radius: fence.radius || 500,
+    polygonCoordinates: fence.polygonCoordinates || fence.coordinates || '',
+    alertType: fence.alertType || 'sms',
+    emergencyContacts: fence.emergencyContacts || '',
+    description: fence.description || ''
   })
   showCreateDialog.value = true
 }
@@ -526,20 +730,103 @@ const viewFenceEvents = async (fence) => {
 }
 
 const resetForm = () => {
+  // 重置编辑状态
   editingFence.value = null
+  
+  // 获取当前位置作为默认中心坐标
+  let defaultCenterCoordinates = ''
+  
+  // 如果浏览器支持地理位置API，可以获取当前位置
+  // 这里暂时使用默认值，实际项目中可以根据需求调整
+  defaultCenterCoordinates = '114.12503,22.69937' // 默认经度,纬度
+  
+  // 重置表单数据
   Object.assign(fenceForm, {
     fenceName: '',
     elderlyId: null,
     fenceType: 'circle',
-    centerCoordinates: '',
-    radius: 500,
+    centerCoordinates: defaultCenterCoordinates, // 使用默认中心坐标
+    radius: 500, // 默认半径500米
     polygonCoordinates: '',
     alertType: 'sms',
     emergencyContacts: '',
     description: ''
   })
+  
+  // 清除表单验证
   if (fenceFormRef.value) {
     fenceFormRef.value.clearValidate()
+  }
+}
+
+// 事件相关方法
+const loadAllEvents = async () => {
+  allEventsLoading.value = true
+  try {
+    const params = {
+      page: eventCurrentPage.value,
+      size: eventPageSize.value
+    }
+    
+    // 添加筛选条件
+    if (eventFilters.elderlyId) {
+      params.elderlyId = eventFilters.elderlyId
+    }
+    if (eventFilters.eventType) {
+      params.eventType = eventFilters.eventType
+    }
+    if (eventFilters.dateRange && eventFilters.dateRange.length === 2) {
+      params.startTime = eventFilters.dateRange[0]
+      params.endTime = eventFilters.dateRange[1]
+    }
+    
+    const response = await geoFenceApi.getAllEvents(params)
+    if (response.success) {
+      allEventList.value = response.data.list || []
+      eventTotal.value = response.data.total || 0
+    }
+  } catch (error) {
+    console.error('加载事件列表失败:', error)
+    ElMessage.error('加载事件列表失败')
+  } finally {
+    allEventsLoading.value = false
+  }
+}
+
+const handleEventSizeChange = (val) => {
+  eventPageSize.value = val
+  eventCurrentPage.value = 1
+  loadAllEvents()
+}
+
+const handleEventCurrentChange = (val) => {
+  eventCurrentPage.value = val
+  loadAllEvents()
+}
+
+const resetEventFilters = () => {
+  Object.assign(eventFilters, {
+    elderlyId: null,
+    eventType: null,
+    dateRange: null
+  })
+  eventCurrentPage.value = 1
+  loadAllEvents()
+}
+
+const markEventAsRead = async (event) => {
+  try {
+    const response = await geoFenceApi.markEventAsRead(event.id)
+    if (response.success) {
+      event.isRead = 1
+      event.readTime = new Date().toISOString()
+      ElMessage.success('标记已读成功')
+    } else {
+      ElMessage.error(response.message || '标记已读失败')
+    }
+  } catch (error) {
+    console.error('标记已读失败:', error)
+    ElMessage.error('标记已读失败')
   }
 }
 
@@ -630,6 +917,49 @@ const resetBindForm = () => {
     bindFormRef.value.clearValidate()
   }
 }
+
+// 获取当前位置
+const getCurrentLocation = () => {
+  if (!navigator.geolocation) {
+    ElMessage.error('您的浏览器不支持地理位置获取')
+    return
+  }
+  
+  gettingLocation.value = true
+  
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { longitude, latitude } = position.coords
+      fenceForm.centerCoordinates = `${longitude.toFixed(6)},${latitude.toFixed(6)}`
+      ElMessage.success('位置获取成功')
+      gettingLocation.value = false
+    },
+    (error) => {
+      console.error('获取位置失败:', error)
+      let errorMessage = '获取位置失败'
+      
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = '用户拒绝了位置请求'
+          break
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = '位置信息不可用'
+          break
+        case error.TIMEOUT:
+          errorMessage = '获取位置超时'
+          break
+      }
+      
+      ElMessage.error(errorMessage)
+      gettingLocation.value = false
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    }
+  )
+}
 </script>
 
 <style scoped>
@@ -689,5 +1019,23 @@ const resetBindForm = () => {
 :deep(.bind-list-card .el-card__header) {
   background-color: #f5f7fa;
   border-bottom: 1px solid #e4e7ed;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.event-filters {
+  background-color: #f5f7fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
 }
 </style>

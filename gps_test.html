@@ -158,7 +158,7 @@
                 
                 <div class="form-group">
                     <label for="gpsData">GPS数据 (JSON数组):</label>
-                    <textarea id="gpsData" placeholder='[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","GpsTime":1506399055758,"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]'></textarea>
+                    <textarea id="gpsData" placeholder='[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","MapLat":"22.69937","MapLon":"114.12503","GpsTime":1506399055758,"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]'></textarea>
                 </div>
                 
                 <button onclick="sendGpsData()">发送GPS数据</button>
@@ -267,19 +267,19 @@
         function loadPresetData(type) {
             const presets = {
                 home: {
-                    data: '[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","GpsTime":' + Date.now() + ',"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]',
+                    data: '[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","MapLat":"22.69937","MapLon":"114.12503","GpsTime":' + Date.now() + ',"Speed":0,"Dir":0,"Stats":"online","Value":"normal"}]',
                     description: '家庭位置（深圳）'
                 },
                 hospital: {
-                    data: '[{"Macid":"123456","Lat":"22.70123","Lon":"114.12789","GpsTime":' + Date.now() + ',"Speed":5,"Dir":45,"Stats":"online","Value":"normal"}]',
+                    data: '[{"Macid":"123456","Lat":"22.70123","Lon":"114.12789","MapLat":"22.70123","MapLon":"114.12789","GpsTime":' + Date.now() + ',"Speed":5,"Dir":45,"Stats":"online","Value":"normal"}]',
                     description: '医院位置'
                 },
                 park: {
-                    data: '[{"Macid":"123456","Lat":"22.69654","Lon":"114.12234","GpsTime":' + Date.now() + ',"Speed":2,"Dir":90,"Stats":"online","Value":"normal"}]',
+                    data: '[{"Macid":"123456","Lat":"22.69654","Lon":"114.12234","MapLat":"22.69654","MapLon":"114.12234","GpsTime":' + Date.now() + ',"Speed":2,"Dir":90,"Stats":"online","Value":"normal"}]',
                     description: '公园位置'
                 },
                 moving: {
-                    data: '[{"Macid":"123456","Lat":"22.69800","Lon":"114.12600","GpsTime":' + Date.now() + ',"Speed":15,"Dir":180,"Stats":"online","Value":"moving"}]',
+                    data: '[{"Macid":"123456","Lat":"22.69800","Lon":"114.12600","MapLat":"22.69800","MapLon":"114.12600","GpsTime":' + Date.now() + ',"Speed":15,"Dir":180,"Stats":"online","Value":"moving"}]',
                     description: '移动中'
                 }
             };

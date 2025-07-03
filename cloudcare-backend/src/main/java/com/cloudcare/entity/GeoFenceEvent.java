@@ -86,4 +86,14 @@ public class GeoFenceEvent {
      * 创建时间
      */
     private LocalDateTime createTime;
+    
+    /**
+     * 是否已读：1-已读，0-未读
+     */
+    private Integer isRead;
+    
+    /**
+     * 已读时间
+     */
+    private LocalDateTime readTime;
 }

@@ -2,6 +2,8 @@ package com.cloudcare.service.impl;
 
 import com.cloudcare.entity.GeoFence;
 import com.cloudcare.entity.GeoFenceEvent;
+import com.cloudcare.entity.ElderlyProfile;
+import com.cloudcare.service.ElderlyProfileService;
 import com.cloudcare.mapper.GeoFenceEventMapper;
 import com.cloudcare.mapper.GeoFenceMapper;
 import com.cloudcare.service.GeoFenceEventService;
@@ -13,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 电子围栏事件服务实现类
@@ -25,6 +29,7 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     private final GeoFenceEventMapper geoFenceEventMapper;
     private final GeoFenceMapper geoFenceMapper;
     private final SmsService smsService;
+    private final ElderlyProfileService elderlyProfileService;
 
     @Override
     public boolean saveGeoFenceEvent(GeoFenceEvent geoFenceEvent) {
@@ -142,6 +147,120 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
         }
     }
     
+    @Override
+    public List<GeoFenceEvent> getUnreadEvents(Integer limit) {
+        return geoFenceEventMapper.getUnreadEvents(limit);
+    }
+    
+    @Override
+    public boolean markEventAsRead(Long eventId) {
+        try {
+            return geoFenceEventMapper.markEventAsRead(eventId) > 0;
+        } catch (Exception e) {
+            log.error("标记事件为已读失败: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public List<com.cloudcare.dto.GeoFenceEventDTO> getUnreadEventsWithElderlyName(Integer limit) {
+        try {
+            List<GeoFenceEvent> events = geoFenceEventMapper.getUnreadEvents(limit);
+            return convertToDTO(events);
+        } catch (Exception e) {
+            log.error("查询未读事件失败: {}", e.getMessage(), e);
+            return new java.util.ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<com.cloudcare.dto.GeoFenceEventDTO> getRecentEventsWithElderlyName(Integer limit) {
+        try {
+            List<GeoFenceEvent> events = geoFenceEventMapper.getRecentEvents(limit);
+            return convertToDTO(events);
+        } catch (Exception e) {
+            log.error("查询最近事件失败: {}", e.getMessage(), e);
+            return new java.util.ArrayList<>();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getAllEventsWithPagination(Integer page, Integer size, Integer elderlyId, 
+                                                          String eventType, LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            // 计算偏移量
+            int offset = (page - 1) * size;
+            
+            List<GeoFenceEvent> events;
+            Long total;
+            
+            // 根据筛选条件选择不同的查询方法
+            if (elderlyId != null && eventType != null && startTime != null && endTime != null) {
+                // 多条件筛选，暂时使用基础查询
+                events = geoFenceEventMapper.getAllEventsWithPagination(offset, size);
+                total = geoFenceEventMapper.countAllEvents();
+            } else if (elderlyId != null) {
+                // 按老人ID筛选
+                events = geoFenceEventMapper.getEventsByElderlyIdWithPagination(elderlyId, offset, size);
+                total = geoFenceEventMapper.countEventsByElderlyId(elderlyId);
+            } else if (eventType != null) {
+                // 按事件类型筛选
+                events = geoFenceEventMapper.getEventsByTypeWithPagination(eventType, offset, size);
+                total = geoFenceEventMapper.countEventsByType(eventType);
+            } else if (startTime != null && endTime != null) {
+                // 按时间范围筛选
+                events = geoFenceEventMapper.getEventsByTimeRangeWithPagination(startTime, endTime, offset, size);
+                total = geoFenceEventMapper.countEventsByTimeRange2(startTime, endTime);
+            } else {
+                // 无筛选条件，查询所有
+                events = geoFenceEventMapper.getAllEventsWithPagination(offset, size);
+                total = geoFenceEventMapper.countAllEvents();
+            }
+            
+            // 转换为DTO
+            List<com.cloudcare.dto.GeoFenceEventDTO> eventDTOs = convertToDTO(events);
+            
+            // 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("list", eventDTOs);
+            result.put("total", total);
+            result.put("page", page);
+            result.put("size", size);
+            result.put("pages", (total + size - 1) / size); // 总页数
+            
+            return result;
+        } catch (Exception e) {
+            log.error("分页查询所有围栏事件失败: {}", e.getMessage(), e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("list", new java.util.ArrayList<>());
+            errorResult.put("total", 0L);
+            errorResult.put("page", page);
+            errorResult.put("size", size);
+            errorResult.put("pages", 0L);
+            return errorResult;
+        }
+    }
+    
+    /**
+     * 将GeoFenceEvent列表转换为DTO列表
+     */
+    private List<com.cloudcare.dto.GeoFenceEventDTO> convertToDTO(List<GeoFenceEvent> events) {
+        List<com.cloudcare.dto.GeoFenceEventDTO> dtoList = new java.util.ArrayList<>();
+        for (GeoFenceEvent event : events) {
+            String elderlyName = "未知";
+            try {
+                com.cloudcare.entity.ElderlyProfile elderly = elderlyProfileService.getElderlyProfileById(event.getElderlyId());
+                if (elderly != null && elderly.getName() != null) {
+                    elderlyName = elderly.getName();
+                }
+            } catch (Exception e) {
+                log.warn("获取老人姓名失败: elderlyId={}, error={}", event.getElderlyId(), e.getMessage());
+            }
+            dtoList.add(com.cloudcare.dto.GeoFenceEventDTO.fromEntity(event, elderlyName));
+        }
+        return dtoList;
+    }
+    
     /**
      * 发送短信提醒
      */
@@ -151,6 +270,7 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             for (String phone : phones) {
                 phone = phone.trim();
                 if (!phone.isEmpty()) {
+                    // 直接使用预生成的告警内容
                     boolean sent = smsService.sendSms(phone, alertContent);
                     if (sent) {
                         log.info("围栏事件短信提醒发送成功: phone={}", phone);

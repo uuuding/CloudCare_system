@@ -216,13 +216,59 @@ public class GeoFenceController {
      * 查询最近的围栏事件
      */
     @GetMapping("/events/recent")
-    public Result<List<GeoFenceEvent>> getRecentFenceEvents(@RequestParam(defaultValue = "10") Integer limit) {
+    public Result<List<com.cloudcare.dto.GeoFenceEventDTO>> getRecentFenceEvents(
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(defaultValue = "false") Boolean unread) {
         try {
-            List<GeoFenceEvent> events = geoFenceEventService.getRecentEvents(limit);
+            List<com.cloudcare.dto.GeoFenceEventDTO> events;
+            if (unread) {
+                events = geoFenceEventService.getUnreadEventsWithElderlyName(limit);
+            } else {
+                events = geoFenceEventService.getRecentEventsWithElderlyName(limit);
+            }
             return Result.success(events);
         } catch (Exception e) {
             log.error("查询最近围栏事件失败: {}", e.getMessage(), e);
             return Result.error("查询最近围栏事件失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 分页查询所有围栏事件（支持筛选）
+     */
+    @GetMapping("/events/all")
+    public Result<Map<String, Object>> getAllFenceEvents(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Integer elderlyId,
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        try {
+            Map<String, Object> result = geoFenceEventService.getAllEventsWithPagination(
+                page, size, elderlyId, eventType, startTime, endTime);
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("查询所有围栏事件失败: {}", e.getMessage(), e);
+            return Result.error("查询所有围栏事件失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 标记围栏事件为已读
+     */
+    @PostMapping("/events/{eventId}/read")
+    public Result<Boolean> markEventAsRead(@PathVariable Long eventId) {
+        try {
+            boolean success = geoFenceEventService.markEventAsRead(eventId);
+            if (success) {
+                return Result.success(true);
+            } else {
+                return Result.error("标记已读失败");
+            }
+        } catch (Exception e) {
+            log.error("标记事件已读失败: {}", e.getMessage(), e);
+            return Result.error("标记事件已读失败: " + e.getMessage());
         }
     }
 

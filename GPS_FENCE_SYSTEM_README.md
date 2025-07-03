@@ -60,8 +60,10 @@ public class GpsLocation {
     private String macid;        // 设备编号（IMEI）
     private Integer elderlyId;   // 老人ID
     private Long gpsTime;        // GPS时间戳
-    private Double lat;          // 纬度
-    private Double lon;          // 经度
+    private Double lat;          // GPS原始纬度
+    private Double lon;          // GPS原始经度
+    private Double mapLat;       // 地图坐标纬度
+    private Double mapLon;       // 地图坐标经度
     private Double speed;        // 速度
     private Double dir;          // 方向角度
     // ... 其他字段
@@ -214,8 +216,18 @@ http://8.137.152.246:8080/api/gps/push
 
 **请求示例**：
 ```
-method=status&serialNumber=1506399055758&data=[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","GpsTime":1506399055758,"Speed":0,"Dir":0}]
+method=status&serialNumber=1506399055758&data=[{"Macid":"123456","Lat":"22.69937","Lon":"114.12503","MapLat":"22.69937","MapLon":"114.12503","GpsTime":1506399055758,"Speed":0,"Dir":0}]
 ```
+
+**GPS数据字段说明**：
+- `Macid`: 设备编号（IMEI）
+- `Lat`: GPS原始纬度
+- `Lon`: GPS原始经度
+- `MapLat`: 地图坐标纬度（可选，用于地图显示）
+- `MapLon`: 地图坐标经度（可选，用于地图显示）
+- `GpsTime`: GPS时间戳（毫秒）
+- `Speed`: 速度（km/h）
+- `Dir`: 方向角度
 
 **响应示例**：
 ```

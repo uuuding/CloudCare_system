@@ -3,9 +3,12 @@ package com.cloudcare.service.impl;
 import com.cloudcare.entity.GeoFence;
 import com.cloudcare.entity.GeoFenceEvent;
 import com.cloudcare.entity.GpsLocation;
+import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.mapper.GeoFenceMapper;
 import com.cloudcare.service.GeoFenceEventService;
 import com.cloudcare.service.GeoFenceService;
+import com.cloudcare.service.ElderlyProfileService;
+import com.cloudcare.service.DeviceBindingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,8 @@ public class GeoFenceServiceImpl implements GeoFenceService {
     private final GeoFenceMapper geoFenceMapper;
     private final GeoFenceEventService geoFenceEventService;
     private final ObjectMapper objectMapper;
+    private final ElderlyProfileService elderlyProfileService;
+    private final DeviceBindingService deviceBindingService;
     
     // 缓存老人的上一次围栏状态，用于判断进入/离开事件
     // Key: elderlyId + "-" + fenceId, Value: 是否在围栏内
@@ -99,7 +104,11 @@ public class GeoFenceServiceImpl implements GeoFenceService {
 
     @Override
     public boolean isLocationInFence(GpsLocation gpsLocation, GeoFence geoFence) {
-        if (gpsLocation.getLat() == null || gpsLocation.getLon() == null) {
+        // 优先使用地图坐标，如果不可用则使用GPS坐标
+        Double lat = gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat();
+        Double lon = gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon();
+        
+        if (lat == null || lon == null) {
             return false;
         }
         
@@ -110,7 +119,7 @@ public class GeoFenceServiceImpl implements GeoFenceService {
             }
             
             double distance = calculateDistance(
-                    gpsLocation.getLat(), gpsLocation.getLon(),
+                    lat, lon,
                     geoFence.getCenterLat(), geoFence.getCenterLon()
             );
             
@@ -118,7 +127,7 @@ public class GeoFenceServiceImpl implements GeoFenceService {
             
         } else if ("polygon".equals(geoFence.getFenceType())) {
             // 多边形围栏检测
-            return isPointInPolygon(gpsLocation.getLat(), gpsLocation.getLon(), geoFence.getCoordinates());
+            return isPointInPolygon(lat, lon, geoFence.getCoordinates());
         }
         
         return false;
@@ -162,8 +171,11 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                         event.setFenceId(fence.getId());
                         event.setFenceName(fence.getFenceName());
                         event.setEventType(eventType);
-                        event.setLat(gpsLocation.getLat());
-                        event.setLon(gpsLocation.getLon());
+                        // 优先使用地图坐标记录事件位置
+                        Double eventLat = gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat();
+                        Double eventLon = gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon();
+                        event.setLat(eventLat);
+                        event.setLon(eventLon);
                         event.setLocationId(gpsLocation.getId());
                         event.setMacid(gpsLocation.getMacid());
                         event.setEventTime(LocalDateTime.now());
@@ -171,7 +183,7 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                         event.setAlertType(fence.getAlertType());
                         
                         // 生成提醒内容
-                        String alertContent = generateAlertContent(gpsLocation.getElderlyId(), fence.getFenceName(), eventType);
+                        String alertContent = generateAlertContent(gpsLocation.getElderlyId(), fence.getFenceName(), eventType, eventLat, eventLon);
                         event.setAlertContent(alertContent);
                         
                         // 保存事件记录
@@ -180,9 +192,20 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                         // 发送提醒
                         geoFenceEventService.sendFenceEventAlert(event);
                         
-                        log.info("围栏事件触发: 老人ID={}, 围栏={}, 事件类型={}, 位置=({}, {})", 
-                                gpsLocation.getElderlyId(), fence.getFenceName(), eventType, 
-                                gpsLocation.getLat(), gpsLocation.getLon());
+                        // 获取老人姓名用于日志记录
+                        String elderlyName = "未知老人";
+                        try {
+                            ElderlyProfile elderlyProfile = elderlyProfileService.getElderlyProfileById(gpsLocation.getElderlyId());
+                            if (elderlyProfile != null) {
+                                elderlyName = elderlyProfile.getName();
+                            }
+                        } catch (Exception e) {
+                            log.warn("获取老人信息失败: elderlyId={}", gpsLocation.getElderlyId(), e);
+                        }
+                        
+                        log.info("围栏事件触发: 老人{}(ID={}), 围栏={}, 事件类型={}, 位置=({}, {}), 设备MAC={}", 
+                                elderlyName, gpsLocation.getElderlyId(), fence.getFenceName(), eventType, 
+                                eventLat, eventLon, gpsLocation.getMacid());
                     }
                     
                     // 更新状态缓存
@@ -251,9 +274,28 @@ public class GeoFenceServiceImpl implements GeoFenceService {
     /**
      * 生成提醒内容
      */
-    private String generateAlertContent(Integer elderlyId, String fenceName, String eventType) {
-        String action = "enter".equals(eventType) ? "进入" : "离开";
-        return String.format("【云护CloudCare】老人（ID:%d）已%s电子围栏\"%s\"，请及时关注。", 
-                elderlyId, action, fenceName);
+    private String generateAlertContent(Integer elderlyId, String fenceName, String eventType, Double lat, Double lon) {
+        try {
+            // 获取老人信息
+            ElderlyProfile elderlyProfile = elderlyProfileService.getElderlyProfileById(elderlyId);
+            String elderlyName = elderlyProfile != null ? elderlyProfile.getName() : "未知老人";
+            
+            String action = "enter".equals(eventType) ? "进入" : "离开";
+            String locationInfo = "";
+            if (lat != null && lon != null) {
+                locationInfo = String.format("，当前位置：纬度%.6f，经度%.6f", lat, lon);
+            }
+            
+            // 获取当前时间
+            String currentTime = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            
+            return String.format("【云护CloudCare】老人%s已%s电子围栏\"%s\"%s，事件时间：%s，请及时关注。", 
+                    elderlyName, action, fenceName, locationInfo, currentTime);
+        } catch (Exception e) {
+            log.error("生成提醒内容失败: elderlyId={}, fenceName={}, eventType={}", elderlyId, fenceName, eventType, e);
+            String action = "enter".equals(eventType) ? "进入" : "离开";
+            return String.format("【云护CloudCare】老人（ID:%d）已%s电子围栏\"%s\"，请及时关注。", 
+                    elderlyId, action, fenceName);
+        }
     }
 }

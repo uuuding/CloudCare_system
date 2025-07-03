@@ -59,4 +59,9 @@ public class ElderlyProfileServiceImpl implements ElderlyProfileService {
     public List<ElderlyChronicDisease> getChronicDiseasesByElderlyId(Integer elderlyId) {
         return elderlyProfileMapper.selectChronicDiseasesByElderlyId(elderlyId);
     }
+
+    @Override
+    public ElderlyProfile getElderlyProfileById(Integer id) {
+        return elderlyProfileMapper.selectById(id);
+    }
 }

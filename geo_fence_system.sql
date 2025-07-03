@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS `gps_location` (
     `upd_time` BIGINT NULL COMMENT '最后更新位置时间',
     `lat` DOUBLE NULL COMMENT 'GPS纬度',
     `lon` DOUBLE NULL COMMENT 'GPS经度',
+    `map_lat` DOUBLE NULL COMMENT '地图纬度',
+    `map_lon` DOUBLE NULL COMMENT '地图经度',
     `speed` DOUBLE NULL COMMENT '速度（单位：km/h）',
     `dir` DOUBLE NULL COMMENT '方向角度',
     `stats` VARCHAR(500) NULL COMMENT '状态字段，逗号分隔',
@@ -84,6 +86,8 @@ CREATE TABLE IF NOT EXISTS `geo_fence_event` (
     `alert_sent_time` DATETIME NULL COMMENT '提醒发送时间',
     `alert_type` VARCHAR(20) NULL COMMENT '提醒方式',
     `alert_content` TEXT NULL COMMENT '提醒内容',
+    `is_read` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已读：1-已读，0-未读',
+    `read_time` DATETIME NULL COMMENT '已读时间',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
     INDEX `idx_elderly_id` (`elderly_id`),
@@ -91,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `geo_fence_event` (
     INDEX `idx_event_type` (`event_type`),
     INDEX `idx_event_time` (`event_time`),
     INDEX `idx_alert_sent` (`alert_sent`),
+    INDEX `idx_is_read` (`is_read`),
     INDEX `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='电子围栏事件记录表';
 
@@ -179,6 +184,8 @@ SELECT
     gl1.macid,
     gl1.lat,
     gl1.lon,
+    gl1.map_lat,
+    gl1.map_lon,
     gl1.speed,
     gl1.dir,
     gl1.gps_time,

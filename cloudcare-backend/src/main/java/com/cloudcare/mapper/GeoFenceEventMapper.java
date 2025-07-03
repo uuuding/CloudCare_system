@@ -73,4 +73,78 @@ public interface GeoFenceEventMapper extends BaseMapper<GeoFenceEvent> {
             @Param("eventType") String eventType,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查询未读的围栏事件
+     */
+    @Select("SELECT * FROM geo_fence_event WHERE is_read = 0 OR is_read IS NULL ORDER BY event_time DESC LIMIT #{limit}")
+    List<GeoFenceEvent> getUnreadEvents(@Param("limit") Integer limit);
+    
+    /**
+     * 标记事件为已读
+     */
+    @Select("UPDATE geo_fence_event SET is_read = 1, read_time = NOW() WHERE id = #{eventId}")
+    int markEventAsRead(@Param("eventId") Long eventId);
+    
+    /**
+     * 分页查询所有围栏事件
+     */
+    @Select("SELECT * FROM geo_fence_event ORDER BY event_time DESC LIMIT #{offset}, #{size}")
+    List<GeoFenceEvent> getAllEventsWithPagination(
+            @Param("offset") Integer offset,
+            @Param("size") Integer size);
+    
+    /**
+     * 根据老人ID分页查询围栏事件
+     */
+    @Select("SELECT * FROM geo_fence_event WHERE elderly_id = #{elderlyId} ORDER BY event_time DESC LIMIT #{offset}, #{size}")
+    List<GeoFenceEvent> getEventsByElderlyIdWithPagination(
+            @Param("elderlyId") Integer elderlyId,
+            @Param("offset") Integer offset,
+            @Param("size") Integer size);
+    
+    /**
+     * 根据事件类型分页查询围栏事件
+     */
+    @Select("SELECT * FROM geo_fence_event WHERE event_type = #{eventType} ORDER BY event_time DESC LIMIT #{offset}, #{size}")
+    List<GeoFenceEvent> getEventsByTypeWithPagination(
+            @Param("eventType") String eventType,
+            @Param("offset") Integer offset,
+            @Param("size") Integer size);
+    
+    /**
+     * 根据时间范围分页查询围栏事件
+     */
+    @Select("SELECT * FROM geo_fence_event WHERE event_time >= #{startTime} AND event_time <= #{endTime} ORDER BY event_time DESC LIMIT #{offset}, #{size}")
+    List<GeoFenceEvent> getEventsByTimeRangeWithPagination(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("offset") Integer offset,
+            @Param("size") Integer size);
+    
+    /**
+     * 统计所有围栏事件数量
+     */
+    @Select("SELECT COUNT(*) FROM geo_fence_event")
+    Long countAllEvents();
+    
+    /**
+     * 根据老人ID统计围栏事件数量
+     */
+    @Select("SELECT COUNT(*) FROM geo_fence_event WHERE elderly_id = #{elderlyId}")
+    Long countEventsByElderlyId(@Param("elderlyId") Integer elderlyId);
+    
+    /**
+     * 根据事件类型统计围栏事件数量
+     */
+    @Select("SELECT COUNT(*) FROM geo_fence_event WHERE event_type = #{eventType}")
+    Long countEventsByType(@Param("eventType") String eventType);
+    
+    /**
+     * 根据时间范围统计围栏事件数量
+     */
+    @Select("SELECT COUNT(*) FROM geo_fence_event WHERE event_time >= #{startTime} AND event_time <= #{endTime}")
+    Long countEventsByTimeRange2(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
 }

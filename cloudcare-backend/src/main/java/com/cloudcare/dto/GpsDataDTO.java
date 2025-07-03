@@ -1,12 +1,13 @@
 package com.cloudcare.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
 /**
- * GPS数据推送DTO
+ * GPS数据传输对象
  */
 @Data
 public class GpsDataDTO {
@@ -22,14 +23,15 @@ public class GpsDataDTO {
     private String serialNumber;
     
     /**
-     * 设备数据数组
+     * GPS设备数据数组
      */
     private List<GpsLocationData> data;
     
     /**
-     * GPS定位数据
+     * GPS定位数据内部类
      */
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class GpsLocationData {
         
         /**
@@ -67,6 +69,18 @@ public class GpsDataDTO {
          */
         @JsonProperty("Lon")
         private String lon;
+        
+        /**
+         * 地图纬度
+         */
+        @JsonProperty("MapLat")
+        private String mapLat;
+        
+        /**
+         * 地图经度
+         */
+        @JsonProperty("MapLon")
+        private String mapLon;
         
         /**
          * 速度（单位：km/h）

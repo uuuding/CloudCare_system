@@ -53,6 +53,16 @@ public class GpsLocation {
     private Double lon;
     
     /**
+     * 地图纬度
+     */
+    private Double mapLat;
+    
+    /**
+     * 地图经度
+     */
+    private Double mapLon;
+    
+    /**
      * 速度（单位：km/h）
      */
     private Double speed;

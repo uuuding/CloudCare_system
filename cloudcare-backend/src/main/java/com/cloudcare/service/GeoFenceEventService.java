@@ -4,6 +4,7 @@ import com.cloudcare.entity.GeoFenceEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 电子围栏事件服务接口
@@ -88,4 +89,45 @@ public interface GeoFenceEventService {
      * @return 处理的告警数量
      */
     int processUnsentAlerts();
+
+    /**
+     * 查询未读的围栏事件
+     * @param limit 限制数量
+     * @return 未读事件记录列表
+     */
+    List<GeoFenceEvent> getUnreadEvents(Integer limit);
+
+    /**
+     * 标记围栏事件为已读
+     * @param eventId 事件ID
+     * @return 标记结果
+     */
+    boolean markEventAsRead(Long eventId);
+    
+    /**
+     * 查询未读的围栏事件（包含老人姓名）
+     * @param limit 限制数量
+     * @return 未读事件记录列表
+     */
+    List<com.cloudcare.dto.GeoFenceEventDTO> getUnreadEventsWithElderlyName(Integer limit);
+    
+    /**
+     * 查询最近的围栏事件（包含老人姓名）
+     * @param limit 限制数量
+     * @return 事件记录列表
+     */
+    List<com.cloudcare.dto.GeoFenceEventDTO> getRecentEventsWithElderlyName(Integer limit);
+    
+    /**
+     * 分页查询所有围栏事件（支持筛选）
+     * @param page 页码
+     * @param size 每页大小
+     * @param elderlyId 老人ID（可选）
+     * @param eventType 事件类型（可选）
+     * @param startTime 开始时间（可选）
+     * @param endTime 结束时间（可选）
+     * @return 分页结果
+     */
+    Map<String, Object> getAllEventsWithPagination(Integer page, Integer size, Integer elderlyId, 
+                                                   String eventType, LocalDateTime startTime, LocalDateTime endTime);
 }

@@ -79,6 +79,31 @@ export function getFenceEvents(fenceId, params) {
 }
 
 /**
+ * 获取所有围栏事件记录
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getAllEvents(params) {
+  return request({
+    url: '/geo-fence/events/all',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 标记事件为已读
+ * @param {Number} eventId 事件ID
+ * @returns {Promise}
+ */
+export function markEventAsRead(eventId) {
+  return request({
+    url: `/geo-fence/events/${eventId}/read`,
+    method: 'post'
+  })
+}
+
+/**
  * 获取老人最新位置
  * @param {Number} elderlyId 老人ID
  * @returns {Promise}
@@ -164,6 +189,8 @@ export default {
   deleteFence,
   getFenceDetail,
   getFenceEvents,
+  getAllEvents,
+  markEventAsRead,
   getLatestLocation,
   getFenceStats,
   testGpsPush,

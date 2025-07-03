@@ -36,25 +36,41 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
             if ("status".equals(gpsDataDTO.getMethod()) && gpsDataDTO.getData() != null) {
                 for (GpsDataDTO.GpsLocationData locationData : gpsDataDTO.getData()) {
+                    // 记录接收到的原始macid
+                    log.info("处理GPS数据，原始macid: [{}], 长度: {}", 
+                            locationData.getMacid(), 
+                            locationData.getMacid() != null ? locationData.getMacid().length() : 0);
+                    
                     // 转换并保存GPS数据
                     GpsLocation gpsLocation = convertToGpsLocation(locationData);
                     if (gpsLocation != null) {
                         // 查询或获取老人ID
                         Integer elderlyId = getElderlyIdByMacid(locationData.getMacid());
+                        log.info("设备绑定查询结果，macid: [{}], elderlyId: {}", 
+                                locationData.getMacid(), elderlyId);
+                        
                         if (elderlyId != null) {
                             gpsLocation.setElderlyId(elderlyId);
+                            log.info("成功设置elderly_id: {} 到GPS记录", elderlyId);
+                        } else {
+                            log.warn("未找到设备 [{}] 的绑定关系，elderly_id将为null", locationData.getMacid());
                         }
                         
                         // 保存GPS记录
                         boolean saved = saveGpsLocation(gpsLocation);
                         if (saved) {
-                            log.info("GPS数据保存成功，设备: {}, 老人ID: {}, 位置: ({}, {})", 
+                            // 优先显示地图坐标
+                            Double displayLat = gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat();
+                            Double displayLon = gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon();
+                            log.info("GPS数据保存成功，设备: [{}], 老人ID: {}, 位置: ({}, {})", 
                                     gpsLocation.getMacid(), gpsLocation.getElderlyId(), 
-                                    gpsLocation.getLat(), gpsLocation.getLon());
+                                    displayLat, displayLon);
                             
                             // 检查围栏事件
                             if (elderlyId != null) {
                                 geoFenceService.checkFenceEvents(gpsLocation);
+                            } else {
+                                log.warn("跳过围栏检查，因为设备 [{}] 未绑定老人", gpsLocation.getMacid());
                             }
                         }
                     }
@@ -132,6 +148,14 @@ public class GpsLocationServiceImpl implements GpsLocationService {
             }
             if (locationData.getLon() != null && !locationData.getLon().isEmpty()) {
                 gpsLocation.setLon(Double.parseDouble(locationData.getLon()));
+            }
+            
+            // 转换地图坐标
+            if (locationData.getMapLat() != null && !locationData.getMapLat().isEmpty()) {
+                gpsLocation.setMapLat(Double.parseDouble(locationData.getMapLat()));
+            }
+            if (locationData.getMapLon() != null && !locationData.getMapLon().isEmpty()) {
+                gpsLocation.setMapLon(Double.parseDouble(locationData.getMapLon()));
             }
             
             // 转换速度和方向

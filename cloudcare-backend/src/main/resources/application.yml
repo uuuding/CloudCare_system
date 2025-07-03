@@ -83,3 +83,6 @@ logging:
   level:
     com.cloudcare: debug
     org.springframework: warn
+
+deepseek:
+  api-key: sk-a78ba32fa79c443299eaa7ed4b6d8315

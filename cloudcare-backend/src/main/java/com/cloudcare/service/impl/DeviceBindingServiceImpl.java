@@ -118,10 +118,18 @@ public class DeviceBindingServiceImpl implements DeviceBindingService {
     @Override
     public Integer getElderlyIdByMacid(String macid) {
         try {
+            log.debug("查询设备绑定关系，macid: [{}]", macid);
             DeviceBinding binding = deviceBindingMapper.getBindingByMacid(macid);
-            return binding != null ? binding.getElderlyId() : null;
+            if (binding != null) {
+                log.debug("找到绑定关系，macid: [{}] -> elderlyId: {}, status: {}", 
+                        macid, binding.getElderlyId(), binding.getStatus());
+                return binding.getElderlyId();
+            } else {
+                log.warn("未找到设备 [{}] 的有效绑定关系", macid);
+                return null;
+            }
         } catch (Exception e) {
-            log.error("根据设备编号获取老人ID失败: macid={}", macid, e);
+            log.error("根据设备编号获取老人ID失败: macid=[{}]", macid, e);
             return null;
         }
     }

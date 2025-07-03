@@ -27,4 +27,7 @@ public interface ElderlyProfileService {
     // 获取老人既往病史
     public List<ElderlyChronicDisease> getChronicDiseasesByElderlyId(Integer elderlyId);
 
+    // 根据ID获取老人信息
+    public ElderlyProfile getElderlyProfileById(Integer id);
+
 }
