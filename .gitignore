@@ -4,3 +4,4 @@
 node_modules
 /cloudcare-backend/src/main/resources/application-dev.yml
 /cloudcare-frontend/dist/
+/cloudcare-backend/src/main/resources/application.yml
