@@ -20,6 +20,7 @@
             type="text"
             autocomplete="off"
             prefix-icon="User"
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
@@ -30,6 +31,7 @@
             type="text"
             autocomplete="off"
             prefix-icon="UserFilled"
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
@@ -40,6 +42,7 @@
             type="text"
             autocomplete="off"
             prefix-icon="Phone"
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
@@ -50,6 +53,7 @@
             type="email"
             autocomplete="off"
             prefix-icon="Message"
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
@@ -61,6 +65,7 @@
             autocomplete="off"
             prefix-icon="Lock"
             show-password
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
@@ -72,6 +77,7 @@
             autocomplete="off"
             prefix-icon="Lock"
             show-password
+            @keyup.enter="handleRegister"
           />
         </el-form-item>
         
