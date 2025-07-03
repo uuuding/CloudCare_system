@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequestMapping("/api/deepseek")
 public class DeepSeekController {
 
-    @Value("${deepseek.api.key}")
+    @Value("${deepseek.api-key}")
     private String deepSeekApiKey;
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
