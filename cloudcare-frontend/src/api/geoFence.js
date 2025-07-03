@@ -145,6 +145,18 @@ export function getDeviceBindings(params) {
   })
 }
 
+/**
+ * 解绑设备
+ * @param {String} macid 设备MAC地址
+ * @returns {Promise}
+ */
+export function unbindDevice(macid) {
+  return request({
+    url: `/gps/unbind/${macid}`,
+    method: 'delete'
+  })
+}
+
 export default {
   getFenceList,
   createFence,
@@ -156,5 +168,6 @@ export default {
   getFenceStats,
   testGpsPush,
   bindDevice,
-  getDeviceBindings
+  getDeviceBindings,
+  unbindDevice
 }

@@ -30,6 +30,19 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
+    // 检查是否是GPS相关API的响应格式 {success: true/false, data: [], message: ''}
+    if (res.hasOwnProperty('success')) {
+      if (!res.success) {
+        ElMessage({
+          message: res.message || '系统错误',
+          type: 'error',
+          duration: 5 * 1000
+        })
+        return Promise.reject(new Error(res.message || '系统错误'))
+      }
+      return res
+    }
+
     // 如果返回的状态码不是200，则判断为错误
     if (res.code !== 200) {
       ElMessage({

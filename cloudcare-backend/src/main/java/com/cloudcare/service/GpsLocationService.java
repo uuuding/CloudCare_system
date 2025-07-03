@@ -56,14 +56,6 @@ public interface GpsLocationService {
     Integer getElderlyIdByMacid(String macid);
 
     /**
-     * 绑定设备与老人的关系
-     * @param macid 设备编号
-     * @param elderlyId 老人ID
-     * @return 绑定结果
-     */
-    boolean bindDeviceToElderly(String macid, Integer elderlyId);
-
-    /**
      * 数据清理：删除指定时间之前的GPS记录
      * @param beforeTime 时间点
      * @return 删除的记录数

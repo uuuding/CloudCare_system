@@ -49,4 +49,16 @@ public interface GpsLocationMapper extends BaseMapper<GpsLocation> {
      */
     @Select("DELETE FROM gps_location WHERE create_time < #{beforeTime}")
     int deleteLocationsBefore(@Param("beforeTime") LocalDateTime beforeTime);
+
+    /**
+     * 获取所有设备绑定记录
+     */
+    @Select("SELECT DISTINCT g.macid, g.elderly_id, e.name as elderly_name, " +
+            "MIN(g.create_time) as create_time, MAX(g.update_time) as update_time " +
+            "FROM gps_location g " +
+            "LEFT JOIN elderly_profile e ON g.elderly_id = e.id " +
+            "WHERE g.elderly_id IS NOT NULL " +
+            "GROUP BY g.macid, g.elderly_id, e.name " +
+            "ORDER BY MAX(g.update_time) DESC")
+    java.util.List<java.util.Map<String, Object>> getAllDeviceBindings();
 }

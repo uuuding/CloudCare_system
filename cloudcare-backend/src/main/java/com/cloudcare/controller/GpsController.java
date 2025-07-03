@@ -1,6 +1,8 @@
 package com.cloudcare.controller;
 
+import com.cloudcare.dto.DeviceBindRequest;
 import com.cloudcare.dto.GpsDataDTO;
+import com.cloudcare.service.DeviceBindingService;
 import com.cloudcare.service.GpsLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +14,12 @@ import org.springframework.web.bind.annotation.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/gps")
+@RequestMapping("/gps")
 @RequiredArgsConstructor
 public class GpsController {
 
     private final GpsLocationService gpsLocationService;
+    private final DeviceBindingService deviceBindingService;
 
     /**
      * 接收GPS设备推送的定位数据
@@ -116,20 +119,91 @@ public class GpsController {
      * 将GPS设备与老人进行绑定
      */
     @PostMapping("/bind")
-    public ResponseEntity<String> bindDeviceToElderly(
-            @RequestParam("macid") String macid,
-            @RequestParam("elderlyId") Integer elderlyId) {
+    public ResponseEntity<?> bindDeviceToElderly(@RequestBody DeviceBindRequest request) {
         
         try {
-            boolean success = gpsLocationService.bindDeviceToElderly(macid, elderlyId);
+            if (request.getMacid() == null || request.getMacid().trim().isEmpty()) {
+                java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "MAC地址不能为空");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            if (request.getElderlyId() == null) {
+                java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "老人ID不能为空");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            boolean success = deviceBindingService.bindDevice(request.getMacid(), request.getElderlyId(), "system");
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
             if (success) {
-                return ResponseEntity.ok("设备绑定成功");
+                response.put("success", true);
+                response.put("message", "设备绑定成功");
+                return ResponseEntity.ok(response);
             } else {
-                return ResponseEntity.badRequest().body("设备绑定失败");
+                response.put("success", false);
+                response.put("message", "设备绑定失败");
+                return ResponseEntity.badRequest().body(response);
             }
         } catch (Exception e) {
             log.error("设备绑定失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body("设备绑定失败: " + e.getMessage());
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "设备绑定失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+    
+    /**
+     * 获取设备绑定列表
+     */
+    @GetMapping("/bindings")
+    public ResponseEntity<?> getDeviceBindings() {
+        try {
+            java.util.List<java.util.Map<String, Object>> bindings = deviceBindingService.getAllDeviceBindings();
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("success", true);
+            response.put("data", bindings);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("获取设备绑定列表失败: {}", e.getMessage(), e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "获取设备绑定列表失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+    
+    /**
+     * 解绑设备
+     */
+    @DeleteMapping("/unbind/{macid}")
+    public ResponseEntity<?> unbindDevice(@PathVariable("macid") String macid) {
+        try {
+            // 先获取绑定关系，然后解绑
+            com.cloudcare.entity.DeviceBinding binding = deviceBindingService.getBindingByMacid(macid);
+            boolean success = false;
+            if (binding != null) {
+                success = deviceBindingService.unbindDevice(macid, binding.getElderlyId(), "system");
+            }
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            if (success) {
+                response.put("success", true);
+                response.put("message", "设备解绑成功");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "设备解绑失败");
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            log.error("设备解绑失败: {}", e.getMessage(), e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "设备解绑失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 }

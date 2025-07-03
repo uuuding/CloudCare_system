@@ -3,6 +3,7 @@ package com.cloudcare.service.impl;
 import com.cloudcare.dto.GpsDataDTO;
 import com.cloudcare.entity.GpsLocation;
 import com.cloudcare.mapper.GpsLocationMapper;
+import com.cloudcare.service.DeviceBindingService;
 import com.cloudcare.service.GeoFenceService;
 import com.cloudcare.service.GpsLocationService;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * GPS定位服务实现类
@@ -25,9 +24,7 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
     private final GpsLocationMapper gpsLocationMapper;
     private final GeoFenceService geoFenceService;
-    
-    // 设备与老人的绑定关系缓存
-    private final Map<String, Integer> deviceElderlyMapping = new ConcurrentHashMap<>();
+    private final DeviceBindingService deviceBindingService;
 
     @Override
     @Transactional
@@ -102,34 +99,11 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
     @Override
     public Integer getElderlyIdByMacid(String macid) {
-        // 先从缓存中查找
-        Integer elderlyId = deviceElderlyMapping.get(macid);
-        if (elderlyId != null) {
-            return elderlyId;
-        }
-        
-        // 从数据库查找
-        elderlyId = gpsLocationMapper.getElderlyIdByMacid(macid);
-        if (elderlyId != null) {
-            // 缓存绑定关系
-            deviceElderlyMapping.put(macid, elderlyId);
-        }
-        
-        return elderlyId;
+        // 使用新的设备绑定服务查询
+        return deviceBindingService.getElderlyIdByMacid(macid);
     }
 
-    @Override
-    public boolean bindDeviceToElderly(String macid, Integer elderlyId) {
-        try {
-            // 更新缓存
-            deviceElderlyMapping.put(macid, elderlyId);
-            log.info("设备绑定成功，设备: {}, 老人ID: {}", macid, elderlyId);
-            return true;
-        } catch (Exception e) {
-            log.error("设备绑定失败: {}", e.getMessage(), e);
-            return false;
-        }
-    }
+
 
     @Override
     public int cleanOldLocationData(LocalDateTime beforeTime) {

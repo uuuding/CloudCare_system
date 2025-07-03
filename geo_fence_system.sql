@@ -1,6 +1,26 @@
 -- 老人防丢电子围栏系统数据库表结构
 
--- 1. GPS定位数据表
+-- 1. 设备绑定表
+CREATE TABLE IF NOT EXISTS `device_binding` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `macid` VARCHAR(50) NOT NULL COMMENT '设备编号（IMEI）',
+    `elderly_id` INT NOT NULL COMMENT '老人ID',
+    `bind_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间',
+    `unbind_time` DATETIME NULL COMMENT '解绑时间',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '绑定状态：1-已绑定，0-已解绑',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by` VARCHAR(50) NULL COMMENT '创建者',
+    `update_by` VARCHAR(50) NULL COMMENT '更新者',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_macid_elderly_active` (`macid`, `elderly_id`, `status`),
+    INDEX `idx_macid` (`macid`),
+    INDEX `idx_elderly_id` (`elderly_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_bind_time` (`bind_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备绑定表';
+
+-- 2. GPS定位数据表
 CREATE TABLE IF NOT EXISTS `gps_location` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `macid` VARCHAR(50) NOT NULL COMMENT '设备编号（IMEI）',
@@ -23,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `gps_location` (
     INDEX `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='GPS定位数据表';
 
--- 2. 电子围栏配置表
+-- 3. 电子围栏配置表
 CREATE TABLE IF NOT EXISTS `geo_fence` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `elderly_id` INT NOT NULL COMMENT '老人ID',
@@ -48,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `geo_fence` (
     INDEX `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='电子围栏配置表';
 
--- 3. 电子围栏事件记录表
+-- 4. 电子围栏事件记录表
 CREATE TABLE IF NOT EXISTS `geo_fence_event` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `elderly_id` INT NOT NULL COMMENT '老人ID',
@@ -75,6 +95,13 @@ CREATE TABLE IF NOT EXISTS `geo_fence_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='电子围栏事件记录表';
 
 -- 插入示例数据
+
+-- 示例设备绑定数据
+INSERT INTO `device_binding` (
+    `macid`, `elderly_id`, `status`, `create_by`
+) VALUES 
+    ('TEST123456789', 1, 1, 'admin'),
+    ('TEST987654321', 2, 1, 'admin');
 
 -- 示例围栏配置（圆形围栏）
 INSERT INTO `geo_fence` (

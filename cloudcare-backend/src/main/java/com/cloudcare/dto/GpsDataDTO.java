@@ -1,5 +1,6 @@
 package com.cloudcare.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -34,51 +35,61 @@ public class GpsDataDTO {
         /**
          * 设备编号（IMEI）
          */
-        private String Macid;
+        @JsonProperty("Macid")
+        private String macid;
         
         /**
          * GPS时间戳（毫秒）
          */
-        private Long GpsTime;
+        @JsonProperty("GpsTime")
+        private Long gpsTime;
         
         /**
          * 信号时间
          */
-        private Long HeartTime;
+        @JsonProperty("HeartTime")
+        private Long heartTime;
         
         /**
          * 最后更新位置时间
          */
-        private Long UpdTime;
+        @JsonProperty("UpdTime")
+        private Long updTime;
         
         /**
          * GPS纬度
          */
-        private String Lat;
+        @JsonProperty("Lat")
+        private String lat;
         
         /**
          * GPS经度
          */
-        private String Lon;
+        @JsonProperty("Lon")
+        private String lon;
         
         /**
          * 速度（单位：km/h）
          */
-        private String Speed;
+        @JsonProperty("Speed")
+        private String speed;
         
         /**
          * 方向角度
          */
-        private String Dir;
+        @JsonProperty("Dir")
+        private String dir;
         
         /**
          * 状态字段，逗号分隔
          */
-        private String Stats;
+        @JsonProperty("Stats")
+        private String stats;
         
         /**
          * 状态值字段，逗号分隔
          */
-        private String Value;
+        @JsonProperty("Value")
+        private String value;
     }
 }

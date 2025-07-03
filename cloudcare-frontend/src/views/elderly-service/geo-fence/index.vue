@@ -12,6 +12,10 @@
         <el-icon><Plus /></el-icon>
         创建围栏
       </el-button>
+      <el-button type="success" @click="showBindDialog = true">
+        <el-icon><Link /></el-icon>
+        设备绑定
+      </el-button>
       <el-button @click="refreshData">
         <el-icon><Refresh /></el-icon>
         刷新
@@ -164,38 +168,138 @@
     </el-dialog>
 
     <!-- 围栏事件记录对话框 -->
-    <el-dialog v-model="showEventsDialog" title="围栏事件记录" width="800px">
-      <el-table :data="eventList" v-loading="eventsLoading" stripe>
-        <el-table-column prop="eventType" label="事件类型" width="100">
+    <el-dialog
+      v-model="showEventsDialog"
+      title="围栏事件记录"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <el-table
+        v-loading="eventsLoading"
+        :data="eventList"
+        style="width: 100%"
+      >
+        <el-table-column prop="eventTime" label="事件时间" width="180" />
+        <el-table-column prop="eventType" label="事件类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.eventType === 'enter' ? 'success' : 'warning'">
+            <el-tag :type="row.eventType === 'enter' ? 'success' : 'danger'">
               {{ row.eventType === 'enter' ? '进入' : '离开' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="eventTime" label="事件时间" width="180">
-          <template #default="{ row }">
-            {{ formatDateTime(row.eventTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="location" label="位置坐标" width="150" />
-        <el-table-column prop="alertSent" label="告警状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.alertSent ? 'success' : 'danger'">
-              {{ row.alertSent ? '已发送' : '未发送' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="alertContent" label="告警内容" show-overflow-tooltip />
+        <el-table-column prop="elderlyName" label="老人姓名" width="120" />
+        <el-table-column prop="coordinates" label="位置坐标" />
+        <el-table-column prop="description" label="描述" />
       </el-table>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showEventsDialog = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 设备绑定对话框 -->
+    <el-dialog
+      v-model="showBindDialog"
+      title="设备绑定管理"
+      width="900px"
+      :close-on-click-modal="false"
+      @close="resetBindForm"
+    >
+      <!-- 绑定表单 -->
+      <el-card class="bind-form-card" shadow="never">
+        <template #header>
+          <span>新增设备绑定</span>
+        </template>
+        <el-form
+          ref="bindFormRef"
+          :model="bindForm"
+          :rules="bindRules"
+          label-width="120px"
+          inline
+        >
+          <el-form-item label="设备MAC地址" prop="macid">
+            <el-input
+              v-model="bindForm.macid"
+              placeholder="请输入设备MAC地址"
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item label="关联老人" prop="elderlyId">
+            <el-select
+              v-model="bindForm.elderlyId"
+              placeholder="请选择老人"
+              style="width: 200px"
+            >
+              <el-option
+                v-for="elderly in elderlyList"
+                :key="elderly.id"
+                :label="elderly.name"
+                :value="elderly.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              :loading="binding"
+              @click="bindDevice"
+            >
+              绑定设备
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <!-- 已绑定设备列表 -->
+      <el-card class="bind-list-card" shadow="never">
+        <template #header>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>已绑定设备列表</span>
+            <el-button size="small" @click="loadDeviceBindings">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+          </div>
+        </template>
+        <el-table
+          v-loading="bindingsLoading"
+          :data="deviceBindings"
+          style="width: 100%"
+        >
+          <el-table-column prop="macid" label="设备MAC地址" width="180" />
+          <el-table-column prop="elderlyName" label="关联老人" width="120" />
+          <el-table-column prop="elderlyId" label="老人ID" width="100" />
+          <el-table-column prop="bindTime" label="绑定时间" width="180" />
+          <el-table-column prop="lastActiveTime" label="最后活跃时间" width="180" />
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button
+                type="danger"
+                size="small"
+                @click="unbindDevice(row)"
+              >
+                解绑
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showBindDialog = false">关闭</el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Plus, Refresh, Link } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
 import * as geoFenceApi from '@/api/geoFence'
 import * as elderlyApi from '@/api/elderlyProfile'
@@ -206,6 +310,9 @@ const saving = ref(false)
 const eventsLoading = ref(false)
 const showCreateDialog = ref(false)
 const showEventsDialog = ref(false)
+const showBindDialog = ref(false)
+const binding = ref(false)
+const bindingsLoading = ref(false)
 const editingFence = ref(null)
 
 // 分页数据
@@ -217,6 +324,7 @@ const total = ref(0)
 const fenceList = ref([])
 const elderlyList = ref([])
 const eventList = ref([])
+const deviceBindings = ref([])
 
 // 表单数据
 const fenceForm = reactive({
@@ -229,6 +337,11 @@ const fenceForm = reactive({
   alertType: 'sms',
   emergencyContacts: '',
   description: ''
+})
+
+const bindForm = reactive({
+  macid: '',
+  elderlyId: null
 })
 
 // 表单验证规则
@@ -244,11 +357,19 @@ const fenceRules = {
 }
 
 const fenceFormRef = ref()
+const bindFormRef = ref()
+
+// 设备绑定表单验证规则
+const bindRules = {
+  macid: [{ required: true, message: '请输入设备MAC地址', trigger: 'blur' }],
+  elderlyId: [{ required: true, message: '请选择关联老人', trigger: 'change' }]
+}
 
 // 生命周期
 onMounted(() => {
   loadFenceList()
   loadElderlyList()
+  loadDeviceBindings()
 })
 
 // 方法
@@ -421,6 +542,94 @@ const resetForm = () => {
     fenceFormRef.value.clearValidate()
   }
 }
+
+// 设备绑定相关方法
+const loadDeviceBindings = async () => {
+  bindingsLoading.value = true
+  try {
+    const response = await geoFenceApi.getDeviceBindings()
+    if (response.success) {
+      deviceBindings.value = response.data || []
+      // 处理每个绑定记录的数据
+      deviceBindings.value.forEach(binding => {
+        // 映射字段名
+        binding.elderlyName = binding.elderly_name || '未知'
+        binding.elderlyId = binding.elderly_id
+        binding.bindTime = binding.bind_time ? formatDateTime(binding.bind_time) : '未知'
+        binding.lastActiveTime = binding.last_active_time === '暂无数据' ? '暂无数据' : 
+          (binding.last_active_time ? formatDateTime(binding.last_active_time) : '暂无数据')
+      })
+    }
+  } catch (error) {
+    console.error('加载设备绑定列表失败:', error)
+    ElMessage.error('加载设备绑定列表失败')
+  } finally {
+    bindingsLoading.value = false
+  }
+}
+
+const bindDevice = async () => {
+  if (!bindFormRef.value) return
+  
+  try {
+    await bindFormRef.value.validate()
+    binding.value = true
+    
+    const response = await geoFenceApi.bindDevice({
+      macid: bindForm.macid,
+      elderlyId: bindForm.elderlyId
+    })
+    
+    if (response.success) {
+      ElMessage.success('设备绑定成功')
+      resetBindForm()
+      loadDeviceBindings()
+    } else {
+      ElMessage.error(response.message || '设备绑定失败')
+    }
+  } catch (error) {
+    console.error('设备绑定失败:', error)
+    ElMessage.error('设备绑定失败')
+  } finally {
+    binding.value = false
+  }
+}
+
+const unbindDevice = async (binding) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要解绑设备"${binding.macid}"吗？`,
+      '确认解绑',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const response = await geoFenceApi.unbindDevice(binding.macid)
+    if (response.success) {
+      ElMessage.success('设备解绑成功')
+      loadDeviceBindings()
+    } else {
+      ElMessage.error(response.message || '设备解绑失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('设备解绑失败')
+    }
+  }
+}
+
+const resetBindForm = () => {
+  Object.assign(bindForm, {
+    macid: '',
+    elderlyId: null
+  })
+  if (bindFormRef.value) {
+    bindFormRef.value.clearValidate()
+  }
+}
 </script>
 
 <style scoped>
@@ -462,5 +671,23 @@ const resetForm = () => {
 
 :deep(.el-dialog__body) {
   padding: 20px;
+}
+
+.bind-form-card {
+  margin-bottom: 20px;
+}
+
+.bind-list-card {
+  margin-top: 20px;
+}
+
+:deep(.bind-form-card .el-card__header) {
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+:deep(.bind-list-card .el-card__header) {
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
 }
 </style>
