@@ -413,7 +413,8 @@ const activitiesLoading = ref(true)
       'LOGIN': 'user',
       'SECURITY': 'system',
       'BACKUP': 'system',
-      'MAINTENANCE': 'system'
+      'MAINTENANCE': 'system',
+      'ALERT': 'alert'
     }
     return typeMap[module] || 'system'
   }
@@ -437,7 +438,8 @@ const activitiesLoading = ref(true)
       'LOGIN': 'User',
       'SECURITY': 'Warning',
       'BACKUP': 'DocumentAdd',
-      'MAINTENANCE': 'Operation'
+      'MAINTENANCE': 'Operation',
+      'ALERT': 'Warning'
     }
     return iconMap[module] || 'InfoFilled'
   }
@@ -465,7 +467,8 @@ const activitiesLoading = ref(true)
       'LOGIN': '登录操作',
       'SECURITY': '安全操作',
       'BACKUP': '数据备份',
-      'MAINTENANCE': '系统维护'
+      'MAINTENANCE': '系统维护',
+      'ALERT': '健康预警'
     }
     return titleMap[module] || '系统操作'
   }
@@ -1178,6 +1181,10 @@ onBeforeUnmount(() => {
 
 .activity-icon.system {
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.activity-icon.alert {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 .activity-content {

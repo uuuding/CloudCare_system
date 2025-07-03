@@ -47,7 +47,7 @@ public class UserController {
      * 更新用户基本信息
      */
     @PutMapping("/info")
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @Log(title = "USER", businessType = BusinessType.UPDATE)
     @Operation(summary = "更新用户基本信息", description = "更新当前登录用户的基本信息")
     public Result<Boolean> updateUserInfo(@RequestBody User user) {
         boolean result = userService.updateUserInfo(user);
@@ -58,7 +58,7 @@ public class UserController {
      * 修改密码
      */
     @PutMapping("/password")
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE, isSaveRequestData = false)
+    @Log(title = "USER", businessType = BusinessType.UPDATE, isSaveRequestData = false)
     @Operation(summary = "修改密码", description = "修改当前登录用户的密码")
     public Result<Boolean> updatePassword(
             @Parameter(description = "旧密码") @RequestParam String oldPassword,
@@ -101,7 +101,7 @@ public class UserController {
      * 新增用户
      */
     @PostMapping
-    @Log(title = "用户管理", businessType = BusinessType.INSERT)
+    @Log(title = "USER", businessType = BusinessType.INSERT)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "新增用户", description = "新增用户信息")
     public Result<Boolean> addUser(@RequestBody User user) {
@@ -113,7 +113,7 @@ public class UserController {
      * 更新用户
      */
     @PutMapping
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @Log(title = "USER", businessType = BusinessType.UPDATE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "更新用户", description = "更新用户信息")
     public Result<Boolean> updateUser(@RequestBody User user) {
@@ -125,7 +125,7 @@ public class UserController {
      * 删除用户
      */
     @DeleteMapping("/{userId}")
-    @Log(title = "用户管理", businessType = BusinessType.DELETE)
+    @Log(title = "USER", businessType = BusinessType.DELETE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "删除用户", description = "根据用户ID删除用户信息")
     public Result<Boolean> deleteUser(@Parameter(description = "用户ID") @PathVariable Long userId) {
@@ -137,7 +137,7 @@ public class UserController {
      * 重置密码
      */
     @PutMapping("/reset-password/{userId}")
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE, isSaveResponseData = false)
+    @Log(title = "USER", businessType = BusinessType.UPDATE, isSaveResponseData = false)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "重置密码", description = "重置用户密码为默认密码")
     public Result<String> resetPassword(@Parameter(description = "用户ID") @PathVariable Long userId) {
@@ -149,7 +149,7 @@ public class UserController {
      * 更新用户状态
      */
     @PutMapping("/status/{userId}/{status}")
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @Log(title = "USER", businessType = BusinessType.UPDATE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "更新用户状态", description = "更新用户状态（0：禁用，1：正常）")
     public Result<Boolean> updateUserStatus(

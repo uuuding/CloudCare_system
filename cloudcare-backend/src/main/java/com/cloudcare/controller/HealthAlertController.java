@@ -1,6 +1,8 @@
 package com.cloudcare.controller;
 
 import com.cloudcare.common.Result;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.entity.HealthAlert;
 import com.cloudcare.entity.HealthAlertRule;
 import com.cloudcare.service.HealthAlertService;
@@ -133,6 +135,7 @@ public class HealthAlertController {
      * 处理预警（标记为已解决）
      */
     @PutMapping("/resolve/{alertId}")
+    @Log(title = "HEALTH", businessType = BusinessType.UPDATE, isSaveRequestData = true, isSaveResponseData = true)
     public Result<String> resolveAlert(@PathVariable Long alertId, 
                                      @RequestParam String resolvedBy,
                                      @RequestParam(required = false) String resolvedNote) {

@@ -39,7 +39,7 @@ public class AuthController {
      * 用户登录
      */
     @PostMapping("/login")
-    @Log(title = "用户认证", businessType = BusinessType.OTHER, isSaveRequestData = false)
+    @Log(title = "USER", businessType = BusinessType.OTHER, isSaveRequestData = false, isSaveResponseData = true)
     @Operation(summary = "用户登录", description = "用户登录接口")
     public Result<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
         String username = loginDTO.getUsername();
@@ -77,7 +77,7 @@ public class AuthController {
      * 用户注册
      */
     @PostMapping("/register")
-    @Log(title = "用户认证", businessType = BusinessType.INSERT, isSaveRequestData = false)
+    @Log(title = "USER", businessType = BusinessType.INSERT, isSaveRequestData = false, isSaveResponseData = true)
     @Operation(summary = "用户注册", description = "用户注册接口")
     public Result<Boolean> register(@RequestBody RegisterDTO registerDTO) {
 
@@ -102,7 +102,7 @@ public class AuthController {
      * 退出登录
      */
     @PostMapping("/logout")
-    @Log(title = "用户认证", businessType = BusinessType.OTHER)
+    @Log(title = "USER", businessType = BusinessType.OTHER, isSaveResponseData = true)
     @Operation(summary = "退出登录", description = "用户退出登录接口")
     public Result<Boolean> logout() {
         return Result.success(true, "退出成功");

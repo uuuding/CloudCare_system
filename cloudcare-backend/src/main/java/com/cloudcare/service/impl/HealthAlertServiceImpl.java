@@ -45,6 +45,9 @@ public class HealthAlertServiceImpl implements HealthAlertService {
     @Autowired
     private SmsNotificationService smsNotificationService;
     
+    @Autowired
+    private com.cloudcare.service.SystemLogService systemLogService;
+    
     @Override
     @Transactional
     public void checkAndGenerateAlerts(ElderlyObservations observation) {
@@ -189,6 +192,16 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         
         healthAlertMapper.insert(alert);
         log.info("为老人{}创建{}级别{}预警", elderly.getName(), rule.getAlertLevel(), alertType);
+        
+        // 记录系统日志
+        String logContent = String.format("生成健康预警，老人: %s，预警类型: %s，预警级别: %s，触发值: %s，正常范围: %s", 
+            elderly.getName(), 
+            getAlertTypeText(alertType),
+            getAlertLevelText(rule.getAlertLevel()),
+            triggerValue,
+            normalRange);
+        
+        systemLogService.saveLog("WARNING", "ALERT", "生成健康预警", logContent);
         
         // 发送健康预警短信通知
         try {

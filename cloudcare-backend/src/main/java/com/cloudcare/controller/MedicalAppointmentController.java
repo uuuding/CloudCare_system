@@ -2,6 +2,8 @@ package com.cloudcare.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cloudcare.common.Result;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.dto.MedicalAppointmentDTO;
 import com.cloudcare.dto.MedicalAppointmentQueryDTO;
 import com.cloudcare.entity.MedicalAppointment;
@@ -60,6 +62,7 @@ public class MedicalAppointmentController {
      * 创建医疗预约
      */
     @PostMapping
+    @Log(title = "MEDICAL", businessType = BusinessType.INSERT, isSaveRequestData = true, isSaveResponseData = true)
     public Result<String> createAppointment(@Validated @RequestBody MedicalAppointmentDTO appointmentDTO) {
         try {
             boolean success = medicalAppointmentService.createAppointment(appointmentDTO);
@@ -78,6 +81,7 @@ public class MedicalAppointmentController {
      * 更新医疗预约
      */
     @PutMapping("/{appointmentId}")
+    @Log(title = "MEDICAL", businessType = BusinessType.UPDATE, isSaveRequestData = true, isSaveResponseData = true)
     public Result<String> updateAppointment(@PathVariable Long appointmentId, 
                                            @Validated @RequestBody MedicalAppointmentDTO appointmentDTO) {
         try {

@@ -21,6 +21,9 @@ public class ElderlyObservationsController {
 
     @Autowired
     private HealthAlertService healthAlertService;
+    
+    @Autowired
+    private com.cloudcare.service.SystemLogService systemLogService;
 
     // 查询所有体检记录
     @GetMapping("/all")
@@ -104,11 +107,23 @@ public class ElderlyObservationsController {
                 // 自动触发预警检查
                 healthAlertService.checkAndGenerateAlerts(observation);
                 log.info("观察记录添加成功并完成预警检查，老人ID: {}", observation.getElderlyId());
+                
+                // 记录系统日志
+                String logContent = String.format("新增健康评估记录，老人ID: %d，体温: %.1f℃，收缩压: %d mmHg，心率: %d bpm", 
+                    observation.getElderlyId(), 
+                    observation.getBodyTemperature(),
+                    observation.getSystolicBp(),
+                    observation.getHeartRate());
+                
+                systemLogService.saveLog("INFO", "HEALTH", "新增健康评估", logContent);
             } catch (Exception e) {
                 log.error("预警检查失败，老人ID: {}, 错误: {}", observation.getElderlyId(), e.getMessage());
             }
             return Result.success(true);
         } else {
+            // 记录失败日志
+            systemLogService.saveErrorLog("HEALTH", "新增健康评估失败", 
+                "添加健康评估记录失败，老人ID: " + observation.getElderlyId(), null);
             return Result.error("添加失败");
         }
     }

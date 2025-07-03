@@ -2,6 +2,8 @@ package com.cloudcare.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloudcare.common.Result;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.dto.DeviceInfoDTO;
 import com.cloudcare.entity.DeviceInfo;
 import com.cloudcare.service.DeviceInfoService;
@@ -73,6 +75,7 @@ public class DeviceInfoController {
      * 新增设备信息
      */
     @PostMapping
+    @Log(title = "DEVICE", businessType = BusinessType.INSERT, isSaveRequestData = true, isSaveResponseData = true)
     @Operation(summary = "新增设备信息", description = "新增设备信息")
     public Result<Void> add(@Validated @RequestBody DeviceInfoDTO deviceInfoDTO) {
         DeviceInfo deviceInfo = new DeviceInfo();
@@ -109,6 +112,7 @@ public class DeviceInfoController {
      * 更新设备状态
      */
     @PutMapping("/status")
+    @Log(title = "DEVICE", businessType = BusinessType.UPDATE, isSaveRequestData = true, isSaveResponseData = true)
     @Operation(summary = "更新设备状态", description = "更新设备状态")
     public Result<Void> updateStatus(
             @Parameter(description = "设备ID") @RequestParam Long deviceId,

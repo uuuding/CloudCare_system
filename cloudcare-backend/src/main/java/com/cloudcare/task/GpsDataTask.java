@@ -2,6 +2,8 @@ package com.cloudcare.task;
 
 import com.cloudcare.service.GeoFenceEventService;
 import com.cloudcare.service.GpsLocationService;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ public class GpsDataTask {
      * 每天凌晨2点执行
      */
     @Scheduled(cron = "${gps.schedule.data-cleanup-cron:0 0 2 * * ?}")
+    @Log(title = "SYSTEM", businessType = BusinessType.CLEAN, isSaveResponseData = true)
     public void cleanupOldGpsData() {
         log.info("开始清理{}天前的GPS定位数据", retentionDays);
         try {
@@ -51,6 +54,7 @@ public class GpsDataTask {
      * 每5分钟执行一次
      */
     @Scheduled(fixedDelayString = "${gps.schedule.unsent-alert-interval:5}000", initialDelay = 60000)
+    @Log(title = "SYSTEM", businessType = BusinessType.OTHER, isSaveResponseData = true)
     public void processUnsentAlerts() {
         log.debug("开始处理未发送的围栏告警");
         try {
@@ -68,6 +72,7 @@ public class GpsDataTask {
      * 每小时执行一次
      */
     @Scheduled(cron = "0 0 * * * ?")
+    @Log(title = "SYSTEM", businessType = BusinessType.OTHER, isSaveResponseData = true)
     public void statisticsGpsData() {
         log.debug("开始统计GPS数据和围栏事件");
         try {

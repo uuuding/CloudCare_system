@@ -3,6 +3,8 @@ package com.cloudcare.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloudcare.common.Result;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.entity.SystemLog;
 import com.cloudcare.service.SystemLogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,13 +68,14 @@ public class SystemLogController {
     }
 
     @DeleteMapping("/clear")
+    @Log(title = "SYSTEM", businessType = BusinessType.CLEAN, isSaveResponseData = true)
     @Operation(summary = "清空所有日志", description = "清空系统中的所有日志记录")
     public Result<Void> clearAllLogs() {
         try {
             boolean success = systemLogService.clearAllLogs();
             if (success) {
                 // 记录清空日志的操作
-                systemLogService.saveLog("INFO", "系统日志", "清空日志", "清空所有系统日志");
+                systemLogService.saveLog("INFO", "SYSTEM", "清空日志", "清空所有系统日志");
                 return Result.success();
             } else {
                 return Result.error("清空日志失败");
@@ -164,6 +167,7 @@ public class SystemLogController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @Log(title = "SYSTEM", businessType = BusinessType.DELETE, isSaveResponseData = true)
     @Operation(summary = "删除单条日志", description = "根据ID删除指定的日志记录")
     public Result<Void> deleteLog(@Parameter(description = "日志ID") @PathVariable Long id) {
         try {
@@ -175,7 +179,7 @@ public class SystemLogController {
             boolean success = systemLogService.removeById(id);
             if (success) {
                 // 记录删除日志的操作
-                systemLogService.saveLog("INFO", "系统日志", "删除日志", 
+                systemLogService.saveLog("INFO", "SYSTEM", "删除日志", 
                     "删除日志ID: " + id + ", 内容: " + logToDelete.getContent());
                 return Result.success();
             } else {
@@ -188,6 +192,7 @@ public class SystemLogController {
     }
 
     @GetMapping("/export")
+    @Log(title = "SYSTEM", businessType = BusinessType.EXPORT, isSaveResponseData = true)
     @Operation(summary = "导出日志数据", description = "根据条件导出日志数据")
     public Result<List<SystemLog>> exportLogs(
             @Parameter(description = "日志级别") @RequestParam(required = false) String level,

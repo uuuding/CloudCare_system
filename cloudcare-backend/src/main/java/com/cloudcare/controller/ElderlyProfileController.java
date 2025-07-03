@@ -1,6 +1,8 @@
 package com.cloudcare.controller;
 
 import com.cloudcare.common.Result;
+import com.cloudcare.common.annotation.Log;
+import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.service.ElderlyProfileService;
@@ -17,6 +19,9 @@ public class ElderlyProfileController {
 
     @Autowired
     private ElderlyProfileService elderlyProfileService;
+    
+    @Autowired
+    private com.cloudcare.service.SystemLogService systemLogService;
 
     // 查询所有老人档案
     @GetMapping("/index")
@@ -40,6 +45,7 @@ public class ElderlyProfileController {
 
     // 更新老人档案
     @PutMapping("/update")
+    @Log(title = "ELDERLY", businessType = BusinessType.UPDATE, isSaveRequestData = true, isSaveResponseData = true)
     public Result<Boolean> updateElderlyProfile(@RequestBody ElderlyProfile elderlyProfile,
             @RequestBody(required = false) List<ElderlyChronicDisease> chronicDiseases) {
         elderlyProfileService.updateProfile(elderlyProfile, chronicDiseases);
@@ -47,6 +53,7 @@ public class ElderlyProfileController {
     }
 
     @PostMapping("/add")
+    @Log(title = "ELDERLY", businessType = BusinessType.INSERT, isSaveRequestData = true, isSaveResponseData = true)
     public Result<Boolean> addElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
         boolean success = elderlyProfileService.addProfile(elderlyProfile);
         return Result.success(success);
