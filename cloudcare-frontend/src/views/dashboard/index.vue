@@ -177,15 +177,29 @@
               <el-icon><Clock /></el-icon>
             </div>
           </template>
-          <div class="activity-list">
-            <div v-for="(item, index) in recentActivities" :key="index" class="activity-item">
+          <div class="activity-list"><!-- 加载状态 -->
+            <div v-if="activitiesLoading" class="loading-container">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span>正在加载最新动态...</span>
+            </div>
+            
+            <!-- 空数据状态 -->
+            <div v-else-if="recentActivities.length === 0" class="empty-container">
+              <el-icon><DocumentRemove /></el-icon>
+              <span>暂无最新动态</span>
+            </div>
+            
+            <!-- 动态列表 -->
+            <div v-else v-for="(item, index) in recentActivities" :key="index" class="activity-item">
               <div class="activity-icon" :class="item.type">
                 <el-icon><component :is="item.icon" /></el-icon>
               </div>
               <div class="activity-content">
                 <p class="activity-title">{{ item.title }}</p>
                 <p class="activity-desc">{{ item.description }}</p>
-                <span class="activity-time">{{ item.time }}</span>
+                <div class="activity-meta">
+                  <span class="activity-time">{{ item.time }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -204,10 +218,12 @@ import { getAllAlerts } from '@/api/healthAlert'
 import { getDeviceList } from '@/api/device'
 import { getAllObservations } from '@/api/elderlyObservations'
 import { getAllElderlyProfiles } from '@/api/elderlyProfile'
+import { getRecentSystemLogs, getLogModules } from '@/api/systemLog'
 import {
   User, Warning, Monitor, Connection, Operation, Bell, Clock,
   DataAnalysis, UserFilled, DocumentAdd, TrendCharts, Calendar,
-  InfoFilled, Sunny
+  InfoFilled, Sunny, Loading, DocumentRemove, Setting,
+  FirstAidKit, Document
 } from '@element-plus/icons-vue'
 
 // 默认头像
@@ -307,60 +323,176 @@ const stats = reactive({
 })
 
 // 最新动态数据
-const recentActivities = ref([
-  {
-    id: 1,
-    type: 'health',
-    icon: 'Health',
-    title: '健康数据异常提醒',
-    description: '张老先生的血压数据超出正常范围，建议及时关注',
-    time: '2分钟前'
-  },
-  {
-    id: 2,
-    type: 'user',
-    icon: 'User',
-    title: '新用户注册',
-    description: '李阿姨已成功注册并完成基础信息录入',
-    time: '15分钟前'
-  },
-  {
-    id: 3,
-    type: 'device',
-    icon: 'Monitor',
-    title: '设备连接状态',
-    description: '智能手环设备离线，请检查网络连接',
-    time: '30分钟前'
-  },
-  {
-    id: 4,
-    type: 'medical',
-    icon: 'FirstAidKit',
-    title: '医疗预约提醒',
-    description: '王老太太明天上午10点的体检预约即将到期',
-    time: '1小时前'
-  },
-  {
-    id: 5,
-    type: 'intervention',
-    icon: 'Document',
-    title: '干预方案更新',
-    description: '为赵老先生制定了新的康复训练计划',
-    time: '2小时前'
-  },
-  {
-    id: 6,
-    type: 'health',
-    icon: 'TrendCharts',
-    title: '健康报告生成',
-    description: '本周健康数据分析报告已生成，请查看',
-    time: '3小时前'
-  }
-])
+const recentActivities = ref([])
+const activitiesLoading = ref(true)
 
 // 导航方法
   const navigateTo = (path) => {
     router.push(path)
+  }
+
+  // 获取最新动态数据
+  const fetchRecentActivities = async () => {
+    try {
+      activitiesLoading.value = true
+      
+      // 获取所有模块类型，检查图标映射
+      try {
+        const modulesResponse = await getLogModules()
+        if (modulesResponse && modulesResponse.code === 200 && modulesResponse.data) {
+          const allModules = modulesResponse.data
+          console.log('系统中存在的所有模块类型:', allModules)
+          
+          // 检查哪些模块没有图标映射
+          const iconMap = {
+            'USER': 'User',
+            'ELDERLY': 'User',
+            'HEALTH': 'TrendCharts', 
+            'MEDICAL': 'FirstAidKit',
+            'DEVICE': 'Monitor',
+            'INTERVENTION': 'Document',
+            'SYSTEM': 'Setting'
+          }
+          
+          const missingIcons = allModules.filter(module => !iconMap[module])
+          if (missingIcons.length > 0) {
+            console.warn('以下模块缺少图标映射:', missingIcons)
+          }
+        }
+      } catch (error) {
+        console.error('获取模块列表失败:', error)
+      }
+      
+      const response = await getRecentSystemLogs(6) // 获取最近6条日志
+      
+      if (response && response.code === 200 && response.data) {
+        const logs = response.data
+        
+        // 将系统日志转换为动态数据格式
+        recentActivities.value = logs.map(log => {
+          const activity = {
+            id: log.id,
+            type: getActivityType(log.module),
+            icon: getActivityIcon(log.module),
+            title: getActivityTitle(log.operation, log.module),
+            description: log.content || log.operation,
+            time: formatRelativeTime(log.createTime),
+            level: log.level,
+            username: log.username
+          }
+          return activity
+        })
+      } else {
+        console.warn('获取最新动态失败:', response)
+        recentActivities.value = []
+      }
+    } catch (error) {
+      console.error('获取最新动态数据失败:', error)
+      recentActivities.value = []
+    } finally {
+      activitiesLoading.value = false
+    }
+  }
+
+  // 根据模块获取活动类型
+  const getActivityType = (module) => {
+    const typeMap = {
+      'USER': 'user',
+      'ELDERLY': 'user',
+      'HEALTH': 'health',
+      'MEDICAL': 'medical',
+      'DEVICE': 'device',
+      'INTERVENTION': 'intervention',
+      'SYSTEM': 'system',
+      'SMS': 'notification',
+      'NOTIFICATION': 'notification',
+      'CONFIG': 'system',
+      'SCHEDULE': 'schedule',
+      'TASK': 'system',
+      'AUTH': 'user',
+      'LOGIN': 'user',
+      'SECURITY': 'system',
+      'BACKUP': 'system',
+      'MAINTENANCE': 'system'
+    }
+    return typeMap[module] || 'system'
+  }
+
+  // 根据模块获取图标
+  const getActivityIcon = (module) => {
+    const iconMap = {
+      'USER': 'User',
+      'ELDERLY': 'User',
+      'HEALTH': 'TrendCharts', 
+      'MEDICAL': 'FirstAidKit',
+      'DEVICE': 'Monitor',
+      'INTERVENTION': 'Document',
+      'SYSTEM': 'Setting',
+      'SMS': 'Bell',
+      'NOTIFICATION': 'Bell',
+      'CONFIG': 'Setting',
+      'SCHEDULE': 'Calendar',
+      'TASK': 'Operation',
+      'AUTH': 'User',
+      'LOGIN': 'User',
+      'SECURITY': 'Warning',
+      'BACKUP': 'DocumentAdd',
+      'MAINTENANCE': 'Operation'
+    }
+    return iconMap[module] || 'InfoFilled'
+  }
+
+  // 根据操作和模块生成标题
+  const getActivityTitle = (operation, module) => {
+    if (operation) {
+      return operation
+    }
+    
+    const titleMap = {
+      'USER': '用户操作',
+      'ELDERLY': '老人档案操作',
+      'HEALTH': '健康数据操作',
+      'MEDICAL': '医疗服务操作', 
+      'DEVICE': '设备操作',
+      'INTERVENTION': '干预方案操作',
+      'SYSTEM': '系统操作',
+      'SMS': '短信通知',
+      'NOTIFICATION': '系统通知',
+      'CONFIG': '系统配置',
+      'SCHEDULE': '定时任务',
+      'TASK': '任务执行',
+      'AUTH': '权限管理',
+      'LOGIN': '登录操作',
+      'SECURITY': '安全操作',
+      'BACKUP': '数据备份',
+      'MAINTENANCE': '系统维护'
+    }
+    return titleMap[module] || '系统操作'
+  }
+
+  // 格式化相对时间
+  const formatRelativeTime = (dateTime) => {
+    if (!dateTime) return ''
+    
+    const now = new Date()
+    const time = new Date(dateTime)
+    const diff = now - time
+    
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    
+    if (minutes < 1) {
+      return '刚刚'
+    } else if (minutes < 60) {
+      return `${minutes}分钟前`
+    } else if (hours < 24) {
+      return `${hours}小时前`
+    } else if (days < 7) {
+      return `${days}天前`
+    } else {
+      return time.toLocaleDateString()
+    }
   }
 
   // 获取统计数据的方法
@@ -639,6 +771,9 @@ onMounted(() => {
   
   // 获取统计数据
   fetchStats()
+  
+  // 获取最新动态数据
+  fetchRecentActivities()
 })
 
 // 页面卸载前清理
@@ -1033,6 +1168,18 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
+.activity-icon.notification {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.activity-icon.schedule {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.activity-icon.system {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
 .activity-content {
   flex: 1;
 }
@@ -1051,9 +1198,47 @@ onBeforeUnmount(() => {
   line-height: 1.4;
 }
 
+.activity-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .activity-time {
   font-size: 12px;
   color: #94a3b8;
+}
+
+
+
+/* 加载状态和空数据状态样式 */
+.loading-container,
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+}
+
+.loading-container .el-icon,
+.empty-container .el-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.loading-container span,
+.empty-container span {
+  font-size: 14px;
+}
+
+.loading-container .el-icon {
+  color: #3b82f6;
+}
+
+.empty-container .el-icon {
+  color: #cbd5e1;
 }
 
 /* 响应式设计 */
