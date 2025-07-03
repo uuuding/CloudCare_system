@@ -20,6 +20,7 @@
             type="text"
             autocomplete="on"
             prefix-icon="User"
+            @keyup.enter="handleLogin"
           />
         </el-form-item>
         
@@ -31,6 +32,7 @@
             autocomplete="on"
             prefix-icon="Lock"
             show-password
+            @keyup.enter="handleLogin"
           />
         </el-form-item>
         
