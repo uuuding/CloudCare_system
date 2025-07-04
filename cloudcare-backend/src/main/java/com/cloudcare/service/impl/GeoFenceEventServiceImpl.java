@@ -120,9 +120,12 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             
             // 发送短信提醒
             if ("sms".equals(alertType) || "both".equals(alertType)) {
-                // 如果是离开围栏事件，使用新的模板发送
+                // 如果是离开围栏事件，使用离开模板发送
                 if ("exit".equals(geoFenceEvent.getEventType())) {
                     sendFenceLeaveAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
+                } else if ("enter".equals(geoFenceEvent.getEventType())) {
+                    // 如果是进入围栏事件，使用进入模板发送
+                    sendFenceEnterAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
                 } else {
                     // 其他事件类型使用原有方式
                     sendSmsAlert(emergencyContacts, geoFenceEvent.getAlertContent());
@@ -343,6 +346,73 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             
         } catch (Exception e) {
             log.error("发送围栏离开模板短信失败: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 发送围栏进入提醒（使用模板）
+     */
+    private void sendFenceEnterAlertWithTemplate(String emergencyContacts, GeoFenceEvent geoFenceEvent, GeoFence geoFence) {
+        try {
+            // 获取老人信息
+            String elderlyName = "未知";
+            try {
+                ElderlyProfile elderly = elderlyProfileService.getElderlyProfileById(geoFenceEvent.getElderlyId());
+                if (elderly != null && elderly.getName() != null) {
+                    elderlyName = elderly.getName();
+                }
+            } catch (Exception e) {
+                log.warn("获取老人姓名失败: elderlyId={}, error={}", geoFenceEvent.getElderlyId(), e.getMessage());
+            }
+            
+            // 收集所有需要发送短信的电话号码
+            Set<String> phoneSet = new HashSet<>();
+            
+            // 添加紧急联系人电话
+            if (StringUtils.hasText(emergencyContacts)) {
+                String[] phones = emergencyContacts.split(",");
+                for (String phone : phones) {
+                    phone = phone.trim();
+                    if (!phone.isEmpty()) {
+                        phoneSet.add(phone);
+                    }
+                }
+            }
+            
+            // 添加管理员电话
+            if (systemConfig.getAdmin() != null && StringUtils.hasText(systemConfig.getAdmin().getPhone())) {
+                phoneSet.add(systemConfig.getAdmin().getPhone());
+                log.info("添加管理员电话到围栏告警通知列表: {}", systemConfig.getAdmin().getPhone());
+            }
+            
+            // 格式化事件时间
+            String eventTime = geoFenceEvent.getEventTime() != null ? 
+                geoFenceEvent.getEventTime().toString().replace("T", " ") : "未知";
+            
+            // 发送模板短信给所有电话号码
+            for (String phone : phoneSet) {
+                boolean sent = smsService.sendFenceEnterAlert(
+                    phone, 
+                    elderlyName, 
+                    geoFence.getFenceName(), 
+                    String.valueOf(geoFenceEvent.getLat()), 
+                    String.valueOf(geoFenceEvent.getLon()), 
+                    eventTime
+                );
+                
+                if (sent) {
+                    log.info("围栏进入模板短信发送成功: phone={}, elderly={}, fence={}", 
+                            phone, elderlyName, geoFence.getFenceName());
+                } else {
+                    log.warn("围栏进入模板短信发送失败: phone={}, elderly={}, fence={}", 
+                            phone, elderlyName, geoFence.getFenceName());
+                }
+            }
+            
+            log.info("围栏进入模板短信发送完成，共发送{}条短信", phoneSet.size());
+            
+        } catch (Exception e) {
+            log.error("发送围栏进入模板短信失败: {}", e.getMessage(), e);
         }
     }
     

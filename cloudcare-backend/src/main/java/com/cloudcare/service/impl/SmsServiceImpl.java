@@ -468,6 +468,8 @@ public class SmsServiceImpl implements SmsService {
                 return "紧急提醒";
             case FENCE_LEAVE_ALERT:
                 return "围栏离开提醒";
+            case FENCE_ENTER_ALERT:
+                return "围栏进入提醒";
             default:
                 return template.getCode();
         }
@@ -703,5 +705,20 @@ public class SmsServiceImpl implements SmsService {
         log.info("发送围栏离开提醒短信: 手机号={}, 老人={}, 围栏={}", phone, elderName, fenceName);
         
         return sendTemplateSms(phone, SmsTemplateEnum.FENCE_LEAVE_ALERT, params);
+    }
+    
+    @Override
+    public boolean sendFenceEnterAlert(String phone, String elderName, String fenceName, 
+                                      String latitude, String longitude, String eventTime) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("elder_name", elderName);
+        params.put("fence_name", fenceName);
+        params.put("latitude", latitude);
+        params.put("longitude", longitude);
+        params.put("event_time", eventTime);
+        
+        log.info("发送围栏进入提醒短信: 手机号={}, 老人={}, 围栏={}", phone, elderName, fenceName);
+        
+        return sendTemplateSms(phone, SmsTemplateEnum.FENCE_ENTER_ALERT, params);
     }
 }

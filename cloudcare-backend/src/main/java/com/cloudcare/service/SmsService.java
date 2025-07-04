@@ -183,4 +183,18 @@ public interface SmsService {
      */
     boolean sendFenceLeaveAlert(String phone, String elderName, String fenceName, 
                                String latitude, String longitude, String eventTime);
+    
+    /**
+     * 发送围栏进入提醒（使用模板）
+     * 
+     * @param phone 手机号
+     * @param elderName 老人姓名
+     * @param fenceName 围栏名称
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @param eventTime 事件时间
+     * @return 发送结果
+     */
+    boolean sendFenceEnterAlert(String phone, String elderName, String fenceName, 
+                               String latitude, String longitude, String eventTime);
 }

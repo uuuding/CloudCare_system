@@ -43,7 +43,12 @@ public enum SmsTemplateEnum {
     /**
      * 围栏离开提醒
      */
-    FENCE_LEAVE_ALERT("FENCE_LEAVE_ALERT", "【云护CloudCare】老人{elder_name}已离开电子围栏\"{fence_name}\"，当前位置：纬度{latitude}，经度{longitude}，事件时间：{event_time}，请及时关注。");
+    FENCE_LEAVE_ALERT("FENCE_LEAVE_ALERT", "【云护CloudCare】老人{elder_name}已离开电子围栏\"{fence_name}\"，当前位置：纬度{latitude}，经度{longitude}，事件时间：{event_time}，请及时关注。"),
+    
+    /**
+     * 围栏进入提醒
+     */
+    FENCE_ENTER_ALERT("FENCE_ENTER_ALERT", "【云护CloudCare】老人{elder_name}已进入电子围栏\"{fence_name}\"，当前位置：纬度{latitude}，经度{longitude}，事件时间：{event_time}，请及时关注。");
     
     private final String code;
     private final String template;
