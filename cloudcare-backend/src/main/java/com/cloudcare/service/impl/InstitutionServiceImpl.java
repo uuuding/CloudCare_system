@@ -61,6 +61,11 @@ public class InstitutionServiceImpl extends ServiceImpl<InstitutionMapper, Insti
             if (StringUtils.isNotBlank(institution.getAddress())) {
                 queryWrapper.like(Institution::getAddress, institution.getAddress());
             }
+            
+            // 机构状态
+            if (StringUtils.isNotBlank(institution.getStatus())) {
+                queryWrapper.eq(Institution::getStatus, institution.getStatus());
+            }
         }
         
         // 按创建时间倒序

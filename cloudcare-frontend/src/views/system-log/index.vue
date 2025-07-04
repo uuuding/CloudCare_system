@@ -371,6 +371,8 @@ const resetSearch = () => {
 // 导出日志
 const exportLogs = async () => {
   try {
+    console.log('开始导出日志...')
+    
     const params = {
       level: searchForm.level,
       module: searchForm.module,
@@ -380,11 +382,39 @@ const exportLogs = async () => {
     
     // 处理时间范围
     if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      params.startTime = searchForm.dateRange[0]
-      params.endTime = searchForm.dateRange[1]
+      // 确保时间格式为 yyyy-MM-dd HH:mm:ss
+      const formatDateTime = (date) => {
+        if (!date) return null
+        const d = new Date(date)
+        return d.getFullYear() + '-' + 
+               String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(d.getDate()).padStart(2, '0') + ' ' + 
+               String(d.getHours()).padStart(2, '0') + ':' + 
+               String(d.getMinutes()).padStart(2, '0') + ':' + 
+               String(d.getSeconds()).padStart(2, '0')
+      }
+      params.startTime = formatDateTime(searchForm.dateRange[0])
+      params.endTime = formatDateTime(searchForm.dateRange[1])
     }
     
+    console.log('导出参数:', params)
+    
     const response = await exportSystemLog(params)
+    console.log('导出响应:', response)
+    console.log('响应类型:', typeof response)
+    console.log('是否为Blob:', response instanceof Blob)
+    
+    // 检查响应是否为有效的blob
+    if (!response || !(response instanceof Blob)) {
+      throw new Error('服务器返回的不是有效的文件数据')
+    }
+    
+    // 检查blob大小
+    if (response.size === 0) {
+      throw new Error('导出的文件为空')
+    }
+    
+    console.log('Blob大小:', response.size)
     
     // 创建下载链接
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -400,7 +430,12 @@ const exportLogs = async () => {
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出日志失败:', error)
-    ElMessage.error('导出失败，请稍后重试')
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response
+    })
+    ElMessage.error(`导出失败: ${error.message || '请稍后重试'}`)
   }
 }
 

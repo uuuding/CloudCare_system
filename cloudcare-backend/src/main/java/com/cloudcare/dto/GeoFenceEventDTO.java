@@ -93,13 +93,15 @@ public class GeoFenceEventDTO {
     
     /**
      * 是否已读：1-已读，0-未读
+     * 临时注释：数据库表中暂无此字段
      */
-    private Integer isRead;
+    // private Integer isRead;
     
     /**
      * 已读时间
+     * 临时注释：数据库表中暂无此字段
      */
-    private LocalDateTime readTime;
+    // private LocalDateTime readTime;
     
     /**
      * 创建时间
@@ -126,8 +128,9 @@ public class GeoFenceEventDTO {
         dto.setAlertSentTime(event.getAlertSentTime());
         dto.setAlertType(event.getAlertType());
         dto.setAlertContent(event.getAlertContent());
-        dto.setIsRead(event.getIsRead());
-        dto.setReadTime(event.getReadTime());
+        // 临时注释：数据库表中暂无此字段
+        // dto.setIsRead(event.getIsRead());
+        // dto.setReadTime(event.getReadTime());
         dto.setCreateTime(event.getCreateTime());
         return dto;
     }

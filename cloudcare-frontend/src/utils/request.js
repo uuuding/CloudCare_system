@@ -28,6 +28,11 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   response => {
+    // 如果是blob类型的响应（如文件下载），直接返回
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
+    
     const res = response.data
 
     // 检查是否是GPS相关API的响应格式 {success: true/false, data: [], message: ''}

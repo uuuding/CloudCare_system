@@ -7,13 +7,21 @@ import com.cloudcare.common.annotation.Log;
 import com.cloudcare.common.enums.BusinessType;
 import com.cloudcare.entity.SystemLog;
 import com.cloudcare.service.SystemLogService;
+import com.cloudcare.utils.ExcelUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -193,8 +201,8 @@ public class SystemLogController {
 
     @GetMapping("/export")
     @Log(title = "SYSTEM", businessType = BusinessType.EXPORT, isSaveResponseData = true)
-    @Operation(summary = "导出日志数据", description = "根据条件导出日志数据")
-    public Result<List<SystemLog>> exportLogs(
+    @Operation(summary = "导出日志数据", description = "根据条件导出日志数据为Excel文件")
+    public ResponseEntity<byte[]> exportLogs(
             @Parameter(description = "日志级别") @RequestParam(required = false) String level,
             @Parameter(description = "模块名称") @RequestParam(required = false) String module,
             @Parameter(description = "用户名") @RequestParam(required = false) String username,
@@ -203,14 +211,35 @@ public class SystemLogController {
             @Parameter(description = "结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         
         try {
+            // 获取日志数据
             List<SystemLog> logs = systemLogService.exportLogs(level, module, username, keyword, startTime, endTime);
+            
+            // 生成Excel文件
+            byte[] excelData = ExcelUtils.exportSystemLogsToExcel(logs);
+            
+            // 生成文件名
+            String fileName = "系统日志_" + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replaceAll("\\+", "%20");
+            
+            // 设置响应头
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.add("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+            
             // 记录导出操作
             systemLogService.saveLog("INFO", "系统日志", "导出日志", 
-                "导出日志数据，条件: 级别=" + level + ", 模块=" + module + ", 用户=" + username);
-            return Result.success(logs);
+                "导出日志数据，条件: 级别=" + level + ", 模块=" + module + ", 用户=" + username + ", 导出记录数: " + logs.size());
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+                    
+        } catch (UnsupportedEncodingException e) {
+            log.error("文件名编码失败", e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("导出日志数据失败", e);
-            return Result.error("导出日志数据失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 

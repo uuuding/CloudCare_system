@@ -96,11 +96,13 @@ public class GeoFenceEvent {
     
     /**
      * 是否已读：1-已读，0-未读
+     * 临时注释：数据库表中暂无此字段
      */
-    private Integer isRead;
+    // private Integer isRead;
     
     /**
      * 已读时间
+     * 临时注释：数据库表中暂无此字段
      */
-    private LocalDateTime readTime;
+    // private LocalDateTime readTime;
 }
