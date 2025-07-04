@@ -12,18 +12,35 @@ import java.util.List;
 
 /**
  * 电子围栏事件记录Mapper接口
+ * 提供围栏事件数据的数据库访问操作，包括事件记录的增删改查
+ * 支持按老人ID、围栏ID、时间范围等条件查询事件记录
+ * 提供事件统计、状态管理和提醒发送状态跟踪功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Mapper
 public interface GeoFenceEventMapper extends BaseMapper<GeoFenceEvent> {
 
     /**
      * 根据老人ID查询围栏事件记录
+     * 查询指定老人的所有围栏事件，用于事件历史查看
+     * 
+     * @param elderlyId 老人ID
+     * @return 围栏事件记录列表，按事件时间倒序排列
      */
     @Select("SELECT * FROM geo_fence_event WHERE elderly_id = #{elderlyId} ORDER BY event_time DESC")
     List<GeoFenceEvent> getEventsByElderlyId(@Param("elderlyId") Integer elderlyId);
 
     /**
      * 根据老人ID和时间范围查询围栏事件记录
+     * 用于统计分析和历史数据查询
+     * 
+     * @param elderlyId 老人ID
+     * @param startTime 查询开始时间
+     * @param endTime 查询结束时间
+     * @return 指定时间范围内的围栏事件记录列表
      */
     @Select("SELECT * FROM geo_fence_event WHERE elderly_id = #{elderlyId} " +
             "AND event_time BETWEEN #{startTime} AND #{endTime} " +

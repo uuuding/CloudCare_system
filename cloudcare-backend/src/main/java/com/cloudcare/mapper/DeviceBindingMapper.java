@@ -13,13 +13,23 @@ import java.util.Map;
 
 /**
  * 设备绑定Mapper接口
+ * 提供GPS设备与老人绑定关系的数据库访问操作
+ * 支持设备绑定、解绑、查询和状态管理功能
+ * 提供设备活跃状态和绑定关系的复杂查询
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Mapper
 public interface DeviceBindingMapper extends BaseMapper<DeviceBinding> {
 
     /**
      * 获取所有有效的设备绑定关系
-     * @return 设备绑定列表
+     * 联合查询设备绑定、老人信息和最后活跃时间
+     * 用于管理界面展示设备绑定状态和活跃情况
+     * 
+     * @return 设备绑定列表，包含设备信息、老人姓名和最后活跃时间
      */
     @Select("SELECT db.macid, db.elderly_id, ep.name as elderly_name, db.bind_time, " +
             "       COALESCE(gl.last_active_time, '暂无数据') as last_active_time " +

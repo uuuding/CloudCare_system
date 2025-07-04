@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子围栏告警测试（含管理员通知）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>电子围栏告警测试（含管理员通知）</h1>
+        
+        <div class="info">
+            <strong>功能说明：</strong><br>
+            1. 测试老人走出电子围栏时的短信告警功能<br>
+            2. 系统会同时发送短信给紧急联系人和管理员（15983660989）<br>
+            3. 管理员电话已在系统配置中设置，无需额外配置
+        </div>
+
+        <div class="form-group">
+            <label for="elderlyId">老人ID:</label>
+            <input type="number" id="elderlyId" value="1" placeholder="请输入老人ID">
+        </div>
+
+        <div class="form-group">
+            <label for="fenceId">围栏ID:</label>
+            <input type="number" id="fenceId" value="1" placeholder="请输入围栏ID">
+        </div>
+
+        <div class="form-group">
+            <label for="eventType">事件类型:</label>
+            <select id="eventType">
+                <option value="exit">离开围栏</option>
+                <option value="enter">进入围栏</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="latitude">纬度:</label>
+            <input type="number" id="latitude" value="30.572269" step="0.000001" placeholder="请输入纬度">
+        </div>
+
+        <div class="form-group">
+            <label for="longitude">经度:</label>
+            <input type="number" id="longitude" value="104.066541" step="0.000001" placeholder="请输入经度">
+        </div>
+
+        <div class="form-group">
+            <label for="location">位置描述:</label>
+            <input type="text" id="location" value="四川省成都市武侯区" placeholder="请输入位置描述">
+        </div>
+
+        <div class="form-group">
+            <label for="emergencyContacts">紧急联系人电话:</label>
+            <input type="text" id="emergencyContacts" value="13800138000,13900139000" placeholder="多个电话用逗号分隔">
+        </div>
+
+        <button onclick="testFenceAlert()">测试围栏告警</button>
+        <button onclick="clearResult()">清空结果</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function testFenceAlert() {
+            const elderlyId = document.getElementById('elderlyId').value;
+            const fenceId = document.getElementById('fenceId').value;
+            const eventType = document.getElementById('eventType').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
+            const location = document.getElementById('location').value;
+            const emergencyContacts = document.getElementById('emergencyContacts').value;
+
+            if (!elderlyId || !fenceId || !latitude || !longitude) {
+                showResult('请填写所有必填字段', 'error');
+                return;
+            }
+
+            try {
+                showResult('正在测试围栏告警...', 'info');
+
+                // 1. 首先创建或更新围栏（确保有紧急联系人）
+                const fenceData = {
+                    id: parseInt(fenceId),
+                    elderlyId: parseInt(elderlyId),
+                    fenceName: '测试围栏',
+                    fenceType: 'circle',
+                    centerLatitude: parseFloat(latitude),
+                    centerLongitude: parseFloat(longitude),
+                    radius: 100,
+                    alertType: 'sms',
+                    emergencyContacts: emergencyContacts,
+                    isActive: true
+                };
+
+                const fenceResponse = await fetch(`${API_BASE}/geo-fence/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(fenceData)
+                });
+
+                if (!fenceResponse.ok) {
+                    throw new Error(`创建围栏失败: ${fenceResponse.status}`);
+                }
+
+                // 2. 创建围栏事件
+                const eventData = {
+                    elderlyId: parseInt(elderlyId),
+                    fenceId: parseInt(fenceId),
+                    eventType: eventType,
+                    latitude: parseFloat(latitude),
+                    longitude: parseFloat(longitude),
+                    location: location,
+                    alertSent: false
+                };
+
+                const eventResponse = await fetch(`${API_BASE}/geo-fence/event/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (!eventResponse.ok) {
+                    throw new Error(`创建围栏事件失败: ${eventResponse.status}`);
+                }
+
+                const eventResult = await eventResponse.json();
+
+                // 3. 触发告警处理
+                const alertResponse = await fetch(`${API_BASE}/geo-fence/event/process-unsent-alerts`, {
+                    method: 'POST'
+                });
+
+                if (!alertResponse.ok) {
+                    throw new Error(`处理告警失败: ${alertResponse.status}`);
+                }
+
+                const alertResult = await alertResponse.json();
+
+                const resultText = `测试完成！\n\n` +
+                    `围栏事件创建结果: ${JSON.stringify(eventResult, null, 2)}\n\n` +
+                    `告警处理结果: ${JSON.stringify(alertResult, null, 2)}\n\n` +
+                    `预期行为:\n` +
+                    `1. 系统会发送短信给紧急联系人: ${emergencyContacts}\n` +
+                    `2. 系统会同时发送短信给管理员: 15983660989\n` +
+                    `3. 短信内容包含老人姓名、时间、围栏名称、位置等信息\n\n` +
+                    `请检查相关电话是否收到短信通知。`;
+
+                showResult(resultText, 'success');
+
+            } catch (error) {
+                showResult(`测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = '';
+        }
+    </script>
+</body>
+</html>

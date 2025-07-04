@@ -70,6 +70,8 @@ public class AuthController {
         result.put("phone", user.getPhone());
         result.put("email", user.getEmail());
 
+
+
         return Result.success(result, "登录成功");
     }
 

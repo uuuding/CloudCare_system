@@ -8,7 +8,14 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 电子围栏实体类
+ * 电子围栏配置实体类
+ * 定义电子围栏的几何形状、位置范围和触发规则
+ * 支持圆形和多边形两种围栏类型，提供进入/离开事件检测
+ * 用于老人安全监护，当老人进入或离开指定区域时触发告警
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Data
 @TableName("geo_fence")

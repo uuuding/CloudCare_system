@@ -19,6 +19,12 @@ import java.util.Map;
 
 /**
  * 电子围栏管理控制器
+ * 提供电子围栏的创建、更新、删除、查询等管理功能
+ * 支持圆形和多边形围栏，提供围栏事件查询和统计分析
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @RestController
@@ -32,6 +38,12 @@ public class GeoFenceController {
 
     /**
      * 创建电子围栏
+     * 支持创建圆形和多边形围栏，自动设置创建时间和创建者
+     * 
+     * @param geoFence 围栏信息，包含围栏名称、类型、坐标、老人ID等
+     * @return 创建结果，true-成功，false-失败
+     * @see GeoFence
+     * @see GeoFenceService#createGeoFence(GeoFence)
      */
     @PostMapping("/create")
     public Result<Boolean> createGeoFence(@RequestBody GeoFence geoFence) {
@@ -50,6 +62,12 @@ public class GeoFenceController {
 
     /**
      * 更新电子围栏
+     * 更新围栏的基本信息，如名称、坐标、提醒设置等
+     * 
+     * @param id 围栏ID
+     * @param geoFence 更新的围栏信息
+     * @return 更新结果，true-成功，false-失败
+     * @see GeoFenceService#updateGeoFence(GeoFence)
      */
     @PutMapping("/update/{id}")
     public Result<Boolean> updateGeoFence(@PathVariable Long id, @RequestBody GeoFence geoFence) {
@@ -70,6 +88,11 @@ public class GeoFenceController {
 
     /**
      * 删除电子围栏
+     * 软删除围栏记录，同时删除相关的围栏事件记录
+     * 
+     * @param fenceId 围栏ID
+     * @return 删除结果，true-成功，false-失败
+     * @see GeoFenceService#deleteGeoFence(Long)
      */
     @DeleteMapping("/delete/{fenceId}")
     public Result<Boolean> deleteGeoFence(@PathVariable Long fenceId) {
@@ -88,6 +111,12 @@ public class GeoFenceController {
 
     /**
      * 查询所有围栏（分页）
+     * 分页查询系统中的所有围栏，用于管理界面展示
+     * 
+     * @param page 页码，从1开始，默认为1
+     * @param size 每页大小，默认为10
+     * @return 分页结果，包含围栏列表、总数、页码等信息
+     * @see GeoFenceService#getAllFences()
      */
     @GetMapping("/list")
     public Result<Map<String, Object>> getAllFences(
@@ -121,6 +150,11 @@ public class GeoFenceController {
 
     /**
      * 根据老人ID查询所有围栏
+     * 查询指定老人的所有围栏（包括启用和禁用的）
+     * 
+     * @param elderlyId 老人ID
+     * @return 该老人的所有围栏列表
+     * @see GeoFenceService#getAllFencesByElderlyId(Integer)
      */
     @GetMapping("/list/{elderlyId}")
     public Result<List<GeoFence>> getFencesByElderlyId(@PathVariable Integer elderlyId) {
@@ -135,6 +169,11 @@ public class GeoFenceController {
 
     /**
      * 根据老人ID查询启用的围栏
+     * 查询指定老人当前启用的围栏，用于围栏检测
+     * 
+     * @param elderlyId 老人ID
+     * @return 该老人的启用围栏列表
+     * @see GeoFenceService#getActiveFencesByElderlyId(Integer)
      */
     @GetMapping("/active/{elderlyId}")
     public Result<List<GeoFence>> getActiveFencesByElderlyId(@PathVariable Integer elderlyId) {
@@ -149,6 +188,11 @@ public class GeoFenceController {
 
     /**
      * 根据围栏ID查询围栏详情
+     * 获取指定围栏的完整信息
+     * 
+     * @param fenceId 围栏ID
+     * @return 围栏详细信息，不存在时返回错误
+     * @see GeoFenceService#getFenceById(Long)
      */
     @GetMapping("/detail/{fenceId}")
     public Result<GeoFence> getFenceById(@PathVariable Long fenceId) {
@@ -167,6 +211,10 @@ public class GeoFenceController {
 
     /**
      * 根据围栏ID查询围栏详情（兼容前端调用）
+     * 提供与detail接口相同的功能，用于兼容不同的前端路由
+     * 
+     * @param id 围栏ID
+     * @return 围栏详细信息
      */
     @GetMapping("/{id}")
     public Result<GeoFence> getFenceByIdCompat(@PathVariable Long id) {
@@ -185,6 +233,12 @@ public class GeoFenceController {
 
     /**
      * 更新围栏状态
+     * 启用或禁用指定的围栏
+     * 
+     * @param fenceId 围栏ID
+     * @param status 围栏状态，1-启用，0-禁用
+     * @return 更新结果，true-成功，false-失败
+     * @see GeoFenceService#updateFenceStatus(Long, Integer)
      */
     @PutMapping("/status/{fenceId}")
     public Result<Boolean> updateFenceStatus(@PathVariable Long fenceId, @RequestParam Integer status) {

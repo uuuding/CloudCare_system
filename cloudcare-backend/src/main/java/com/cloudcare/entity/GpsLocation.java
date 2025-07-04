@@ -9,6 +9,13 @@ import java.time.LocalDateTime;
 
 /**
  * GPS定位数据实体类
+ * 存储GPS设备上报的定位数据，包括原始GPS坐标和转换后的地图坐标
+ * 支持多种坐标系统转换，提供位置信息的完整记录
+ * 用于轨迹回放、围栏检测、位置查询等功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Data
 @TableName("gps_location")

@@ -16,6 +16,12 @@ import java.util.List;
 
 /**
  * GPS定位服务实现类
+ * 实现GPS设备数据的接收、解析、存储和围栏事件触发等核心功能
+ * 支持多种GPS设备协议，自动处理设备绑定关系查询
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @Service
@@ -133,6 +139,10 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
     /**
      * 转换GPS数据DTO为实体对象
+     * 将接收到的GPS数据转换为数据库实体对象，处理坐标、速度、方向等字段的类型转换
+     * 
+     * @param locationData GPS位置数据DTO，包含字符串格式的坐标和其他属性
+     * @return 转换后的GPS位置实体对象，转换失败时返回null
      */
     private GpsLocation convertToGpsLocation(GpsDataDTO.GpsLocationData locationData) {
         try {

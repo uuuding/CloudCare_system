@@ -8,18 +8,29 @@ import com.cloudcare.mapper.GeoFenceEventMapper;
 import com.cloudcare.mapper.GeoFenceMapper;
 import com.cloudcare.service.GeoFenceEventService;
 import com.cloudcare.service.SmsService;
+import com.cloudcare.config.SystemConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 电子围栏事件服务实现类
+ * 处理围栏事件的记录、查询、统计和提醒发送功能
+ * 支持多种提醒方式（短信、邮件、推送），提供事件状态管理
+ * 自动处理未发送提醒的重试机制，确保重要事件及时通知
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @Service
@@ -30,6 +41,7 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     private final GeoFenceMapper geoFenceMapper;
     private final SmsService smsService;
     private final ElderlyProfileService elderlyProfileService;
+    private final SystemConfig systemConfig;
 
     @Override
     public boolean saveGeoFenceEvent(GeoFenceEvent geoFenceEvent) {
@@ -263,22 +275,43 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     
     /**
      * 发送短信提醒
+     * 同时发送给紧急联系人和管理员
      */
     private void sendSmsAlert(String emergencyContacts, String alertContent) {
         try {
-            String[] phones = emergencyContacts.split(",");
-            for (String phone : phones) {
-                phone = phone.trim();
-                if (!phone.isEmpty()) {
-                    // 直接使用预生成的告警内容
-                    boolean sent = smsService.sendSms(phone, alertContent);
-                    if (sent) {
-                        log.info("围栏事件短信提醒发送成功: phone={}", phone);
-                    } else {
-                        log.warn("围栏事件短信提醒发送失败: phone={}", phone);
+            // 收集所有需要发送短信的电话号码
+            Set<String> phoneSet = new HashSet<>();
+            
+            // 添加紧急联系人电话
+            if (StringUtils.hasText(emergencyContacts)) {
+                String[] phones = emergencyContacts.split(",");
+                for (String phone : phones) {
+                    phone = phone.trim();
+                    if (!phone.isEmpty()) {
+                        phoneSet.add(phone);
                     }
                 }
             }
+            
+            // 添加管理员电话
+            if (systemConfig.getAdmin() != null && StringUtils.hasText(systemConfig.getAdmin().getPhone())) {
+                phoneSet.add(systemConfig.getAdmin().getPhone());
+                log.info("添加管理员电话到围栏告警通知列表: {}", systemConfig.getAdmin().getPhone());
+            }
+            
+            // 发送短信给所有电话号码
+            for (String phone : phoneSet) {
+                // 直接使用预生成的告警内容
+                boolean sent = smsService.sendSms(phone, alertContent);
+                if (sent) {
+                    log.info("围栏事件短信提醒发送成功: phone={}", phone);
+                } else {
+                    log.warn("围栏事件短信提醒发送失败: phone={}", phone);
+                }
+            }
+            
+            log.info("围栏事件短信提醒发送完成，共发送{}条短信", phoneSet.size());
+            
         } catch (Exception e) {
             log.error("发送围栏事件短信提醒失败: {}", e.getMessage(), e);
         }

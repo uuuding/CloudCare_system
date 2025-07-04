@@ -14,6 +14,13 @@ import java.util.Map;
 
 /**
  * 设备绑定服务实现类
+ * 管理GPS设备与老人的绑定关系，支持设备的绑定、解绑和查询操作
+ * 确保每个设备只能绑定一个老人，每个老人可以绑定多个设备
+ * 提供设备状态检查和绑定关系验证功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @Service

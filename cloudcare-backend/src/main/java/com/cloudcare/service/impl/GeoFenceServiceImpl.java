@@ -23,6 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 电子围栏服务实现类
+ * 实现电子围栏的创建、管理和事件检测功能
+ * 支持圆形和多边形围栏，提供进入/离开事件检测和提醒发送
+ * 使用地理坐标计算算法判断位置与围栏的关系
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @Service
@@ -102,6 +109,14 @@ public class GeoFenceServiceImpl implements GeoFenceService {
         }
     }
 
+    /**
+     * 判断位置是否在围栏内
+     * 根据围栏类型（圆形或多边形）使用不同的算法进行判断
+     * 
+     * @param gpsLocation GPS位置信息
+     * @param geoFence 围栏信息
+     * @return true-位置在围栏内，false-位置在围栏外或围栏不存在
+     */
     @Override
     public boolean isLocationInFence(GpsLocation gpsLocation, GeoFence geoFence) {
         // 优先使用地图坐标，如果不可用则使用GPS坐标
@@ -133,6 +148,13 @@ public class GeoFenceServiceImpl implements GeoFenceService {
         return false;
     }
 
+    /**
+     * 检查GPS位置并触发围栏事件
+     * 根据老人当前位置检查所有激活的围栏，判断进入/离开事件并创建事件记录
+     * 自动发送围栏事件提醒给相关联系人
+     * 
+     * @param gpsLocation GPS位置信息，包含老人ID和坐标信息
+     */
     @Override
     @Transactional
     public void checkFenceEvents(GpsLocation gpsLocation) {
@@ -218,6 +240,16 @@ public class GeoFenceServiceImpl implements GeoFenceService {
         }
     }
 
+    /**
+     * 计算两个地理坐标点之间的距离
+     * 使用Haversine公式计算球面距离
+     * 
+     * @param lat1 第一个点的纬度
+     * @param lon1 第一个点的经度
+     * @param lat2 第二个点的纬度
+     * @param lon2 第二个点的经度
+     * @return 两点之间的距离（米）
+     */
     @Override
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000; // 地球半径（米）
@@ -236,6 +268,15 @@ public class GeoFenceServiceImpl implements GeoFenceService {
         return R * c;
     }
 
+    /**
+     * 判断点是否在多边形内
+     * 使用射线法（Ray Casting Algorithm）进行判断
+     * 
+     * @param lat 点的纬度
+     * @param lon 点的经度
+     * @param coordinates 多边形顶点坐标JSON字符串
+     * @return true-点在多边形内，false-点在多边形外
+     */
     @Override
     public boolean isPointInPolygon(double lat, double lon, String coordinates) {
         try {

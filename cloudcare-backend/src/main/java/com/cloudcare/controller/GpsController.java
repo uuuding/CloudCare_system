@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * GPS数据接收控制器
+ * 提供GPS设备数据接收、设备绑定管理等API接口
+ * 支持多种数据格式（表单、JSONP）和设备管理功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Slf4j
 @RestController
@@ -23,13 +29,23 @@ public class GpsController {
 
     /**
      * 接收GPS设备推送的定位数据
-     * 接口地址：POST /api/gps/push
-     * 请求参数格式：表单提交（application/x-www-form-urlencoded）
+     * 主要用于接收GPS设备实时推送的位置数据，自动触发围栏检测和事件处理
      * 
-     * @param method 数据类型标识，值包括：status、alarm、pic、voice、video、PushTest
-     * @param serialNumber 推送序号，毫秒时间戳字符串
-     * @param data 对应的设备数据数组，格式详见每个 method
-     * @return 成功返回serialNumber，失败返回错误信息
+     * 接口地址：POST /gps/push
+     * 请求格式：application/x-www-form-urlencoded
+     * 
+     * @param method 数据类型标识，支持的值：
+     *               - status: 状态数据（包含GPS位置信息）
+     *               - alarm: 告警数据
+     *               - pic: 图片数据
+     *               - voice: 语音数据
+     *               - video: 视频数据
+     *               - PushTest: 测试推送
+     * @param serialNumber 推送序号，通常为毫秒时间戳字符串，用于去重和排序
+     * @param data JSON格式的设备数据数组，包含macid、GPS坐标、时间戳等信息
+     * @return 成功时返回serialNumber，失败时返回错误信息
+     * @see GpsDataDTO
+     * @see GpsLocationService#processGpsData(GpsDataDTO)
      */
     @PostMapping("/push")
     public ResponseEntity<String> receiveGpsData(
@@ -75,6 +91,13 @@ public class GpsController {
     
     /**
      * JSONP格式的GPS数据接收接口（兼容性支持）
+     * 为支持跨域请求的老版本设备提供JSONP格式的数据接收接口
+     * 
+     * @param method 数据类型标识，同push接口
+     * @param serialNumber 推送序号
+     * @param data JSON格式的设备数据
+     * @param callback JSONP回调函数名，可选参数
+     * @return JSONP格式的响应或普通响应
      */
     @PostMapping("/push/jsonp")
     public ResponseEntity<String> receiveGpsDataJsonp(
@@ -107,7 +130,10 @@ public class GpsController {
     }
     
     /**
-     * 测试接口
+     * GPS服务测试接口
+     * 用于检查GPS数据接收服务是否正常运行
+     * 
+     * @return 服务状态信息
      */
     @GetMapping("/test")
     public ResponseEntity<String> testGpsInterface() {
@@ -116,7 +142,12 @@ public class GpsController {
     
     /**
      * 设备绑定接口
-     * 将GPS设备与老人进行绑定
+     * 将GPS设备与老人建立绑定关系，绑定后设备数据会关联到对应老人
+     * 
+     * @param request 绑定请求对象，包含macid（设备MAC地址）和elderlyId（老人ID）
+     * @return 绑定结果，包含success状态和message信息
+     * @see DeviceBindRequest
+     * @see DeviceBindingService#bindDevice(String, Integer, String)
      */
     @PostMapping("/bind")
     public ResponseEntity<?> bindDeviceToElderly(@RequestBody DeviceBindRequest request) {
@@ -158,6 +189,10 @@ public class GpsController {
     
     /**
      * 获取设备绑定列表
+     * 查询所有设备与老人的绑定关系，用于管理界面展示
+     * 
+     * @return 绑定关系列表，包含设备信息和老人信息
+     * @see DeviceBindingService#getAllDeviceBindings()
      */
     @GetMapping("/bindings")
     public ResponseEntity<?> getDeviceBindings() {
@@ -178,6 +213,11 @@ public class GpsController {
     
     /**
      * 解绑设备
+     * 解除GPS设备与老人的绑定关系，解绑后设备数据不再关联到老人
+     * 
+     * @param macid 设备MAC地址
+     * @return 解绑结果，包含success状态和message信息
+     * @see DeviceBindingService#unbindDevice(String, Integer, String)
      */
     @DeleteMapping("/unbind/{macid}")
     public ResponseEntity<?> unbindDevice(@PathVariable("macid") String macid) {

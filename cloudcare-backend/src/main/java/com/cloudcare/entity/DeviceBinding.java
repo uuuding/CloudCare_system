@@ -9,6 +9,13 @@ import java.time.LocalDateTime;
 
 /**
  * 设备绑定实体类
+ * 管理GPS设备与老人的绑定关系，确保设备唯一性和数据关联
+ * 支持设备绑定、解绑操作，记录绑定状态和时间信息
+ * 用于GPS数据归属识别、设备管理和权限控制
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Data
 @TableName("device_binding")

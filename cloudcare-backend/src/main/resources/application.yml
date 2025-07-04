@@ -78,6 +78,14 @@ sms:
   enabled: true
   signature: "【云护CloudCare平台】"
 
+# 系统管理员配置
+system:
+  admin:
+    # 管理员电话，用于接收重要告警信息
+    phone: 15983660989
+    # 管理员邮箱（可选）
+    email: admin@cloudcare.com
+
 # 日志配置
 logging:
   level:

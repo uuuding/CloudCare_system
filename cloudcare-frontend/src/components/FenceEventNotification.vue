@@ -109,22 +109,20 @@ const stopPolling = () => {
 const checkNewFenceEvents = async () => {
   try {
     // 获取最近的围栏事件（未读的）
-    const response = await fetch('/api/geo-fence/events/recent?unread=true', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    const response = await request({
+      url: '/geo-fence/events/recent',
+      method: 'get',
+      params: {
+        unread: true,
+        limit: 10
       }
     })
     
-    if (response.ok) {
-      const result = await response.json()
-      if (result.success && result.data && result.data.length > 0) {
-        // 处理新事件
-        result.data.forEach(event => {
-          addNotification(event)
-        })
-      }
+    if (response.success && response.data && response.data.length > 0) {
+      // 处理新事件
+      response.data.forEach(event => {
+        addNotification(event)
+      })
     }
   } catch (error) {
     console.error('检查围栏事件失败:', error)
@@ -222,12 +220,9 @@ const markAsRead = async (notificationId) => {
   if (notification) {
     try {
       // 调用API标记事件为已读
-      await fetch(`/api/geo-fence/events/${notification.eventId}/read`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      await request({
+        url: `/geo-fence/events/${notification.eventId}/read`,
+        method: 'post'
       })
       
       emit('notification-read', notification.eventId)

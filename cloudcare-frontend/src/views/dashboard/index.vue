@@ -703,7 +703,7 @@ const recordChartType = ref('type')
 const announcements = ref([
   {
     title: '系统升级通知',
-    content: '尊敬的用户，系统将于2023年6月15日凌晨2:00-4:00进行升级维护，期间系统将暂停服务，请提前做好相关工作安排。',
+    content: '尊敬的用户，系统将于2025年7月12日凌晨2:00-4:00进行升级维护，期间系统将暂停服务，请提前做好相关工作安排。',
     createTime: '2023-06-10 10:00:00',
     createBy: '系统管理员'
   },

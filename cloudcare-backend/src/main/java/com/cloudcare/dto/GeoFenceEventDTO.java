@@ -7,6 +7,12 @@ import java.time.LocalDateTime;
 
 /**
  * 围栏事件DTO，包含老人姓名信息
+ * 用于前端展示围栏事件列表，包含事件详情和关联的老人信息
+ * 提供事件状态管理和提醒发送状态跟踪功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Data
 public class GeoFenceEventDTO {
@@ -15,11 +21,13 @@ public class GeoFenceEventDTO {
     
     /**
      * 老人ID
+     * 触发围栏事件的老人标识
      */
     private Integer elderlyId;
     
     /**
      * 老人姓名
+     * 用于前端展示，避免额外查询老人信息
      */
     private String elderlyName;
     

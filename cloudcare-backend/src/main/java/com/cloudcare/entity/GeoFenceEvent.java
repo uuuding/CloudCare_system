@@ -9,6 +9,13 @@ import java.time.LocalDateTime;
 
 /**
  * 电子围栏事件记录实体类
+ * 记录老人进入或离开电子围栏的事件信息
+ * 包含事件类型、触发时间、位置信息和提醒发送状态
+ * 用于事件历史查询、统计分析和家属提醒功能
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @Data
 @TableName("geo_fence_event")

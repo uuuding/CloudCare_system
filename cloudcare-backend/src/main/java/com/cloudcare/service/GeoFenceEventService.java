@@ -8,29 +8,44 @@ import java.util.Map;
 
 /**
  * 电子围栏事件服务接口
+ * 负责围栏事件的管理和提醒发送，包括事件记录的增删改查、提醒发送、统计分析等功能
+ * 当老人进入或离开围栏时，会创建事件记录并根据配置发送提醒通知
+ * 
+ * @author CloudCare Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 public interface GeoFenceEventService {
 
     /**
      * 保存围栏事件记录
-     * @param geoFenceEvent 围栏事件
-     * @return 保存结果
+     * 自动设置创建时间，用于记录老人进入/离开围栏的事件
+     * 
+     * @param geoFenceEvent 围栏事件实体，包含老人ID、围栏ID、事件类型、位置等信息
+     * @return true-保存成功，false-保存失败
+     * @see GeoFenceEvent
      */
     boolean saveGeoFenceEvent(GeoFenceEvent geoFenceEvent);
 
     /**
      * 根据老人ID查询围栏事件记录
-     * @param elderlyId 老人ID
-     * @return 事件记录列表
+     * 按事件时间倒序排列，用于查看老人的围栏活动历史
+     * 
+     * @param elderlyId 老人ID，不能为null
+     * @return 该老人的所有围栏事件记录列表，按时间倒序排列
+     * @see GeoFenceEvent
      */
     List<GeoFenceEvent> getEventsByElderlyId(Integer elderlyId);
 
     /**
      * 根据老人ID和时间范围查询围栏事件记录
-     * @param elderlyId 老人ID
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 事件记录列表
+     * 用于统计分析和历史数据查询
+     * 
+     * @param elderlyId 老人ID，不能为null
+     * @param startTime 查询开始时间，包含该时间点
+     * @param endTime 查询结束时间，包含该时间点
+     * @return 指定时间范围内的围栏事件记录列表，按时间倒序排列
+     * @see GeoFenceEvent
      */
     List<GeoFenceEvent> getEventsByElderlyIdAndTimeRange(Integer elderlyId, LocalDateTime startTime, LocalDateTime endTime);
 
