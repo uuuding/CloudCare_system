@@ -2,12 +2,16 @@ package com.cloudcare.controller;
 
 import com.cloudcare.dto.DeviceBindRequest;
 import com.cloudcare.dto.GpsDataDTO;
+import com.cloudcare.entity.GpsLocation;
 import com.cloudcare.service.DeviceBindingService;
 import com.cloudcare.service.GpsLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * GPS数据接收控制器
@@ -138,6 +142,87 @@ public class GpsController {
     @GetMapping("/test")
     public ResponseEntity<String> testGpsInterface() {
         return ResponseEntity.ok("GPS接口服务正常运行");
+    }
+
+    /**
+     * 获取老人轨迹数据
+     * 根据老人ID和时间范围查询GPS轨迹记录，用于轨迹回放和路径分析
+     * 
+     * @param elderlyId 老人ID
+     * @param startTime 开始时间（格式：yyyy-MM-dd HH:mm:ss）
+     * @param endTime 结束时间（格式：yyyy-MM-dd HH:mm:ss）
+     * @return GPS轨迹数据列表
+     */
+    @GetMapping("/track/{elderlyId}")
+    public ResponseEntity<?> getElderlyTrack(
+            @PathVariable Integer elderlyId,
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
+        try {
+            log.info("查询老人轨迹数据: elderlyId={}, startTime={}, endTime={}", 
+                    elderlyId, startTime, endTime);
+            
+            // 解析时间参数
+            LocalDateTime start = LocalDateTime.parse(startTime.replace(" ", "T"));
+            LocalDateTime end = LocalDateTime.parse(endTime.replace(" ", "T"));
+            
+            // 查询轨迹数据
+            List<GpsLocation> locations = gpsLocationService.getLocationsByElderlyIdAndTimeRange(
+                    elderlyId, start, end);
+            
+            log.info("查询到{}条轨迹记录", locations.size());
+            
+            // 返回统一格式
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("code", 200);
+            response.put("data", locations);
+            response.put("message", "查询成功");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("查询老人轨迹数据失败: {}", e.getMessage(), e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("code", 500);
+            errorResponse.put("data", null);
+            errorResponse.put("message", "查询轨迹数据失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
+     * 获取老人最新位置
+     * 查询指定老人的最新GPS位置信息
+     * 
+     * @param elderlyId 老人ID
+     * @return 最新GPS位置信息
+     */
+    @GetMapping("/latest/{elderlyId}")
+    public ResponseEntity<?> getLatestLocation(@PathVariable Integer elderlyId) {
+        try {
+            log.info("查询老人最新位置: elderlyId={}", elderlyId);
+            
+            GpsLocation location = gpsLocationService.getLatestLocationByElderlyId(elderlyId);
+            
+            // 返回统一格式
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("code", 200);
+            response.put("data", location);
+            if (location != null) {
+                log.info("查询到最新位置: lat={}, lon={}", location.getLat(), location.getLon());
+                response.put("message", "查询成功");
+            } else {
+                response.put("message", "暂无位置数据");
+            }
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("查询老人最新位置失败: {}", e.getMessage(), e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("code", 500);
+            errorResponse.put("data", null);
+            errorResponse.put("message", "查询最新位置失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
     
     /**

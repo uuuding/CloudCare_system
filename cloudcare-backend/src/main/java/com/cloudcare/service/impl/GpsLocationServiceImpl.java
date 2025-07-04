@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,6 +36,17 @@ public class GpsLocationServiceImpl implements GpsLocationService {
     @Override
     @Transactional
     public String processGpsData(GpsDataDTO gpsDataDTO) {
+        // 输入验证
+        if (gpsDataDTO == null) {
+            log.error("GPS数据为空，无法处理");
+            throw new IllegalArgumentException("GPS数据不能为空");
+        }
+        
+        if (gpsDataDTO.getSerialNumber() == null || gpsDataDTO.getSerialNumber().trim().isEmpty()) {
+            log.error("GPS数据序列号为空，无法处理");
+            throw new IllegalArgumentException("GPS数据序列号不能为空");
+        }
+        
         try {
             log.info("接收到GPS数据推送，method: {}, serialNumber: {}, 数据条数: {}", 
                     gpsDataDTO.getMethod(), gpsDataDTO.getSerialNumber(), 
@@ -94,12 +106,33 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
     @Override
     public boolean saveGpsLocation(GpsLocation gpsLocation) {
+        // 输入验证
+        if (gpsLocation == null) {
+            log.error("GPS定位记录为空，无法保存");
+            return false;
+        }
+        
+        if (gpsLocation.getMacid() == null || gpsLocation.getMacid().trim().isEmpty()) {
+            log.error("GPS定位记录缺少设备ID，无法保存");
+            return false;
+        }
+        
         try {
-            gpsLocation.setCreateTime(LocalDateTime.now());
-            gpsLocation.setUpdateTime(LocalDateTime.now());
-            return gpsLocationMapper.insert(gpsLocation) > 0;
+            LocalDateTime now = LocalDateTime.now();
+            gpsLocation.setCreateTime(now);
+            gpsLocation.setUpdateTime(now);
+            
+            int result = gpsLocationMapper.insert(gpsLocation);
+            if (result > 0) {
+                log.debug("GPS定位记录保存成功，设备ID: {}", gpsLocation.getMacid());
+                return true;
+            } else {
+                log.warn("GPS定位记录保存失败，插入结果为0，设备ID: {}", gpsLocation.getMacid());
+                return false;
+            }
         } catch (Exception e) {
-            log.error("保存GPS定位记录失败: {}", e.getMessage(), e);
+            log.error("保存GPS定位记录失败，设备ID: {}, 错误: {}", 
+                    gpsLocation.getMacid(), e.getMessage(), e);
             return false;
         }
     }
@@ -116,7 +149,32 @@ public class GpsLocationServiceImpl implements GpsLocationService {
 
     @Override
     public List<GpsLocation> getLocationsByElderlyIdAndTimeRange(Integer elderlyId, LocalDateTime startTime, LocalDateTime endTime) {
-        return gpsLocationMapper.getLocationsByElderlyIdAndTimeRange(elderlyId, startTime, endTime);
+        // 输入验证
+        if (elderlyId == null || elderlyId <= 0) {
+            log.warn("老人ID无效: {}", elderlyId);
+            return Collections.emptyList(); // 返回空列表而不是null
+        }
+        
+        if (startTime == null || endTime == null) {
+            log.warn("时间范围参数无效，startTime: {}, endTime: {}", startTime, endTime);
+            return Collections.emptyList();
+        }
+        
+        if (startTime.isAfter(endTime)) {
+            log.warn("开始时间不能晚于结束时间，startTime: {}, endTime: {}", startTime, endTime);
+            return Collections.emptyList();
+        }
+        
+        try {
+            List<GpsLocation> locations = gpsLocationMapper.getLocationsByElderlyIdAndTimeRange(elderlyId, startTime, endTime);
+            log.debug("查询到{}条GPS轨迹记录，老人ID: {}, 时间范围: {} - {}", 
+                    locations != null ? locations.size() : 0, elderlyId, startTime, endTime);
+            return locations != null ? locations : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("查询GPS轨迹记录失败，老人ID: {}, 时间范围: {} - {}, 错误: {}", 
+                    elderlyId, startTime, endTime, e.getMessage(), e);
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -145,36 +203,43 @@ public class GpsLocationServiceImpl implements GpsLocationService {
      * @return 转换后的GPS位置实体对象，转换失败时返回null
      */
     private GpsLocation convertToGpsLocation(GpsDataDTO.GpsLocationData locationData) {
+        // 输入验证
+        if (locationData == null) {
+            log.warn("GPS位置数据为空，跳过转换");
+            return null;
+        }
+        
+        if (locationData.getMacid() == null || locationData.getMacid().trim().isEmpty()) {
+            log.warn("GPS数据缺少设备ID(macid)，跳过转换");
+            return null;
+        }
+        
         try {
             GpsLocation gpsLocation = new GpsLocation();
-            gpsLocation.setMacid(locationData.getMacid());
+            gpsLocation.setMacid(locationData.getMacid().trim());
             gpsLocation.setGpsTime(locationData.getGpsTime());
-            gpsLocation.setHeartTime(locationData.getHeartTime());
+            // 转换heartTime从String到Long
+            if (locationData.getHeartTime() != null && !locationData.getHeartTime().isEmpty()) {
+                try {
+                    gpsLocation.setHeartTime(Long.parseLong(locationData.getHeartTime()));
+                } catch (NumberFormatException e) {
+                    log.warn("HeartTime格式错误，无法转换为Long: {}", locationData.getHeartTime());
+                    gpsLocation.setHeartTime(null);
+                }
+            }
             gpsLocation.setUpdTime(locationData.getUpdTime());
             
-            // 转换坐标
-            if (locationData.getLat() != null && !locationData.getLat().isEmpty()) {
-                gpsLocation.setLat(Double.parseDouble(locationData.getLat()));
-            }
-            if (locationData.getLon() != null && !locationData.getLon().isEmpty()) {
-                gpsLocation.setLon(Double.parseDouble(locationData.getLon()));
-            }
+            // 转换坐标（安全解析）
+            gpsLocation.setLat(parseDoubleValue(locationData.getLat(), "纬度"));
+            gpsLocation.setLon(parseDoubleValue(locationData.getLon(), "经度"));
             
-            // 转换地图坐标
-            if (locationData.getMapLat() != null && !locationData.getMapLat().isEmpty()) {
-                gpsLocation.setMapLat(Double.parseDouble(locationData.getMapLat()));
-            }
-            if (locationData.getMapLon() != null && !locationData.getMapLon().isEmpty()) {
-                gpsLocation.setMapLon(Double.parseDouble(locationData.getMapLon()));
-            }
+            // 转换地图坐标（安全解析）
+            gpsLocation.setMapLat(parseDoubleValue(locationData.getMapLat(), "地图纬度"));
+            gpsLocation.setMapLon(parseDoubleValue(locationData.getMapLon(), "地图经度"));
             
-            // 转换速度和方向
-            if (locationData.getSpeed() != null && !locationData.getSpeed().isEmpty()) {
-                gpsLocation.setSpeed(Double.parseDouble(locationData.getSpeed()));
-            }
-            if (locationData.getDir() != null && !locationData.getDir().isEmpty()) {
-                gpsLocation.setDir(Double.parseDouble(locationData.getDir()));
-            }
+            // 转换速度和方向（安全解析）
+            gpsLocation.setSpeed(parseDoubleValue(locationData.getSpeed(), "速度"));
+            gpsLocation.setDir(parseDoubleValue(locationData.getDir(), "方向"));
             
             gpsLocation.setStats(locationData.getStats());
             gpsLocation.setValue(locationData.getValue());
@@ -182,6 +247,27 @@ public class GpsLocationServiceImpl implements GpsLocationService {
             return gpsLocation;
         } catch (Exception e) {
             log.error("转换GPS数据失败: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * 安全解析Double值
+     * 提供统一的数值解析逻辑，包含空值检查和异常处理
+     * 
+     * @param value 待解析的字符串值
+     * @param fieldName 字段名称，用于日志记录
+     * @return 解析后的Double值，解析失败时返回null
+     */
+    private Double parseDoubleValue(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            log.warn("{}格式错误，无法转换为Double: {}", fieldName, value);
             return null;
         }
     }

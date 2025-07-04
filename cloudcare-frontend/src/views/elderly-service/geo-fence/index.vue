@@ -66,10 +66,13 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="280">
           <template #default="{ row }">
             <el-button size="small" @click="viewFenceEvents(row)">
               事件记录
+            </el-button>
+            <el-button size="small" type="success" @click="viewElderlyTrack(row)">
+              轨迹查看
             </el-button>
             <el-button size="small" type="primary" @click="editFence(row)">
               编辑
@@ -463,6 +466,27 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 轨迹查看对话框 -->
+    <el-dialog
+      v-model="showTrackDialog"
+      title="老人轨迹查看"
+      width="90%"
+      :close-on-click-modal="false"
+      top="5vh"
+    >
+      <TrackViewer 
+        v-if="showTrackDialog && selectedElderlyForTrack"
+        :elderly-id="selectedElderlyForTrack.elderlyId"
+        :elderly-name="selectedElderlyForTrack.elderlyName"
+      />
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showTrackDialog = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -474,6 +498,7 @@ import { formatDateTime } from '@/utils/date'
 import * as geoFenceApi from '@/api/geoFence'
 import * as elderlyApi from '@/api/elderlyProfile'
 import MapPicker from '@/components/MapPicker.vue'
+import TrackViewer from '@/components/TrackViewer.vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -484,10 +509,12 @@ const showCreateDialog = ref(false)
 const showEventsDialog = ref(false)
 const showAllEventsDialog = ref(false)
 const showBindDialog = ref(false)
+const showTrackDialog = ref(false)
 const binding = ref(false)
 const bindingsLoading = ref(false)
 const editingFence = ref(null)
 const gettingLocation = ref(false)
+const selectedElderlyForTrack = ref(null)
 
 // 分页数据
 const currentPage = ref(1)
@@ -739,6 +766,19 @@ const viewFenceEvents = async (fence) => {
   }
 }
 
+const viewElderlyTrack = (fence) => {
+  // 获取老人姓名
+  const elderly = elderlyList.value.find(e => e.id === fence.elderlyId)
+  const elderlyName = elderly ? elderly.name : '未知老人'
+  
+  selectedElderlyForTrack.value = {
+    elderlyId: fence.elderlyId,
+    elderlyName: elderlyName
+  }
+  
+  showTrackDialog.value = true
+}
+
 const resetForm = () => {
   // 重置编辑状态
   editingFence.value = null
@@ -979,6 +1019,14 @@ const getCurrentLocation = () => {
       maximumAge: 60000
     }
   )
+}
+</script>
+
+<script>
+export default {
+  components: {
+    TrackViewer
+  }
 }
 </script>
 

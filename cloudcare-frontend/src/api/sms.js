@@ -134,6 +134,15 @@ export const smsApi = {
         method: 'post',
         data
       })
+    },
+
+    // 发送围栏离开提醒
+    sendFenceLeaveAlert(data) {
+      return request({
+        url: '/sms/send/fence-leave-alert',
+        method: 'post',
+        params: data
+      })
     }
   }
 }

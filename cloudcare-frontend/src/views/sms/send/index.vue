@@ -276,7 +276,19 @@ const templates = ref([
       { key: 'alertType', label: '预警类型', placeholder: '请输入预警类型' },
       { key: 'alertDescription', label: '预警描述', placeholder: '请输入预警描述' }
     ]
-  }
+  },
+   {
+     code: 'FENCE_LEAVE_ALERT',
+     name: '围栏离开提醒',
+     content: '【云护CloudCare】老人{elder_name}已离开电子围栏"{fence_name}"，当前位置：纬度{latitude}，经度{longitude}，事件时间：{event_time}，请及时关注。',
+     params: [
+       { key: 'elder_name', label: '老人姓名', placeholder: '请输入老人姓名' },
+       { key: 'fence_name', label: '围栏名称', placeholder: '请输入围栏名称' },
+       { key: 'latitude', label: '纬度', placeholder: '请输入纬度' },
+       { key: 'longitude', label: '经度', placeholder: '请输入经度' },
+       { key: 'event_time', label: '事件时间', placeholder: '请输入事件时间' }
+     ]
+   }
 ])
 
 // 当前选中的模板

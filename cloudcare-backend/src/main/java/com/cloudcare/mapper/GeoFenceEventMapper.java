@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,7 +66,7 @@ public interface GeoFenceEventMapper extends BaseMapper<GeoFenceEvent> {
     /**
      * 更新事件提醒发送状态
      */
-    @Select("UPDATE geo_fence_event SET alert_sent = 1, alert_sent_time = NOW() WHERE id = #{eventId}")
+    @Update("UPDATE geo_fence_event SET alert_sent = 1, alert_sent_time = NOW() WHERE id = #{eventId}")
     int updateAlertSentStatus(@Param("eventId") Long eventId);
 
     /**
@@ -101,7 +102,7 @@ public interface GeoFenceEventMapper extends BaseMapper<GeoFenceEvent> {
     /**
      * 标记事件为已读
      */
-    @Select("UPDATE geo_fence_event SET is_read = 1, read_time = NOW() WHERE id = #{eventId}")
+    @Update("UPDATE geo_fence_event SET is_read = 1, read_time = NOW() WHERE id = #{eventId}")
     int markEventAsRead(@Param("eventId") Long eventId);
     
     /**

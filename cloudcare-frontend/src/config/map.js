@@ -65,7 +65,7 @@ export const loadAMapAPI = () => {
     
     // 创建script标签加载API
     const script = document.createElement('script')
-    script.src = `https://webapi.amap.com/maps?v=${MAP_CONFIG.AMAP_VERSION}&key=${MAP_CONFIG.AMAP_KEY}&plugin=AMap.Geocoder,AMap.PlaceSearch`
+    script.src = `https://webapi.amap.com/maps?v=${MAP_CONFIG.AMAP_VERSION}&key=${MAP_CONFIG.AMAP_KEY}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.Marker,AMap.Polyline,AMap.Icon`
     
     script.onload = () => {
       mapApiLoaded = true

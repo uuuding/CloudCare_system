@@ -38,7 +38,12 @@ public enum SmsTemplateEnum {
     /**
      * 紧急提醒
      */
-    EMERGENCY_ALERT("EMERGENCY_ALERT", "【云护CloudCare平台】紧急提醒：您关注的老人{elderlyName}出现{alertType}异常，{alertDescription}。请及时关注并联系医护人员。详情请登录系统查看。");
+    EMERGENCY_ALERT("EMERGENCY_ALERT", "【云护CloudCare平台】紧急提醒：您关注的老人{elderlyName}出现{alertType}异常，{alertDescription}。请及时关注并联系医护人员。详情请登录系统查看。"),
+    
+    /**
+     * 围栏离开提醒
+     */
+    FENCE_LEAVE_ALERT("FENCE_LEAVE_ALERT", "【云护CloudCare】老人{elder_name}已离开电子围栏\"{fence_name}\"，当前位置：纬度{latitude}，经度{longitude}，事件时间：{event_time}，请及时关注。");
     
     private final String code;
     private final String template;

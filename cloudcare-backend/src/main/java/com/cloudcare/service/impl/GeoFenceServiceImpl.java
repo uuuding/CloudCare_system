@@ -130,6 +130,8 @@ public class GeoFenceServiceImpl implements GeoFenceService {
         if ("circle".equals(geoFence.getFenceType())) {
             // 圆形围栏检测
             if (geoFence.getCenterLat() == null || geoFence.getCenterLon() == null || geoFence.getRadius() == null) {
+                log.warn("圆形围栏参数不完整: centerLat={}, centerLon={}, radius={}", 
+                        geoFence.getCenterLat(), geoFence.getCenterLon(), geoFence.getRadius());
                 return false;
             }
             
@@ -138,7 +140,12 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                     geoFence.getCenterLat(), geoFence.getCenterLon()
             );
             
-            return distance <= geoFence.getRadius();
+            boolean inFence = distance <= geoFence.getRadius();
+            log.info("圆形围栏距离计算: GPS位置({}, {}), 围栏中心({}, {}), 距离={}米, 半径={}米, 在围栏内={}", 
+                    lat, lon, geoFence.getCenterLat(), geoFence.getCenterLon(), 
+                    Math.round(distance), Math.round(geoFence.getRadius()), inFence);
+            
+            return inFence;
             
         } else if ("polygon".equals(geoFence.getFenceType())) {
             // 多边形围栏检测
@@ -159,21 +166,37 @@ public class GeoFenceServiceImpl implements GeoFenceService {
     @Transactional
     public void checkFenceEvents(GpsLocation gpsLocation) {
         if (gpsLocation.getElderlyId() == null) {
+            log.debug("跳过围栏检查：GPS记录中elderly_id为空");
             return;
         }
         
         try {
+            log.info("开始检查围栏事件，老人ID: {}, GPS位置: ({}, {}), 设备: {}", 
+                    gpsLocation.getElderlyId(), 
+                    gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat(),
+                    gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon(),
+                    gpsLocation.getMacid());
+            
             // 获取该老人的所有启用围栏
             List<GeoFence> activeFences = getActiveFencesByElderlyId(gpsLocation.getElderlyId());
+            log.info("找到启用围栏数量: {}", activeFences.size());
             
             for (GeoFence fence : activeFences) {
+                log.info("检查围栏: ID={}, 名称={}, 类型={}, 进入提醒={}, 离开提醒={}", 
+                        fence.getId(), fence.getFenceName(), fence.getFenceType(), 
+                        fence.getEnterAlert(), fence.getExitAlert());
+                
                 String statusKey = gpsLocation.getElderlyId() + "-" + fence.getId();
                 Boolean lastInFence = lastFenceStatus.get(statusKey);
                 boolean currentInFence = isLocationInFence(gpsLocation, fence);
                 
+                log.info("围栏状态检查: 围栏={}, 上次状态={}, 当前状态={}", 
+                        fence.getFenceName(), lastInFence, currentInFence);
+                
                 // 检查是否有状态变化
                 if (lastInFence == null) {
                     // 首次检测，只记录状态，不触发事件
+                    log.info("首次检测围栏状态，记录当前状态: {} (不触发事件)", currentInFence);
                     lastFenceStatus.put(statusKey, currentInFence);
                     continue;
                 }
@@ -181,59 +204,68 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                 if (lastInFence != currentInFence) {
                     // 状态发生变化，触发事件
                     String eventType = currentInFence ? "enter" : "exit";
+                    log.info("围栏状态发生变化: {} -> {}, 触发{}事件", 
+                            lastInFence, currentInFence, eventType);
+                    
+                    // 创建围栏事件记录（无论是否需要提醒都要记录事件）
+                    GeoFenceEvent event = new GeoFenceEvent();
+                    event.setElderlyId(gpsLocation.getElderlyId());
+                    event.setFenceId(fence.getId());
+                    event.setFenceName(fence.getFenceName());
+                    event.setEventType(eventType);
+                    // 优先使用地图坐标记录事件位置
+                    Double eventLat = gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat();
+                    Double eventLon = gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon();
+                    event.setLat(eventLat);
+                    event.setLon(eventLon);
+                    event.setLocationId(gpsLocation.getId());
+                    event.setMacid(gpsLocation.getMacid());
+                    event.setEventTime(LocalDateTime.now());
+                    event.setAlertSent(0);
+                    event.setAlertType(fence.getAlertType());
+                    
+                    // 生成提醒内容
+                    String alertContent = generateAlertContent(gpsLocation.getElderlyId(), fence.getFenceName(), eventType, eventLat, eventLon);
+                    event.setAlertContent(alertContent);
+                    
+                    // 保存事件记录
+                    boolean eventSaved = geoFenceEventService.saveGeoFenceEvent(event);
+                    log.info("围栏事件记录保存{}: 事件类型={}, 围栏={}", 
+                            eventSaved ? "成功" : "失败", eventType, fence.getFenceName());
                     
                     // 检查是否需要发送提醒
                     boolean shouldAlert = (currentInFence && fence.getEnterAlert() == 1) || 
                                         (!currentInFence && fence.getExitAlert() == 1);
                     
+                    log.info("是否需要发送提醒: {}, 进入提醒={}, 离开提醒={}", 
+                            shouldAlert, fence.getEnterAlert(), fence.getExitAlert());
+                    
                     if (shouldAlert) {
-                        // 创建围栏事件记录
-                        GeoFenceEvent event = new GeoFenceEvent();
-                        event.setElderlyId(gpsLocation.getElderlyId());
-                        event.setFenceId(fence.getId());
-                        event.setFenceName(fence.getFenceName());
-                        event.setEventType(eventType);
-                        // 优先使用地图坐标记录事件位置
-                        Double eventLat = gpsLocation.getMapLat() != null ? gpsLocation.getMapLat() : gpsLocation.getLat();
-                        Double eventLon = gpsLocation.getMapLon() != null ? gpsLocation.getMapLon() : gpsLocation.getLon();
-                        event.setLat(eventLat);
-                        event.setLon(eventLon);
-                        event.setLocationId(gpsLocation.getId());
-                        event.setMacid(gpsLocation.getMacid());
-                        event.setEventTime(LocalDateTime.now());
-                        event.setAlertSent(0);
-                        event.setAlertType(fence.getAlertType());
-                        
-                        // 生成提醒内容
-                        String alertContent = generateAlertContent(gpsLocation.getElderlyId(), fence.getFenceName(), eventType, eventLat, eventLon);
-                        event.setAlertContent(alertContent);
-                        
-                        // 保存事件记录
-                        geoFenceEventService.saveGeoFenceEvent(event);
-                        
                         // 发送提醒
                         geoFenceEventService.sendFenceEventAlert(event);
-                        
-                        // 获取老人姓名用于日志记录
-                        String elderlyName = "未知老人";
-                        try {
-                            ElderlyProfile elderlyProfile = elderlyProfileService.getElderlyProfileById(gpsLocation.getElderlyId());
-                            if (elderlyProfile != null) {
-                                elderlyName = elderlyProfile.getName();
-                            }
-                        } catch (Exception e) {
-                            log.warn("获取老人信息失败: elderlyId={}", gpsLocation.getElderlyId(), e);
-                        }
-                        
-                        log.info("围栏事件触发: 老人{}(ID={}), 围栏={}, 事件类型={}, 位置=({}, {}), 设备MAC={}", 
-                                elderlyName, gpsLocation.getElderlyId(), fence.getFenceName(), eventType, 
-                                eventLat, eventLon, gpsLocation.getMacid());
                     }
+                    
+                    // 获取老人姓名用于日志记录
+                    String elderlyName = "未知老人";
+                    try {
+                        ElderlyProfile elderlyProfile = elderlyProfileService.getElderlyProfileById(gpsLocation.getElderlyId());
+                        if (elderlyProfile != null) {
+                            elderlyName = elderlyProfile.getName();
+                        }
+                    } catch (Exception e) {
+                        log.warn("获取老人信息失败: elderlyId={}", gpsLocation.getElderlyId(), e);
+                    }
+                    
+                    log.info("围栏事件处理完成: 老人{}(ID={}), 围栏={}, 事件类型={}, 位置=({}, {}), 设备MAC={}, 提醒发送={}", 
+                            elderlyName, gpsLocation.getElderlyId(), fence.getFenceName(), eventType, 
+                            eventLat, eventLon, gpsLocation.getMacid(), shouldAlert ? "是" : "否");
                     
                     // 更新状态缓存
                     lastFenceStatus.put(statusKey, currentInFence);
                 }
             }
+            
+            log.info("围栏事件检查完成，老人ID: {}", gpsLocation.getElderlyId());
             
         } catch (Exception e) {
             log.error("检查围栏事件失败: {}", e.getMessage(), e);

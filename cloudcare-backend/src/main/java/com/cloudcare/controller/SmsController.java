@@ -320,6 +320,27 @@ public class SmsController {
     }
     
     /**
+     * 发送围栏离开提醒
+     */
+    @PostMapping("/send/fence-leave-alert")
+    @Operation(summary = "发送围栏离开提醒", description = "发送围栏离开提醒")
+    public Result<Boolean> sendFenceLeaveAlert(
+            @Parameter(description = "手机号") @RequestParam String phone,
+            @Parameter(description = "老人姓名") @RequestParam String elderName,
+            @Parameter(description = "围栏名称") @RequestParam String fenceName,
+            @Parameter(description = "纬度") @RequestParam String latitude,
+            @Parameter(description = "经度") @RequestParam String longitude,
+            @Parameter(description = "事件时间") @RequestParam String eventTime) {
+        try {
+            boolean result = smsService.sendFenceLeaveAlert(phone, elderName, fenceName, latitude, longitude, eventTime);
+            return result ? Result.success(true, "围栏离开提醒发送成功") : Result.error("围栏离开提醒发送失败");
+        } catch (Exception e) {
+            log.error("发送围栏离开提醒异常", e);
+            return Result.error("围栏离开提醒发送异常: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 获取所有短信模板
      */
     @GetMapping("/templates")
