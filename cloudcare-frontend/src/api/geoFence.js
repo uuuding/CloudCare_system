@@ -104,6 +104,18 @@ export function markEventAsRead(eventId) {
 }
 
 /**
+ * 获取老人的围栏列表
+ * @param {Number} elderlyId 老人ID
+ * @returns {Promise}
+ */
+export function getFencesByElderlyId(elderlyId) {
+  return request({
+    url: `/geo-fence/list/${elderlyId}`,
+    method: 'get'
+  })
+}
+
+/**
  * 获取老人最新位置
  * @param {Number} elderlyId 老人ID
  * @returns {Promise}
@@ -191,6 +203,7 @@ export default {
   getFenceEvents,
   getAllEvents,
   markEventAsRead,
+  getFencesByElderlyId,
   getLatestLocation,
   getFenceStats,
   testGpsPush,

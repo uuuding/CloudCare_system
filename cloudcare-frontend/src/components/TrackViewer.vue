@@ -48,11 +48,19 @@
             查询轨迹
           </el-button>
         </el-col>
-        <el-col :span="4">
+        <el-col :span="3">
           <el-button @click="clearTrack">
             <el-icon><Delete /></el-icon>
             清除轨迹
           </el-button>
+        </el-col>
+        <el-col :span="3">
+          <el-switch
+            v-model="showFences"
+            active-text="显示围栏"
+            inactive-text="隐藏围栏"
+            @change="onFenceToggle"
+          />
         </el-col>
       </el-row>
       
@@ -125,6 +133,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Delete, VideoPlay, VideoPause, Close } from '@element-plus/icons-vue'
 import { gpsApi } from '@/api/gps'
 import * as elderlyApi from '@/api/elderlyProfile'
+import { getFencesByElderlyId } from '@/api/geoFence'
 import { loadAMapAPI } from '@/config/map'
 
 // Props
@@ -150,12 +159,15 @@ const isPlaying = ref(false)
 const isPaused = ref(false)
 const playProgress = ref(0)
 const currentPoint = ref(null)
+const fenceData = ref([])
+const showFences = ref(true)
 
 // 地图相关
 let map = null
 let trackPolyline = null
 let currentMarker = null
 let playTimer = null
+let fenceOverlays = []
 
 // 计算属性
 const timeSpan = computed(() => {
@@ -204,8 +216,24 @@ const loadElderlyList = async () => {
   }
 }
 
+const loadFences = async (elderlyId) => {
+  try {
+    const response = await getFencesByElderlyId(elderlyId)
+    if (response.success) {
+      fenceData.value = response.data || []
+      drawFences()
+    }
+  } catch (error) {
+    console.error('加载围栏数据失败:', error)
+    ElMessage.error('加载围栏数据失败')
+  }
+}
+
 const onElderlyChange = () => {
   clearTrack()
+  // 清除围栏数据
+  fenceData.value = []
+  clearFences()
 }
 
 const loadTrack = async () => {
@@ -243,6 +271,8 @@ const loadTrack = async () => {
         })
         
         drawTrack()
+        // 加载围栏数据
+        await loadFences(selectedElderlyId.value)
         ElMessage.success(`加载了 ${trackData.value.length} 个轨迹点`)
       } else {
         ElMessage.info('该时间段内没有轨迹数据')
@@ -329,6 +359,8 @@ const clearTrack = () => {
     map.clearMap()
   }
   trackData.value = []
+  fenceData.value = []
+  fenceOverlays = []
   stopPlay()
 }
 
@@ -336,7 +368,83 @@ const clearMapOnly = () => {
   if (map) {
     map.clearMap()
   }
-  stopPlay()
+}
+
+const drawFences = () => {
+  if (!map || fenceData.value.length === 0 || !showFences.value) return
+  
+  // 清除之前的围栏
+  clearFences()
+  
+  fenceData.value.forEach(fence => {
+    if (fence.status !== 1) return // 只显示启用的围栏
+    
+    let overlay = null
+    
+    if (fence.fenceType === 'circle') {
+      // 圆形围栏
+      overlay = new AMap.Circle({
+        center: [fence.centerLon, fence.centerLat],
+        radius: fence.radius,
+        strokeColor: '#FF6B6B',
+        strokeWeight: 2,
+        strokeOpacity: 0.8,
+        fillColor: '#FF6B6B',
+        fillOpacity: 0.2
+      })
+    } else if (fence.fenceType === 'polygon') {
+      // 多边形围栏
+      try {
+        const coordinates = JSON.parse(fence.coordinates)
+        const path = coordinates.map(coord => [coord.lng, coord.lat])
+        overlay = new AMap.Polygon({
+          path: path,
+          strokeColor: '#4ECDC4',
+          strokeWeight: 2,
+          strokeOpacity: 0.8,
+          fillColor: '#4ECDC4',
+          fillOpacity: 0.2
+        })
+      } catch (error) {
+        console.error('解析多边形坐标失败:', error)
+      }
+    }
+    
+    if (overlay) {
+      map.add(overlay)
+      fenceOverlays.push(overlay)
+      
+      // 添加围栏名称标签
+      const marker = new AMap.Marker({
+        position: fence.fenceType === 'circle' 
+          ? [fence.centerLon, fence.centerLat]
+          : [JSON.parse(fence.coordinates)[0].lng, JSON.parse(fence.coordinates)[0].lat],
+        content: `<div style="background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${fence.fenceName}</div>`,
+        offset: new AMap.Pixel(-20, -10)
+      })
+      map.add(marker)
+      fenceOverlays.push(marker)
+    }
+  })
+}
+
+const clearFences = () => {
+  if (fenceOverlays.length > 0) {
+    map.remove(fenceOverlays)
+    fenceOverlays = []
+  }
+}
+
+const onFenceToggle = () => {
+  if (showFences.value) {
+    // 显示围栏
+    if (selectedElderlyId.value) {
+      loadFences(selectedElderlyId.value)
+    }
+  } else {
+    // 隐藏围栏
+    clearFences()
+  }
 }
 
 const playTrack = () => {
@@ -435,9 +543,10 @@ onMounted(async () => {
   loadElderlyList()
   setDefaultTimeRange()
   
-  // 如果传入了elderlyId，自动设置选中的老人
+  // 如果传入了elderlyId，自动设置选中的老人并加载围栏
   if (props.elderlyId) {
     selectedElderlyId.value = props.elderlyId
+    await loadFences(props.elderlyId)
   }
 })
 
