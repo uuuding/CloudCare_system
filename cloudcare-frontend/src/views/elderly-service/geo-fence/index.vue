@@ -126,19 +126,28 @@
         </el-form-item>
         
         <el-form-item label="中心坐标" prop="centerCoordinates" v-if="fenceForm.fenceType === 'circle'">
-          <el-input 
-            v-model="fenceForm.centerCoordinates" 
-            placeholder="格式：经度,纬度 如：114.125,22.699"
-          >
-            <template #append>
-              <el-button @click="getCurrentLocation" :loading="gettingLocation">
-                <el-icon><Location /></el-icon>
-                获取当前位置
-              </el-button>
-            </template>
-          </el-input>
+          <div class="coordinate-input-group">
+            <el-input 
+              v-model="fenceForm.centerCoordinates" 
+              placeholder="格式：经度,纬度 如：114.125,22.699"
+              style="flex: 1; margin-right: 10px;"
+            />
+            <MapPicker 
+              v-model="fenceForm.centerCoordinates"
+              button-text="地图选点"
+              @change="handleCoordinateChange"
+            />
+            <el-button 
+              @click="getCurrentLocation" 
+              :loading="gettingLocation"
+              style="margin-left: 10px;"
+            >
+              <el-icon><Location /></el-icon>
+              当前位置
+            </el-button>
+          </div>
           <div class="form-tip">
-            提示：点击"获取当前位置"按钮可自动填入当前地理位置坐标
+            提示：可通过地图选点、获取当前位置或手动输入坐标（格式：经度,纬度）
           </div>
         </el-form-item>
         
@@ -464,6 +473,7 @@ import { Plus, Refresh, Link, Location, List, Search } from '@element-plus/icons
 import { formatDateTime } from '@/utils/date'
 import * as geoFenceApi from '@/api/geoFence'
 import * as elderlyApi from '@/api/elderlyProfile'
+import MapPicker from '@/components/MapPicker.vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -918,6 +928,16 @@ const resetBindForm = () => {
   }
 }
 
+// 处理坐标变化
+const handleCoordinateChange = (coordinates) => {
+  console.log('坐标已更新:', coordinates)
+  // 坐标已通过v-model自动更新到fenceForm.centerCoordinates
+  // 这里可以添加额外的处理逻辑，比如验证坐标格式
+  if (coordinates) {
+    ElMessage.success('坐标选择成功')
+  }
+}
+
 // 获取当前位置
 const getCurrentLocation = () => {
   if (!navigator.geolocation) {
@@ -1037,5 +1057,32 @@ const getCurrentLocation = () => {
 
 .text-gray-400 {
   color: #9ca3af;
+}
+
+.coordinate-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coordinate-input-group .el-input {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .coordinate-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .coordinate-input-group .el-input {
+    margin-right: 0 !important;
+    margin-bottom: 10px;
+  }
+  
+  .coordinate-input-group .el-button {
+    margin-left: 0 !important;
+    margin-bottom: 10px;
+  }
 }
 </style>

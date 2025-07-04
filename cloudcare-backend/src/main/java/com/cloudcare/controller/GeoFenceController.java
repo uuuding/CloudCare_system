@@ -51,9 +51,11 @@ public class GeoFenceController {
     /**
      * 更新电子围栏
      */
-    @PutMapping("/update")
-    public Result<Boolean> updateGeoFence(@RequestBody GeoFence geoFence) {
+    @PutMapping("/update/{id}")
+    public Result<Boolean> updateGeoFence(@PathVariable Long id, @RequestBody GeoFence geoFence) {
         try {
+            // 设置围栏ID
+            geoFence.setId(id);
             boolean success = geoFenceService.updateGeoFence(geoFence);
             if (success) {
                 return Result.success(true);
@@ -152,6 +154,24 @@ public class GeoFenceController {
     public Result<GeoFence> getFenceById(@PathVariable Long fenceId) {
         try {
             GeoFence fence = geoFenceService.getFenceById(fenceId);
+            if (fence != null) {
+                return Result.success(fence);
+            } else {
+                return Result.error("围栏不存在");
+            }
+        } catch (Exception e) {
+            log.error("查询围栏详情失败: {}", e.getMessage(), e);
+            return Result.error("查询围栏详情失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据围栏ID查询围栏详情（兼容前端调用）
+     */
+    @GetMapping("/{id}")
+    public Result<GeoFence> getFenceByIdCompat(@PathVariable Long id) {
+        try {
+            GeoFence fence = geoFenceService.getFenceById(id);
             if (fence != null) {
                 return Result.success(fence);
             } else {
