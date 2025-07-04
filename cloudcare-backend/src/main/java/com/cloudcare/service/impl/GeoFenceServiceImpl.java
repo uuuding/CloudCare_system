@@ -45,6 +45,12 @@ public class GeoFenceServiceImpl implements GeoFenceService {
     // 缓存老人的上一次围栏状态，用于判断进入/离开事件
     // Key: elderlyId + "-" + fenceId, Value: 是否在围栏内
     private final Map<String, Boolean> lastFenceStatus = new ConcurrentHashMap<>();
+    
+    // 用于记录最后一次触发事件的时间，防止短时间内重复触发
+    private final Map<String, LocalDateTime> lastEventTime = new ConcurrentHashMap<>();
+    
+    // 防重复触发的时间间隔（分钟）
+    private static final int EVENT_INTERVAL_MINUTES = 5;
 
     @Override
     public boolean createGeoFence(GeoFence geoFence) {
@@ -202,10 +208,26 @@ public class GeoFenceServiceImpl implements GeoFenceService {
                 }
                 
                 if (lastInFence != currentInFence) {
-                    // 状态发生变化，触发事件
+                    // 状态发生变化，检查是否需要触发事件
                     String eventType = currentInFence ? "enter" : "exit";
+                    String eventKey = gpsLocation.getElderlyId() + "-" + fence.getId() + "-" + eventType;
+                    LocalDateTime lastTime = lastEventTime.get(eventKey);
+                    LocalDateTime now = LocalDateTime.now();
+                    
+                    // 检查时间间隔，防止短时间内重复触发
+                    if (lastTime != null && lastTime.plusMinutes(EVENT_INTERVAL_MINUTES).isAfter(now)) {
+                        log.info("围栏事件触发过于频繁，跳过: 围栏={}, 事件类型={}, 上次触发时间={}, 间隔限制={}分钟", 
+                                fence.getFenceName(), eventType, lastTime, EVENT_INTERVAL_MINUTES);
+                        // 更新状态缓存但不触发事件
+                        lastFenceStatus.put(statusKey, currentInFence);
+                        continue;
+                    }
+                    
                     log.info("围栏状态发生变化: {} -> {}, 触发{}事件", 
                             lastInFence, currentInFence, eventType);
+                    
+                    // 记录本次事件触发时间
+                    lastEventTime.put(eventKey, now);
                     
                     // 创建围栏事件记录（无论是否需要提醒都要记录事件）
                     GeoFenceEvent event = new GeoFenceEvent();

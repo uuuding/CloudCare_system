@@ -107,6 +107,8 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             GeoFence geoFence = geoFenceMapper.getFenceById(geoFenceEvent.getFenceId());
             if (geoFence == null) {
                 log.warn("围栏不存在，无法发送提醒: fenceId={}", geoFenceEvent.getFenceId());
+                // 围栏不存在，标记为已发送避免重复处理
+                updateAlertSentStatus(geoFenceEvent.getId());
                 return;
             }
             
@@ -115,20 +117,29 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             
             if (emergencyContacts == null || emergencyContacts.trim().isEmpty()) {
                 log.warn("未配置紧急联系人，无法发送提醒: fenceId={}", geoFenceEvent.getFenceId());
+                // 未配置联系人，标记为已发送避免重复处理
+                updateAlertSentStatus(geoFenceEvent.getId());
                 return;
             }
             
+            boolean smsSuccess = true;
+            
             // 发送短信提醒
             if ("sms".equals(alertType) || "both".equals(alertType)) {
-                // 如果是离开围栏事件，使用离开模板发送
-                if ("exit".equals(geoFenceEvent.getEventType())) {
-                    sendFenceLeaveAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
-                } else if ("enter".equals(geoFenceEvent.getEventType())) {
-                    // 如果是进入围栏事件，使用进入模板发送
-                    sendFenceEnterAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
-                } else {
-                    // 其他事件类型使用原有方式
-                    sendSmsAlert(emergencyContacts, geoFenceEvent.getAlertContent());
+                try {
+                    // 如果是离开围栏事件，使用离开模板发送
+                    if ("exit".equals(geoFenceEvent.getEventType())) {
+                        sendFenceLeaveAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
+                    } else if ("enter".equals(geoFenceEvent.getEventType())) {
+                        // 如果是进入围栏事件，使用进入模板发送
+                        sendFenceEnterAlertWithTemplate(emergencyContacts, geoFenceEvent, geoFence);
+                    } else {
+                        // 其他事件类型使用原有方式
+                        sendSmsAlert(emergencyContacts, geoFenceEvent.getAlertContent());
+                    }
+                } catch (Exception smsException) {
+                    log.error("发送短信失败: eventId={}, error={}", geoFenceEvent.getId(), smsException.getMessage());
+                    smsSuccess = false;
                 }
             }
             
@@ -138,14 +149,18 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
                 log.info("应用推送功能待实现");
             }
             
-            // 更新发送状态
-            updateAlertSentStatus(geoFenceEvent.getId());
-            
-            log.info("围栏事件提醒发送成功: eventId={}, alertType={}", 
-                    geoFenceEvent.getId(), alertType);
+            // 只有在短信发送成功时才更新发送状态
+            if (smsSuccess) {
+                updateAlertSentStatus(geoFenceEvent.getId());
+                log.info("围栏事件提醒发送成功: eventId={}, alertType={}", 
+                        geoFenceEvent.getId(), alertType);
+            } else {
+                log.warn("围栏事件提醒发送失败，将在下次定时任务中重试: eventId={}", geoFenceEvent.getId());
+            }
             
         } catch (Exception e) {
-            log.error("发送围栏事件提醒失败: {}", e.getMessage(), e);
+            log.error("发送围栏事件提醒失败: eventId={}, error={}", geoFenceEvent.getId(), e.getMessage(), e);
+            // 发生异常时不更新发送状态，让定时任务重试
         }
     }
 
