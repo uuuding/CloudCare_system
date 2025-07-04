@@ -25,6 +25,10 @@ public interface ElderlyObservationsMapper extends BaseMapper<ElderlyObservation
     // 删除体检记录
     @Delete("DELETE FROM elderly_observations WHERE id = #{id}")
     int deleteObservation(int id);
+    
+    // 根据老人ID删除所有体检记录
+    @Delete("DELETE FROM elderly_observations WHERE elderly_id = #{elderlyId}")
+    int deleteObservationsByElderlyId(int elderlyId);
 
     // 查询所有体检记录
     @Select("SELECT * FROM elderly_observations")

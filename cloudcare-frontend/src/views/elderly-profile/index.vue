@@ -160,7 +160,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue"
-import { ElMessage, ElDialog, ElButton, ElInput, ElSelect, ElOption, ElForm, ElFormItem } from "element-plus"
+import { ElMessage, ElMessageBox, ElDialog, ElButton, ElInput, ElSelect, ElOption, ElForm, ElFormItem } from "element-plus"
 import {
   getAllElderlyProfiles,
   searchElderlyProfiles,
@@ -271,13 +271,27 @@ const handleEditSave = async () => {
 
 const handleDelete = async (id) => {
   try {
+    await ElMessageBox.confirm(
+      '此操作将永久删除该老人档案，是否继续？',
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
     const response = await deleteElderlyProfile(id)
-    if (response.data) {
-      ElMessage.success("删除成功")
+    if (response.success && response.data) {
+      ElMessage.success(response.message || "删除成功")
       await loadElderlyProfiles()
+    } else {
+      ElMessage.error(response.message || "删除失败")
     }
   } catch (error) {
-    ElMessage.error("删除失败")
+    if (error !== 'cancel') {
+      ElMessage.error("删除失败: " + (error.message || error))
+    }
   }
 }
 

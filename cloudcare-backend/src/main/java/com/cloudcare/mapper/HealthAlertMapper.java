@@ -280,4 +280,10 @@ public interface HealthAlertMapper {
     @Select("SELECT alert_type as type, COUNT(1) as count FROM health_alert " +
             "WHERE status = 'ACTIVE' GROUP BY alert_type")
     List<Map<String, Object>> countByType();
+    
+    /**
+     * 根据老人ID删除所有健康预警记录
+     */
+    @Delete("DELETE FROM health_alert WHERE elderly_id = #{elderlyId}")
+    int deleteAlertsByElderlyId(@Param("elderlyId") int elderlyId);
 }

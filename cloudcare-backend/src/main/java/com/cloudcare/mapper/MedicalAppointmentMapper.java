@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloudcare.dto.MedicalAppointmentQueryDTO;
 import com.cloudcare.entity.MedicalAppointment;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -55,4 +56,10 @@ public interface MedicalAppointmentMapper extends BaseMapper<MedicalAppointment>
             "ORDER BY ma.appointment_time ASC")
     List<MedicalAppointment> findUpcomingAppointments(@Param("startTime") LocalDateTime startTime,
                                                      @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 根据老人ID删除所有医疗预约记录
+     */
+    @Delete("DELETE FROM medical_appointment WHERE elder_id = #{elderId}")
+    int deleteAppointmentsByElderId(@Param("elderId") int elderId);
 }

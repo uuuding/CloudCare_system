@@ -7,19 +7,25 @@
         <el-card class="stat-card critical">
           <div class="stat-content">
             <div class="stat-number">{{ statistics.criticalCount || 0 }}</div>
-            <div class="stat-label">严重预警</div>
+            <div class="stat-label">危急预警</div>
           </div>
         </el-card>
         <el-card class="stat-card warning">
           <div class="stat-content">
-            <div class="stat-number">{{ statistics.warningCount || 0 }}</div>
-            <div class="stat-label">警告预警</div>
+            <div class="stat-number">{{ statistics.highCount || 0 }}</div>
+            <div class="stat-label">重度预警</div>
           </div>
         </el-card>
         <el-card class="stat-card info">
           <div class="stat-content">
-            <div class="stat-number">{{ statistics.infoCount || 0 }}</div>
-            <div class="stat-label">提醒预警</div>
+            <div class="stat-number">{{ statistics.mediumCount || 0 }}</div>
+            <div class="stat-label">中度预警</div>
+          </div>
+        </el-card>
+        <el-card class="stat-card success">
+          <div class="stat-content">
+            <div class="stat-number">{{ statistics.lowCount || 0 }}</div>
+            <div class="stat-label">轻度预警</div>
           </div>
         </el-card>
         <el-card class="stat-card active">
@@ -46,9 +52,10 @@
           <el-form-item label="预警级别">
             <el-select v-model="filterForm.level" placeholder="请选择级别" clearable>
               <el-option label="全部" value=""></el-option>
-              <el-option label="严重" value="CRITICAL"></el-option>
-              <el-option label="警告" value="WARNING"></el-option>
-              <el-option label="提醒" value="INFO"></el-option>
+              <el-option label="危急" value="CRITICAL"></el-option>
+              <el-option label="重度" value="HIGH"></el-option>
+              <el-option label="中度" value="MEDIUM"></el-option>
+              <el-option label="轻度" value="LOW"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="预警类型">
@@ -282,9 +289,10 @@
         </el-form-item>
         <el-form-item label="预警级别" prop="alertLevel">
           <el-select v-model="ruleForm.alertLevel" placeholder="请选择预警级别">
-            <el-option label="严重" value="CRITICAL"></el-option>
-            <el-option label="警告" value="WARNING"></el-option>
-            <el-option label="提醒" value="INFO"></el-option>
+            <el-option label="危急" value="CRITICAL"></el-option>
+            <el-option label="重度" value="HIGH"></el-option>
+            <el-option label="中度" value="MEDIUM"></el-option>
+            <el-option label="轻度" value="LOW"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="最小阈值">
@@ -726,9 +734,10 @@ const getAlertTypeTagType = (type) => {
 
 const getAlertLevelText = (level) => {
   const levelMap = {
-    'CRITICAL': '严重',
-    'WARNING': '警告',
-    'INFO': '提醒'
+    'CRITICAL': '危急',
+    'HIGH': '重度',
+    'MEDIUM': '中度',
+    'LOW': '轻度'
   }
   return levelMap[level] || level
 }
@@ -736,8 +745,9 @@ const getAlertLevelText = (level) => {
 const getAlertLevelTagType = (level) => {
   const levelMap = {
     'CRITICAL': 'danger',
-    'WARNING': 'warning',
-    'INFO': 'info'
+    'HIGH': 'warning',
+    'MEDIUM': 'info',
+    'LOW': 'success'
   }
   return levelMap[level] || ''
 }
@@ -812,8 +822,12 @@ watch(() => showRuleDialog.value, watchRuleDialog)
   border-left: 4px solid #409eff;
 }
 
-.stat-card.active {
+.stat-card.success {
   border-left: 4px solid #67c23a;
+}
+
+.stat-card.active {
+  border-left: 4px solid #909399;
 }
 
 .stat-content {

@@ -39,8 +39,16 @@ public class ElderlyProfileController {
 
     // 根据条件查询老人档案
     @GetMapping("/search")
-    public List<ElderlyProfile> searchElderlyProfiles(String name, int age) {
-        return elderlyProfileService.searchByNameAndAge(name, age);
+    public Result<List<ElderlyProfile>> searchElderlyProfiles(
+            @RequestParam(required = false) String name, 
+            @RequestParam(required = false, defaultValue = "0") int age) {
+        try {
+            List<ElderlyProfile> elderlyProfiles = elderlyProfileService.searchByNameAndAge(name, age);
+            return Result.success(elderlyProfiles);
+        } catch (Exception e) {
+            log.error("搜索老人档案失败，name: {}, age: {}, 错误信息: {}", name, age, e.getMessage(), e);
+            return Result.error("搜索失败: " + e.getMessage());
+        }
     }
 
     // 更新老人档案
@@ -96,7 +104,18 @@ public class ElderlyProfileController {
 
     // 删除老人档案
     @DeleteMapping("/delete/{id}")
-    public boolean deleteElderlyProfile(@PathVariable int id) {
-        return elderlyProfileService.deleteProfile(id);
+    @Log(title = "ELDERLY", businessType = BusinessType.DELETE, isSaveRequestData = true, isSaveResponseData = true)
+    public Result<Boolean> deleteElderlyProfile(@PathVariable int id) {
+        try {
+            boolean success = elderlyProfileService.deleteProfile(id);
+            if (success) {
+                return Result.success(true, "删除成功");
+            } else {
+                return Result.error("删除失败，老人档案不存在");
+            }
+        } catch (Exception e) {
+            log.error("删除老人档案失败，ID: {}, 错误信息: {}", id, e.getMessage(), e);
+            return Result.error("删除失败: " + e.getMessage());
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.cloudcare.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.cloudcare.entity.GeoFenceEvent;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -147,4 +148,10 @@ public interface GeoFenceEventMapper extends BaseMapper<GeoFenceEvent> {
     Long countEventsByTimeRange2(
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 根据老人ID删除所有围栏事件记录
+     */
+    @Delete("DELETE FROM geo_fence_event WHERE elderly_id = #{elderlyId}")
+    int deleteEventsByElderlyId(@Param("elderlyId") int elderlyId);
 }
