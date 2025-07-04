@@ -293,6 +293,9 @@ npm run dev
 - 高德地图API集成
 - 圆形和多边形围栏支持
 - 可视化围栏编辑
+- **地图选点功能**：支持在地图上直观选择围栏中心位置
+- **地点搜索**：支持地点名称搜索快速定位
+- **多种坐标输入方式**：地图选点、GPS定位、手动输入
 
 ### 📊 数据统计
 - 围栏事件统计
@@ -312,6 +315,7 @@ npm run dev
 如有问题，请参考以下文档：
 - [GPS围栏系统详细文档](./GPS_FENCE_SYSTEM_README.md)
 - [短信模块使用说明](./SMS_MODULE_DOCUMENTATION.md)
+- [地图选点功能指南](./MAP_PICKER_GUIDE.md)
 - [API接口文档](./api-docs.md)
 - [数据库设计文档](./geo_fence_system.sql)
 

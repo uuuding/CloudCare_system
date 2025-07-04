@@ -53,6 +53,1298 @@
 
 所有接口返回统一的JSON格式：
 
+```
+
+## 6. 电子围栏管理
+
+### 6.1 创建围栏
+
+- **接口URL**: `/api/geo-fence/create`
+- **请求方式**: POST
+- **接口描述**: 创建新的电子围栏
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+| fenceName | String | 是 | 围栏名称 |
+| fenceType | Integer | 是 | 围栏类型（1：圆形，2：多边形） |
+| centerLat | Double | 是 | 中心点纬度 |
+| centerLng | Double | 是 | 中心点经度 |
+| radius | Integer | 否 | 半径（米，圆形围栏必填） |
+| coordinates | String | 否 | 坐标点（多边形围栏必填） |
+| enterAlert | Boolean | 是 | 进入提醒 |
+| exitAlert | Boolean | 是 | 离开提醒 |
+| alertType | Integer | 是 | 提醒方式（1：短信，2：应用推送，3：两者都有） |
+| emergencyContacts | String | 否 | 紧急联系人手机号（多个用逗号分隔） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 创建结果 |
+
+#### 请求示例
+
+```http
+POST /api/geo-fence/create
+Content-Type: application/json
+
+{
+  "elderlyId": 123,
+  "fenceName": "家庭围栏",
+  "fenceType": 1,
+  "centerLat": 39.9042,
+  "centerLng": 116.4074,
+  "radius": 500,
+  "enterAlert": true,
+  "exitAlert": true,
+  "alertType": 3,
+  "emergencyContacts": "13800138000,13900139000"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 6.2 更新围栏
+
+- **接口URL**: `/api/geo-fence/update/{id}`
+- **请求方式**: PUT
+- **接口描述**: 更新指定的电子围栏
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| id | Long | 是 | 围栏ID（路径参数） |
+| 其他参数 | - | - | 同创建围栏 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /api/geo-fence/update/1
+Content-Type: application/json
+
+{
+  "elderlyId": 123,
+  "fenceName": "更新后的围栏",
+  "fenceType": 1,
+  "centerLat": 39.9042,
+  "centerLng": 116.4074,
+  "radius": 600,
+  "enterAlert": true,
+  "exitAlert": true,
+  "alertType": 3,
+  "emergencyContacts": "13800138000"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 6.3 删除围栏
+
+- **接口URL**: `/api/geo-fence/delete/{fenceId}`
+- **请求方式**: DELETE
+- **接口描述**: 删除指定的电子围栏
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| fenceId | Long | 是 | 围栏ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 删除结果 |
+
+#### 请求示例
+
+```http
+DELETE /api/geo-fence/delete/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 6.4 分页查询所有围栏
+
+- **接口URL**: `/api/geo-fence/list`
+- **请求方式**: GET
+- **接口描述**: 分页查询所有电子围栏
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 | 默认值 |
+| ----- | --- | ------- | ---- | ----- |
+| page | Integer | 否 | 页码 | 1 |
+| size | Integer | 否 | 每页大小 | 10 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| total | Long | 总记录数 |
+| pages | Long | 总页数 |
+| current | Long | 当前页码 |
+| size | Long | 每页大小 |
+| records | Array | 围栏列表 |
+
+#### 请求示例
+
+```http
+GET /api/geo-fence/list?page=1&size=10
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "total": 50,
+    "pages": 5,
+    "current": 1,
+    "size": 10,
+    "records": [
+      {
+        "fenceId": 1,
+        "elderlyId": 123,
+        "fenceName": "家庭围栏",
+        "fenceType": 1,
+        "centerLat": 39.9042,
+        "centerLng": 116.4074,
+        "radius": 500,
+        "status": 1,
+        "createTime": "2024-01-15T10:30:00"
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 6.5 根据老人ID查询围栏
+
+- **接口URL**: `/api/geo-fence/list/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 查询指定老人的所有围栏
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 围栏列表 |
+
+#### 请求示例
+
+```http
+GET /api/geo-fence/list/123
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "fenceId": 1,
+      "elderlyId": 123,
+      "fenceName": "家庭围栏",
+      "fenceType": 1,
+      "centerLat": 39.9042,
+      "centerLng": 116.4074,
+      "radius": 500,
+      "status": 1
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+### 6.6 查询围栏详情
+
+- **接口URL**: `/api/geo-fence/detail/{fenceId}`
+- **请求方式**: GET
+- **接口描述**: 查询指定围栏的详细信息
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| fenceId | Long | 是 | 围栏ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| fenceId | Long | 围栏ID |
+| elderlyId | Long | 老人ID |
+| fenceName | String | 围栏名称 |
+| fenceType | Integer | 围栏类型 |
+| centerLat | Double | 中心点纬度 |
+| centerLng | Double | 中心点经度 |
+| radius | Integer | 半径 |
+| coordinates | String | 坐标点 |
+| status | Integer | 状态 |
+| enterAlert | Boolean | 进入提醒 |
+| exitAlert | Boolean | 离开提醒 |
+| alertType | Integer | 提醒方式 |
+| emergencyContacts | String | 紧急联系人 |
+| createTime | String | 创建时间 |
+| updateTime | String | 更新时间 |
+
+#### 请求示例
+
+```http
+GET /api/geo-fence/detail/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "fenceId": 1,
+    "elderlyId": 123,
+    "fenceName": "家庭围栏",
+    "fenceType": 1,
+    "centerLat": 39.9042,
+    "centerLng": 116.4074,
+    "radius": 500,
+    "coordinates": "39.9042,116.4074;39.9052,116.4084",
+    "status": 1,
+    "enterAlert": true,
+    "exitAlert": true,
+    "alertType": 3,
+    "emergencyContacts": "13800138000,13900139000",
+    "createTime": "2024-01-15T10:30:00",
+    "updateTime": "2024-01-15T10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 6.7 查询围栏事件记录
+
+- **接口URL**: `/api/geo-fence/events/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 查询指定老人的围栏事件记录
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 | 默认值 |
+| ----- | --- | ------- | ---- | ----- |
+| elderlyId | Long | 是 | 老人ID | - |
+| page | Integer | 否 | 页码 | 1 |
+| size | Integer | 否 | 每页大小 | 10 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| total | Long | 总记录数 |
+| pages | Long | 总页数 |
+| current | Long | 当前页码 |
+| size | Long | 每页大小 |
+| records | Array | 事件列表 |
+
+#### 请求示例
+
+```http
+GET /api/geo-fence/events/123?page=1&size=10
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "total": 20,
+    "pages": 2,
+    "current": 1,
+    "size": 10,
+    "records": [
+      {
+        "eventId": 1,
+        "elderlyId": 123,
+        "fenceId": 1,
+        "eventType": "EXIT",
+        "eventTime": "2024-01-15T10:30:00",
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "isRead": false
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 6.8 获取老人当前位置
+
+- **接口URL**: `/api/geo-fence/location/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 获取指定老人的当前位置
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| elderlyId | Long | 老人ID |
+| latitude | Double | 纬度 |
+| longitude | Double | 经度 |
+| address | String | 地址 |
+| updateTime | String | 更新时间 |
+
+#### 请求示例
+
+```http
+GET /api/geo-fence/location/123
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "elderlyId": 123,
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "address": "北京市朝阳区",
+    "updateTime": "2024-01-15T10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+## 7. 短信服务管理
+
+### 7.1 发送普通短信
+
+- **接口URL**: `/api/sms/send`
+- **请求方式**: POST
+- **接口描述**: 发送普通短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phone | String | 是 | 手机号 |
+| content | String | 是 | 短信内容 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 发送结果 |
+| messageId | String | 消息ID |
+| message | String | 结果描述 |
+
+#### 请求示例
+
+```http
+POST /api/sms/send
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "content": "您好，这是一条测试短信。"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "success": true,
+    "messageId": "SMS_123456789",
+    "message": "短信发送成功"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 7.2 批量发送短信
+
+- **接口URL**: `/api/sms/send/batch`
+- **请求方式**: POST
+- **接口描述**: 批量发送短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phones | Array | 是 | 手机号列表 |
+| content | String | 是 | 短信内容 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| successCount | Integer | 成功数量 |
+| failCount | Integer | 失败数量 |
+| results | Array | 详细结果 |
+
+#### 请求示例
+
+```http
+POST /api/sms/send/batch
+Content-Type: application/json
+
+{
+  "phones": ["13800138000", "13900139000"],
+  "content": "您好，这是一条批量短信。"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "successCount": 2,
+    "failCount": 0,
+    "results": [
+      {
+        "phone": "13800138000",
+        "success": true,
+        "messageId": "SMS_123456789"
+      },
+      {
+        "phone": "13900139000",
+        "success": true,
+        "messageId": "SMS_123456790"
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 7.3 发送模板短信
+
+- **接口URL**: `/api/sms/send/template`
+- **请求方式**: POST
+- **接口描述**: 根据模板发送短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phone | String | 是 | 手机号 |
+| templateCode | String | 是 | 模板代码 |
+| templateParams | Object | 否 | 模板参数 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 发送结果 |
+| messageId | String | 消息ID |
+| message | String | 结果描述 |
+
+#### 请求示例
+
+```http
+POST /api/sms/send/template
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "templateCode": "EMERGENCY_ALERT",
+  "templateParams": {
+    "elderlyName": "张三",
+    "location": "北京市朝阳区",
+    "time": "2024-01-15 10:30"
+  }
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "success": true,
+    "messageId": "SMS_123456789",
+    "message": "短信发送成功"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 7.4 查询账户余额
+
+- **接口URL**: `/api/sms/balance`
+- **请求方式**: GET
+- **接口描述**: 查询短信账户余额
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| balance | Integer | 余额（条数） |
+| lastUpdateTime | String | 最后更新时间 |
+
+#### 请求示例
+
+```http
+GET /api/sms/balance
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "balance": 1000,
+    "lastUpdateTime": "2024-01-15T10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 7.5 获取短信发送记录
+
+- **接口URL**: `/api/sms/records`
+- **请求方式**: GET
+- **接口描述**: 获取短信发送记录
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 | 默认值 |
+| ----- | --- | ------- | ---- | ----- |
+| page | Integer | 否 | 页码 | 1 |
+| size | Integer | 否 | 每页大小 | 10 |
+| phone | String | 否 | 手机号 | - |
+| startTime | String | 否 | 开始时间 | - |
+| endTime | String | 否 | 结束时间 | - |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| total | Long | 总记录数 |
+| pages | Long | 总页数 |
+| current | Long | 当前页码 |
+| size | Long | 每页大小 |
+| records | Array | 发送记录列表 |
+
+#### 请求示例
+
+```http
+GET /api/sms/records?page=1&size=10&phone=13800138000
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "total": 50,
+    "pages": 5,
+    "current": 1,
+    "size": 10,
+    "records": [
+      {
+        "id": 1,
+        "phone": "13800138000",
+        "content": "您好，这是一条测试短信。",
+        "status": "SUCCESS",
+        "messageId": "SMS_123456789",
+        "sendTime": "2024-01-15T10:30:00",
+        "deliveryTime": "2024-01-15T10:30:05"
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+## 8. 老人档案管理
+
+### 8.1 查询所有老人档案
+
+- **接口URL**: `/api/elderly-profile/index`
+- **请求方式**: GET
+- **接口描述**: 查询所有老人档案
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 老人档案列表 |
+
+#### 请求示例
+
+```http
+GET /api/elderly-profile/index
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "elderlyId": 1,
+      "name": "张三",
+      "age": 75,
+      "gender": "男",
+      "phone": "13800138000",
+      "address": "北京市朝阳区",
+      "emergencyContact": "李四",
+      "emergencyPhone": "13900139000",
+      "createTime": "2024-01-15T10:30:00"
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+### 8.2 获取老人列表
+
+- **接口URL**: `/api/elderly-profile/list`
+- **请求方式**: GET
+- **接口描述**: 获取老人列表（用于下拉选择）
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 老人列表 |
+
+#### 请求示例
+
+```http
+GET /api/elderly-profile/list
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "elderlyId": 1,
+      "name": "张三",
+      "age": 75,
+      "phone": "13800138000"
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+### 8.3 根据条件查询老人档案
+
+- **接口URL**: `/api/elderly-profile/search`
+- **请求方式**: GET
+- **接口描述**: 根据条件查询老人档案
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| name | String | 否 | 姓名 |
+| age | Integer | 否 | 年龄 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 老人档案列表 |
+
+#### 请求示例
+
+```http
+GET /api/elderly-profile/search?name=张&age=75
+```
+
+#### 响应示例
+
+```json
+[
+  {
+    "elderlyId": 1,
+    "name": "张三",
+    "age": 75,
+    "gender": "男",
+    "phone": "13800138000",
+    "address": "北京市朝阳区"
+  }
+]
+```
+
+### 8.4 新增老人档案
+
+- **接口URL**: `/api/elderly-profile/add`
+- **请求方式**: POST
+- **接口描述**: 新增老人档案
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| name | String | 是 | 姓名 |
+| age | Integer | 是 | 年龄 |
+| gender | String | 是 | 性别 |
+| phone | String | 是 | 手机号 |
+| address | String | 否 | 地址 |
+| emergencyContact | String | 否 | 紧急联系人 |
+| emergencyPhone | String | 否 | 紧急联系人电话 |
+| medicalHistory | String | 否 | 病史 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 新增结果 |
+
+#### 请求示例
+
+```http
+POST /api/elderly-profile/add
+Content-Type: application/json
+
+{
+  "name": "张三",
+  "age": 75,
+  "gender": "男",
+  "phone": "13800138000",
+  "address": "北京市朝阳区",
+  "emergencyContact": "李四",
+  "emergencyPhone": "13900139000",
+  "medicalHistory": "高血压"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.5 更新老人档案
+
+- **接口URL**: `/api/elderly-profile/update`
+- **请求方式**: PUT
+- **接口描述**: 更新老人档案
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+| 其他参数 | - | - | 同新增老人档案 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /api/elderly-profile/update
+Content-Type: application/json
+
+{
+  "elderlyId": 1,
+  "name": "张三",
+  "age": 76,
+  "gender": "男",
+  "phone": "13800138000",
+  "address": "北京市朝阳区"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.6 删除老人档案
+
+- **接口URL**: `/api/elderly-profile/delete/{id}`
+- **请求方式**: DELETE
+- **接口描述**: 删除老人档案
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| id | Integer | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 删除结果 |
+
+#### 请求示例
+
+```http
+DELETE /api/elderly-profile/delete/1
+```
+
+#### 响应示例
+
+```json
+true
+```
+
+### 8.7 获取老人既往病史
+
+- **接口URL**: `/api/elderly-profile/chronic-diseases/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 获取指定老人的既往病史
+- **权限要求**: 需要登录
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | String | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 既往病史列表 |
+
+#### 请求示例
+
+```http
+GET /api/elderly-profile/chronic-diseases/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "id": 1,
+      "elderlyId": 1,
+      "diseaseName": "高血压",
+      "diagnosisDate": "2020-01-15",
+      "severity": "轻度",
+      "treatment": "药物治疗",
+      "notes": "需要定期监测血压"
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+## 9. GPS定位服务
+
+### 9.1 接收GPS数据推送
+
+- **接口URL**: `/api/gps/push`
+- **请求方式**: POST
+- **接口描述**: 接收GPS设备推送的定位数据
+- **权限要求**: 无（设备接口）
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| method | String | 是 | 数据类型标识（status、alarm、pic、voice、video、PushTest） |
+| serialNumber | String | 是 | 推送序号，毫秒时间戳字符串 |
+| data | String | 是 | 对应的设备数据数组（JSON格式） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 处理结果（成功返回serialNumber） |
+
+#### 请求示例
+
+```http
+POST /api/gps/push
+Content-Type: application/x-www-form-urlencoded
+
+method=status&serialNumber=1628756438000&data=[{"macid":"AA:BB:CC:DD:EE:FF","lat":39.9042,"lng":116.4074,"time":"2024-01-15 10:30:00"}]
+```
+
+#### 响应示例
+
+```
+1628756438000
+```
+
+### 9.2 设备绑定
+
+- **接口URL**: `/api/gps/bind`
+- **请求方式**: POST
+- **接口描述**: 将GPS设备与老人进行绑定
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| macid | String | 是 | 设备MAC地址 |
+| elderlyId | Long | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 绑定结果 |
+| message | String | 结果描述 |
+
+#### 请求示例
+
+```http
+POST /api/gps/bind
+Content-Type: application/json
+
+{
+  "macid": "AA:BB:CC:DD:EE:FF",
+  "elderlyId": 123
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "message": "设备绑定成功"
+}
+```
+
+### 9.3 获取设备绑定列表
+
+- **接口URL**: `/api/gps/bindings`
+- **请求方式**: GET
+- **接口描述**: 获取所有设备绑定关系
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 查询结果 |
+| data | Array | 绑定关系列表 |
+
+#### 请求示例
+
+```http
+GET /api/gps/bindings
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "macid": "AA:BB:CC:DD:EE:FF",
+      "elderlyId": 123,
+      "elderlyName": "张三",
+      "bindTime": "2024-01-15T10:30:00",
+      "status": 1
+    }
+  ]
+}
+```
+
+### 9.4 解绑设备
+
+- **接口URL**: `/api/gps/unbind/{macid}`
+- **请求方式**: DELETE
+- **接口描述**: 解绑GPS设备
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| macid | String | 是 | 设备MAC地址 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 解绑结果 |
+| message | String | 结果描述 |
+
+#### 请求示例
+
+```http
+DELETE /api/gps/unbind/AA:BB:CC:DD:EE:FF
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "message": "设备解绑成功"
+}
+```
+
+### 9.5 GPS接口测试
+
+- **接口URL**: `/api/gps/test`
+- **请求方式**: GET
+- **接口描述**: 测试GPS接口服务状态
+- **权限要求**: 无
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 服务状态 |
+
+#### 请求示例
+
+```http
+GET /api/gps/test
+```
+
+#### 响应示例
+
+```
+GPS接口服务正常运行
+```
+
+## 10. 系统配置管理
+
+### 10.1 更新系统配置
+
+- **接口URL**: `/api/system/config`
+- **请求方式**: PUT
+- **接口描述**: 更新系统配置参数
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| configParams | Object | 是 | 配置参数对象 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /api/system/config
+Content-Type: application/json
+
+{
+  "maxFileSize": "20MB",
+  "sessionTimeout": "60",
+  "enableLogging": true,
+  "smsProvider": "aliyun"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": "系统配置更新成功",
+  "timestamp": 1628756438000
+}
+```
+
+### 10.2 获取系统配置
+
+- **接口URL**: `/api/system/config`
+- **请求方式**: GET
+- **接口描述**: 获取当前系统配置
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 系统配置对象 |
+
+#### 请求示例
+
+```http
+GET /api/system/config
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "maxFileSize": "10MB",
+    "sessionTimeout": "30",
+    "enableLogging": true,
+    "smsProvider": "aliyun",
+    "gpsUpdateInterval": 60,
+    "fenceCheckInterval": 30
+  },
+  "timestamp": 1628756438000
+}
 ```json
 {
   "success": true,      // 请求是否成功
