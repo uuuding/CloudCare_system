@@ -2,6 +2,7 @@ package com.cloudcare.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.cloudcare.entity.GpsLocation;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -61,4 +62,10 @@ public interface GpsLocationMapper extends BaseMapper<GpsLocation> {
             "GROUP BY g.macid, g.elderly_id, e.name " +
             "ORDER BY MAX(g.update_time) DESC")
     java.util.List<java.util.Map<String, Object>> getAllDeviceBindings();
+    
+    /**
+     * 根据老人ID删除所有GPS定位记录
+     */
+    @Delete("DELETE FROM gps_location WHERE elderly_id = #{elderlyId}")
+    int deleteLocationsByElderlyId(@Param("elderlyId") int elderlyId);
 }

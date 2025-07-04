@@ -24,8 +24,16 @@ public interface ElderlyProfileMapper extends BaseMapper<ElderlyProfile> {
     @Select("SELECT * FROM elderly_profile WHERE id = #{id}")
     ElderlyProfile selectById(int id);
 
-    // 通过 name 和 age 联合查询
-    @Select("SELECT * FROM elderly_profile WHERE name = #{name} AND age = #{age}")
+    // 通过 name 和 age 联合查询（支持单独或组合查询）
+    @Select({"<script>",
+        "SELECT * FROM elderly_profile WHERE 1=1",
+        "<if test='name != null and name != \"\"'>",
+        "AND name LIKE CONCAT('%', #{name}, '%')",
+        "</if>",
+        "<if test='age > 0'>",
+        "AND age = #{age}",
+        "</if>",
+        "</script>"})
     List<ElderlyProfile> searchByNameAndAge(@Param("name") String name, @Param("age") int age);
 
     // 更新档案（包括既往病史）

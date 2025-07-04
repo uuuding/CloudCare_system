@@ -341,12 +341,12 @@ public class HealthAlertServiceImpl implements HealthAlertService {
         List<Map<String, Object>> levelStats = healthAlertMapper.countByLevel();
         statistics.put("alertsByLevel", levelStats);
         
-        // 转换级别统计为前端需要的格式
-        // 数据库中的级别：LOW, MEDIUM, HIGH, CRITICAL
-        // 前端期望的级别：INFO(提醒), WARNING(警告), CRITICAL(严重)
+        // 按级别统计为前端需要的格式
+        // 统一使用后端级别：LOW, MEDIUM, HIGH, CRITICAL
         int criticalCount = 0;
-        int warningCount = 0;
-        int infoCount = 0;
+        int highCount = 0;
+        int mediumCount = 0;
+        int lowCount = 0;
         
         for (Map<String, Object> stat : levelStats) {
             String level = (String) stat.get("level");
@@ -356,15 +356,22 @@ public class HealthAlertServiceImpl implements HealthAlertService {
             if ("CRITICAL".equals(level)) {
                 criticalCount = count;
             } else if ("HIGH".equals(level)) {
-                warningCount = count;
-            } else if ("MEDIUM".equals(level) || "LOW".equals(level)) {
-                infoCount += count;
+                highCount = count;
+            } else if ("MEDIUM".equals(level)) {
+                mediumCount = count;
+            } else if ("LOW".equals(level)) {
+                lowCount = count;
             }
         }
         
         statistics.put("criticalCount", criticalCount);
-        statistics.put("warningCount", warningCount);
-        statistics.put("infoCount", infoCount);
+        statistics.put("highCount", highCount);
+        statistics.put("mediumCount", mediumCount);
+        statistics.put("lowCount", lowCount);
+        
+        // 保持向后兼容性，同时提供新的统计字段
+        statistics.put("warningCount", highCount); // HIGH对应警告
+        statistics.put("infoCount", mediumCount + lowCount); // MEDIUM+LOW对应提醒
         
         // 按类型统计
         List<Map<String, Object>> typeStats = healthAlertMapper.countByType();

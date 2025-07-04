@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloudcare.dto.FamilyInteractionDTO;
 import com.cloudcare.entity.FamilyInteraction;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -80,4 +81,10 @@ public interface FamilyInteractionMapper extends BaseMapper<FamilyInteraction> {
             "LEFT JOIN sys_user u ON fm.user_id = u.user_id " +
             "WHERE fm.elder_id = #{elderId}")
     List<Map<String, Object>> getFamilyMembersByElderId(@Param("elderId") Long elderId);
+    
+    /**
+     * 根据老人ID删除所有家属互动记录
+     */
+    @Delete("DELETE FROM family_interaction WHERE elder_id = #{elderId}")
+    int deleteInteractionsByElderId(@Param("elderId") int elderId);
 }

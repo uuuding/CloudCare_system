@@ -446,10 +446,10 @@ const getAlertLevelType = (level) => {
 
 const getAlertLevelText = (level) => {
   const texts = {
-    'LOW': '低',
-    'MEDIUM': '中',
-    'HIGH': '高',
-    'CRITICAL': '严重'
+    'LOW': '轻度',
+    'MEDIUM': '中度',
+    'HIGH': '重度',
+    'CRITICAL': '危急'
   }
   return texts[level] || level
 }

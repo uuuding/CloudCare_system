@@ -3,9 +3,12 @@ package com.cloudcare.service.impl;
 import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.mapper.ElderlyProfileMapper;
+import com.cloudcare.mapper.HealthAlertMapper;
+import com.cloudcare.mapper.ElderlyObservationsMapper;
 import com.cloudcare.service.ElderlyProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,6 +17,12 @@ public class ElderlyProfileServiceImpl implements ElderlyProfileService {
 
     @Autowired
     private ElderlyProfileMapper elderlyProfileMapper;
+    
+    @Autowired
+    private HealthAlertMapper healthAlertMapper;
+    
+    @Autowired
+    private ElderlyObservationsMapper elderlyObservationsMapper;
 
     @Override
     public List<ElderlyProfile> getAllElderlyProfiles() {
@@ -41,8 +50,23 @@ public class ElderlyProfileServiceImpl implements ElderlyProfileService {
     }
 
     @Override
+    @Transactional
     public boolean deleteProfile(int id) {
-        return elderlyProfileMapper.deleteProfile(id);
+        try {
+            // 删除关联的健康预警记录
+            healthAlertMapper.deleteAlertsByElderlyId(id);
+            
+            // 删除关联的健康评估记录（体检记录）
+            elderlyObservationsMapper.deleteObservationsByElderlyId(id);
+            
+            // 删除慢性病记录
+            elderlyProfileMapper.deleteChronicDiseasesByElderlyId(id);
+            
+            // 删除老人档案
+            return elderlyProfileMapper.deleteProfile(id);
+        } catch (Exception e) {
+            throw new RuntimeException("删除老人档案失败: " + e.getMessage(), e);
+        }
     }
 
 @Override
