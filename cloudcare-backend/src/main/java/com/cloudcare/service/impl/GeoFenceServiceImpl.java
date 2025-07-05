@@ -169,7 +169,6 @@ public class GeoFenceServiceImpl implements GeoFenceService {
      * @param gpsLocation GPS位置信息，包含老人ID和坐标信息
      */
     @Override
-    @Transactional
     public void checkFenceEvents(GpsLocation gpsLocation) {
         if (gpsLocation.getElderlyId() == null) {
             log.debug("跳过围栏检查：GPS记录中elderly_id为空");

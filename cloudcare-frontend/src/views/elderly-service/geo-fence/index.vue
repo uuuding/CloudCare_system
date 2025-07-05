@@ -584,6 +584,7 @@ onMounted(() => {
   loadFenceList()
   loadElderlyList()
   loadDeviceBindings()
+  loadAllEvents()
 })
 
 // 方法

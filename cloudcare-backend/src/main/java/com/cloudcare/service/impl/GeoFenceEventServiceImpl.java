@@ -44,6 +44,7 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     private final SystemConfig systemConfig;
 
     @Override
+    @Transactional
     public boolean saveGeoFenceEvent(GeoFenceEvent geoFenceEvent) {
         try {
             geoFenceEvent.setCreateTime(LocalDateTime.now());
@@ -75,6 +76,7 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     }
 
     @Override
+    @Transactional
     public boolean updateAlertSentStatus(Long eventId) {
         try {
             return geoFenceEventMapper.updateAlertSentStatus(eventId) > 0;
@@ -100,7 +102,6 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
     }
 
     @Override
-    @Transactional
     public void sendFenceEventAlert(GeoFenceEvent geoFenceEvent) {
         try {
             // 获取围栏信息
@@ -232,9 +233,21 @@ public class GeoFenceEventServiceImpl implements GeoFenceEventService {
             
             // 根据筛选条件选择不同的查询方法
             if (elderlyId != null && eventType != null && startTime != null && endTime != null) {
-                // 多条件筛选，暂时使用基础查询
-                events = geoFenceEventMapper.getAllEventsWithPagination(offset, size);
-                total = geoFenceEventMapper.countAllEvents();
+                // 多条件筛选
+                events = geoFenceEventMapper.getEventsByMultipleConditionsWithPagination(elderlyId, eventType, startTime, endTime, offset, size);
+                total = geoFenceEventMapper.countEventsByMultipleConditions(elderlyId, eventType, startTime, endTime);
+            } else if (elderlyId != null && startTime != null && endTime != null) {
+                // 按老人ID和时间范围筛选
+                events = geoFenceEventMapper.getEventsByElderlyIdAndTimeRangeWithPagination(elderlyId, startTime, endTime, offset, size);
+                total = geoFenceEventMapper.countEventsByElderlyIdAndTimeRange(elderlyId, startTime, endTime);
+            } else if (elderlyId != null && eventType != null) {
+                // 按老人ID和事件类型筛选
+                events = geoFenceEventMapper.getEventsByElderlyIdAndTypeWithPagination(elderlyId, eventType, offset, size);
+                total = geoFenceEventMapper.countEventsByElderlyIdAndType(elderlyId, eventType);
+            } else if (eventType != null && startTime != null && endTime != null) {
+                // 按事件类型和时间范围筛选
+                events = geoFenceEventMapper.getEventsByTypeAndTimeRangeWithPagination(eventType, startTime, endTime, offset, size);
+                total = geoFenceEventMapper.countEventsByTypeAndTimeRange(eventType, startTime, endTime);
             } else if (elderlyId != null) {
                 // 按老人ID筛选
                 events = geoFenceEventMapper.getEventsByElderlyIdWithPagination(elderlyId, offset, size);
