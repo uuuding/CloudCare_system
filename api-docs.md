@@ -38,6 +38,20 @@
   - [5.7 获取未处理的健康预警数量](#57-获取未处理的健康预警数量)
   - [5.8 获取老人的健康预警列表](#58-获取老人的健康预警列表)
   - [5.9 获取最近的健康预警列表](#59-获取最近的健康预警列表)
+- [6. GPS定位管理](#6-gps定位管理)
+  - [6.1 接收GPS数据推送](#61-接收gps数据推送)
+  - [6.2 获取老人轨迹数据](#62-获取老人轨迹数据)
+  - [6.3 获取老人最新位置](#63-获取老人最新位置)
+  - [6.4 绑定GPS设备](#64-绑定gps设备)
+  - [6.5 获取设备绑定列表](#65-获取设备绑定列表)
+  - [6.6 解绑GPS设备](#66-解绑gps设备)
+- [7. 电子围栏管理](#7-电子围栏管理)
+  - [7.1 创建围栏](#71-创建围栏)
+  - [7.2 更新围栏](#72-更新围栏)
+  - [7.3 删除围栏](#73-删除围栏)
+  - [7.4 获取围栏列表](#74-获取围栏列表)
+  - [7.5 获取围栏详情](#75-获取围栏详情)
+  - [7.6 获取老人的围栏列表](#76-获取老人的围栏列表)
 
 ## 1. 接口规范
 
@@ -117,6 +131,371 @@ Content-Type: application/json
   "timestamp": 1628756438000
 }
 ```
+
+## 6. GPS定位管理
+
+### 6.1 接收GPS数据推送
+
+- **接口URL**: `/api/gps/push`
+- **请求方式**: POST
+- **接口描述**: 接收GPS设备推送的定位数据
+- **权限要求**: 无（设备接口）
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| method | String | 是 | 数据类型标识（固定值：status） |
+| serialNumber | String | 是 | 推送序号（毫秒时间戳） |
+| data | String | 是 | GPS设备数据数组（JSON格式） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 返回推送序号 |
+
+#### 请求示例
+
+```http
+POST /api/gps/push
+Content-Type: application/x-www-form-urlencoded
+
+method=status&serialNumber=1628756438000&data=[{"macid":"TEST123456789","gpsTime":1628756438000,"lat":39.9042,"lon":116.4074,"speed":0.0,"dir":0.0}]
+```
+
+#### 响应示例
+
+```
+1628756438000
+```
+
+### 6.2 获取老人轨迹数据
+
+- **接口URL**: `/api/gps/track/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 获取指定老人在指定时间范围内的GPS轨迹数据
+- **权限要求**: 管理员、医生或相关老人
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Integer | 是 | 老人ID（路径参数） |
+| startTime | String | 是 | 开始时间（格式：yyyy-MM-dd HH:mm:ss） |
+| endTime | String | 是 | 结束时间（格式：yyyy-MM-dd HH:mm:ss） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| code | Integer | 状态码 |
+| data | Array | GPS轨迹数据列表 |
+| message | String | 响应消息 |
+
+#### GPS轨迹数据结构
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| id | Long | 记录ID |
+| macid | String | 设备编号 |
+| elderlyId | Integer | 老人ID |
+| gpsTime | Long | GPS时间戳（毫秒） |
+| lat | Double | GPS纬度 |
+| lon | Double | GPS经度 |
+| mapLat | Double | 地图纬度 |
+| mapLon | Double | 地图经度 |
+| speed | Double | 速度（km/h） |
+| dir | Double | 方向角度 |
+| createTime | String | 创建时间 |
+
+#### 请求示例
+
+```http
+GET /api/gps/track/1?startTime=2023-08-08 00:00:00&endTime=2023-08-08 23:59:59
+```
+
+#### 响应示例
+
+```json
+{
+  "code": 200,
+  "data": [
+    {
+      "id": 1,
+      "macid": "TEST123456789",
+      "elderlyId": 1,
+      "gpsTime": 1628756438000,
+      "lat": 39.9042,
+      "lon": 116.4074,
+      "mapLat": 39.9042,
+      "mapLon": 116.4074,
+      "speed": 5.2,
+      "dir": 90.0,
+      "createTime": "2023-08-08 10:30:00"
+    }
+  ],
+  "message": "查询成功"
+}
+```
+
+### 6.3 获取老人最新位置
+
+- **接口URL**: `/api/gps/latest/{elderlyId}`
+- **请求方式**: GET
+- **接口描述**: 获取指定老人的最新GPS位置信息
+- **权限要求**: 管理员、医生或相关老人
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Integer | 是 | 老人ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| code | Integer | 状态码 |
+| data | Object | 最新位置数据（结构同轨迹数据） |
+| message | String | 响应消息 |
+
+#### 请求示例
+
+```http
+GET /api/gps/latest/1
+```
+
+#### 响应示例
+
+```json
+{
+  "code": 200,
+  "data": {
+    "id": 100,
+    "macid": "TEST123456789",
+    "elderlyId": 1,
+    "gpsTime": 1628756438000,
+    "lat": 39.9042,
+    "lon": 116.4074,
+    "mapLat": 39.9042,
+    "mapLon": 116.4074,
+    "speed": 0.0,
+    "dir": 90.0,
+    "createTime": "2023-08-08 14:30:00"
+  },
+  "message": "查询成功"
+}
+```
+
+### 6.4 绑定GPS设备
+
+- **接口URL**: `/api/gps/bind`
+- **请求方式**: POST
+- **接口描述**: 将GPS设备与老人建立绑定关系
+- **权限要求**: 管理员或医生
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| macid | String | 是 | 设备MAC地址/IMEI |
+| elderlyId | Integer | 是 | 老人ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 绑定结果 |
+| message | String | 响应消息 |
+
+#### 请求示例
+
+```http
+POST /api/gps/bind
+Content-Type: application/json
+
+{
+  "macid": "TEST123456789",
+  "elderlyId": 1
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "message": "设备绑定成功"
+}
+```
+
+### 6.5 获取设备绑定列表
+
+- **接口URL**: `/api/gps/bindings`
+- **请求方式**: GET
+- **接口描述**: 获取所有GPS设备与老人的绑定关系列表
+- **权限要求**: 管理员或医生
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 查询结果 |
+| data | Array | 绑定关系列表 |
+| message | String | 响应消息 |
+
+#### 绑定关系数据结构
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| macid | String | 设备编号 |
+| elderlyId | Integer | 老人ID |
+| elderlyName | String | 老人姓名 |
+| createTime | String | 绑定时间 |
+| updateTime | String | 最后更新时间 |
+
+#### 请求示例
+
+```http
+GET /api/gps/bindings
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "macid": "TEST123456789",
+      "elderlyId": 1,
+      "elderlyName": "张老先生",
+      "createTime": "2023-08-01 10:00:00",
+      "updateTime": "2023-08-08 14:30:00"
+    }
+  ],
+  "message": "查询成功"
+}
+```
+
+### 6.6 解绑GPS设备
+
+- **接口URL**: `/api/gps/unbind/{macid}`
+- **请求方式**: DELETE
+- **接口描述**: 解除GPS设备与老人的绑定关系
+- **权限要求**: 管理员或医生
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| macid | String | 是 | 设备MAC地址/IMEI（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 解绑结果 |
+| message | String | 响应消息 |
+
+#### 请求示例
+
+```http
+DELETE /api/gps/unbind/TEST123456789
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "message": "设备解绑成功"
+}
+```
+
+## 7. 电子围栏管理
+
+### 7.1 创建围栏
+
+- **接口URL**: `/api/geo-fence/create`
+- **请求方式**: POST
+- **接口描述**: 创建新的电子围栏
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+| fenceName | String | 是 | 围栏名称 |
+| fenceType | String | 是 | 围栏类型（circle：圆形，polygon：多边形） |
+| centerLat | Double | 是 | 中心点纬度 |
+| centerLon | Double | 是 | 中心点经度 |
+| radius | Double | 否 | 半径（米，圆形围栏必填） |
+| coordinates | String | 否 | 坐标点（JSON，多边形围栏必填） |
+| enterAlert | Boolean | 是 | 进入提醒 |
+| exitAlert | Boolean | 是 | 离开提醒 |
+| alertType | Integer | 是 | 提醒方式（1：短信，2：应用推送，3：两者都有） |
+| emergencyContacts | String | 否 | 紧急联系人手机号（多个用逗号分隔） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| success | Boolean | 创建结果 |
+| message | String | 响应消息 |
+
+#### 请求示例
+
+```http
+POST /api/geo-fence/create
+Content-Type: application/json
+
+{
+  "elderlyId": 1,
+  "fenceName": "家庭围栏",
+  "fenceType": "circle",
+  "centerLat": 39.9042,
+  "centerLon": 116.4074,
+  "radius": 500,
+  "enterAlert": true,
+  "exitAlert": true,
+  "alertType": 3,
+  "emergencyContacts": "13800138000,13900139000"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "message": "围栏创建成功"
+}
+```
+
+---
+
+**注意事项**：
+
+1. **时间格式**：所有时间参数统一使用 `yyyy-MM-dd HH:mm:ss` 格式（24小时制）
+2. **GPS时间戳**：GPS数据中的 `gpsTime` 字段为毫秒级Unix时间戳
+3. **坐标系统**：支持GPS原始坐标和地图坐标，系统会自动处理坐标转换
+4. **权限控制**：不同角色用户只能访问相应权限范围内的数据
+5. **数据分页**：列表查询接口支持分页参数，建议合理设置页面大小
+6. **错误处理**：所有接口都会返回统一的错误格式，便于前端处理
+
+**更新日志**：
+
+- 2024-01-15：新增GPS轨迹查询接口
+- 2024-01-15：修复时间显示格式，统一使用24小时制
+- 2024-01-15：优化GPS时间戳处理，解决时区转换问题
+- 2024-01-15：完善电子围栏管理接口文档
 
 ### 6.2 更新围栏
 
