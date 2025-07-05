@@ -47,6 +47,7 @@ public interface GpsLocationMapper extends BaseMapper<GpsLocation> {
      * 根据老人ID和时间范围查询GPS定位记录
      * 用于轨迹回放和历史数据分析
      * 注意：gps_time字段存储的是毫秒时间戳，需要将LocalDateTime转换为毫秒时间戳进行比较
+     * 使用UTC时区避免时区转换问题
      * 
      * @param elderlyId 老人ID
      * @param startTime 查询开始时间
@@ -54,7 +55,8 @@ public interface GpsLocationMapper extends BaseMapper<GpsLocation> {
      * @return GPS定位记录列表，按GPS时间倒序排列
      */
     @Select("SELECT * FROM gps_location WHERE elderly_id = #{elderlyId} " +
-            "AND gps_time BETWEEN UNIX_TIMESTAMP(#{startTime}) * 1000 AND UNIX_TIMESTAMP(#{endTime}) * 1000 " +
+            "AND gps_time BETWEEN (UNIX_TIMESTAMP(#{startTime}) * 1000) " +
+            "AND (UNIX_TIMESTAMP(#{endTime}) * 1000) " +
             "ORDER BY gps_time DESC")
     List<GpsLocation> getLocationsByElderlyIdAndTimeRange(
             @Param("elderlyId") Integer elderlyId,

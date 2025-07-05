@@ -11,8 +11,21 @@
 export function formatDateTime(date, format = 'YYYY-MM-DD HH:mm:ss') {
   if (!date) return ''
   
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return ''
+  // 处理时间戳类型转换
+  let timestamp = date
+  if (typeof date === 'string') {
+    // 如果是字符串，尝试解析为数字
+    const parsed = parseInt(date)
+    if (!isNaN(parsed)) {
+      timestamp = parsed
+    }
+  }
+  
+  const d = new Date(timestamp)
+  if (isNaN(d.getTime())) {
+    console.warn('无效的时间数据:', date)
+    return ''
+  }
   
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -153,10 +166,43 @@ export function getCurrentDateTime(format = 'YYYY-MM-DD HH:mm:ss') {
   return formatDateTime(new Date(), format)
 }
 
+/**
+ * 格式化时间戳为本地时间字符串（24小时制）
+ * @param {number|string} timestamp - 毫秒时间戳
+ * @returns {string} 格式化后的时间字符串
+ */
+export function formatTimestamp(timestamp) {
+  if (!timestamp) return ''
+  
+  // 确保时间戳是数字类型
+  const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
+  if (isNaN(ts)) {
+    console.warn('无效的时间戳:', timestamp)
+    return '无效时间'
+  }
+  
+  const date = new Date(ts)
+  if (isNaN(date.getTime())) {
+    console.warn('无效的时间戳:', timestamp)
+    return '无效时间'
+  }
+  
+  // 手动格式化，确保使用本地时间
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 export default {
   formatDateTime,
   formatDate,
   formatTime,
+  formatTimestamp,
   getRelativeTime,
   isToday,
   isYesterday,

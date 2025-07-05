@@ -162,9 +162,11 @@ public class GpsController {
             log.info("查询老人轨迹数据: elderlyId={}, startTime={}, endTime={}", 
                     elderlyId, startTime, endTime);
             
-            // 解析时间参数
+            // 解析时间参数 - 确保使用系统默认时区
             LocalDateTime start = LocalDateTime.parse(startTime.replace(" ", "T"));
             LocalDateTime end = LocalDateTime.parse(endTime.replace(" ", "T"));
+            
+            log.info("解析后的时间范围: start={}, end={}", start, end);
             
             // 查询轨迹数据
             List<GpsLocation> locations = gpsLocationService.getLocationsByElderlyIdAndTimeRange(
