@@ -65,5 +65,10 @@ public interface ElderlyProfileMapper extends BaseMapper<ElderlyProfile> {
     // 查询老人既往病史
     @Select("SELECT * FROM elderly_chronic_disease WHERE elderly_id = #{elderlyId}")
     List<ElderlyChronicDisease> selectChronicDiseasesByElderlyId(@Param("elderlyId") Integer elderlyId);
+    
+    // 插入单个病例信息（用于批量新增）
+    @Insert("INSERT INTO elderly_chronic_disease(elderly_id, disease_name, disease_category, diagnosis_date) " +
+            "VALUES(#{elderlyId}, #{diseaseName}, #{diseaseCategory}, #{diagnosisDate})")
+    int insertChronicDisease(ElderlyChronicDisease disease);
 
 }

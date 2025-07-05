@@ -138,6 +138,12 @@
               </div>
               <span>医疗预约</span>
             </div>
+            <div class="action-item" @click="navigateTo('/data-screen')">
+              <div class="action-icon data-screen">
+                <el-icon :size="24"><DataBoard /></el-icon>
+              </div>
+              <span>数据大屏</span>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -218,12 +224,12 @@ import { getAllAlerts } from '@/api/healthAlert'
 import { getDeviceList } from '@/api/device'
 import { getAllObservations } from '@/api/elderlyObservations'
 import { getAllElderlyProfiles } from '@/api/elderlyProfile'
-import { getRecentSystemLogs, getLogModules } from '@/api/systemLog'
+import { getSystemLogList, getLogModules } from '@/api/systemLog'
 import {
   User, Warning, Monitor, Connection, Operation, Bell, Clock,
   DataAnalysis, UserFilled, DocumentAdd, TrendCharts, Calendar,
   InfoFilled, Sunny, Loading, DocumentRemove, Setting,
-  FirstAidKit, Document
+  FirstAidKit, Document, DataBoard
 } from '@element-plus/icons-vue'
 
 // 默认头像
@@ -363,29 +369,66 @@ const activitiesLoading = ref(true)
         console.error('获取模块列表失败:', error)
       }
       
-      const response = await getRecentSystemLogs(6) // 获取最近6条日志
+      // 智能分页查询：先查少量数据，如果过滤后不够就继续查询
+       const businessModules = ['ALERT', 'DEVICE', 'HEALTH', 'MEDICAL']
+       const targetCount = 6 // 目标显示数量
+       let allFilteredLogs = []
+       let currentPage = 1
+       const pageSize = 20
+       const maxPages = 5 // 最多查询5页，避免无限查询
+       
+       while (allFilteredLogs.length < targetCount && currentPage <= maxPages) {
+         const response = await getSystemLogList({
+           page: currentPage,
+           size: pageSize
+         })
+         
+         if (response && response.code === 200 && response.data && response.data.records && response.data.records.length > 0) {
+           const logs = response.data.records
+           
+           // 调试信息
+           if (currentPage === 1) {
+             console.log('第一页日志数据:', logs)
+             console.log('日志模块类型:', logs.map(log => log.module))
+           }
+           
+           // 过滤出业务相关日志
+           const filteredLogs = logs.filter(log => {
+             return businessModules.includes(log.module)
+           })
+           
+           allFilteredLogs = allFilteredLogs.concat(filteredLogs)
+           console.log(`第${currentPage}页过滤后获得${filteredLogs.length}条业务日志，累计${allFilteredLogs.length}条`)
+           
+           // 如果这一页没有新数据，说明已经到底了
+           if (logs.length < pageSize) {
+             break
+           }
+           
+           currentPage++
+         } else {
+           console.warn('获取日志失败或无数据:', response)
+           break
+         }
+       }
       
-      if (response && response.code === 200 && response.data) {
-        const logs = response.data
-        
-        // 将系统日志转换为动态数据格式
-        recentActivities.value = logs.map(log => {
-          const activity = {
-            id: log.id,
-            type: getActivityType(log.module),
-            icon: getActivityIcon(log.module),
-            title: getActivityTitle(log.operation, log.module),
-            description: log.content || log.operation,
-            time: formatRelativeTime(log.createTime),
-            level: log.level,
-            username: log.username
-          }
-          return activity
-        })
-      } else {
-        console.warn('获取最新动态失败:', response)
-        recentActivities.value = []
-      }
+      console.log('最终过滤后的业务日志:', allFilteredLogs)
+      console.log('最终业务日志数量:', allFilteredLogs.length)
+      
+      // 将过滤后的系统日志转换为动态数据格式，只取前6条
+      recentActivities.value = allFilteredLogs.slice(0, targetCount).map(log => {
+        const activity = {
+          id: log.id,
+          type: getActivityType(log.module),
+          icon: getActivityIcon(log.module),
+          title: getActivityTitle(log.operation, log.module),
+          description: log.content || log.operation,
+          time: formatRelativeTime(log.createTime),
+          level: log.level,
+          username: log.username
+        }
+        return activity
+      })
     } catch (error) {
       console.error('获取最新动态数据失败:', error)
       recentActivities.value = []
@@ -1067,6 +1110,10 @@ onBeforeUnmount(() => {
 
 .action-icon.medical {
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+}
+
+.action-icon.data-screen {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
 .action-item span {

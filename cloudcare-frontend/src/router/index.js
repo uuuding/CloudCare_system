@@ -34,6 +34,13 @@ const routes = [
     ]
   },
   {
+    path: '/data-screen',
+    name: 'DataScreen',
+    component: () => import('@/views/dashboard/data-screen.vue'),
+    meta: { title: '数据大屏', isPublic: false },
+    hidden: true
+  },
+  {
     path: '/elderly-profile',
     component: Layout,
     redirect: '/elderly-profile/index',

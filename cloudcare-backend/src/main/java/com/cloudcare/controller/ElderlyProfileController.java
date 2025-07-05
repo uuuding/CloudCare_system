@@ -3,6 +3,7 @@ package com.cloudcare.controller;
 import com.cloudcare.common.Result;
 import com.cloudcare.common.annotation.Log;
 import com.cloudcare.common.enums.BusinessType;
+import com.cloudcare.dto.BatchElderlyProfileDTO;
 import com.cloudcare.entity.ElderlyChronicDisease;
 import com.cloudcare.entity.ElderlyProfile;
 import com.cloudcare.service.ElderlyProfileService;
@@ -65,6 +66,34 @@ public class ElderlyProfileController {
     public Result<Boolean> addElderlyProfile(@RequestBody ElderlyProfile elderlyProfile) {
         boolean success = elderlyProfileService.addProfile(elderlyProfile);
         return Result.success(success);
+    }
+
+    // 批量新增老人档案（含病例信息）
+    @PostMapping("/batch-add")
+    @Log(title = "ELDERLY", businessType = BusinessType.INSERT, isSaveRequestData = true, isSaveResponseData = true)
+    public Result<String> batchAddElderlyProfiles(@RequestBody List<BatchElderlyProfileDTO> batchProfiles) {
+        try {
+            if (batchProfiles == null || batchProfiles.isEmpty()) {
+                return Result.error("批量新增数据不能为空");
+            }
+            
+            if (batchProfiles.size() > 100) {
+                return Result.error("单次批量新增不能超过100条记录");
+            }
+            
+            int successCount = elderlyProfileService.batchAddProfilesWithDisease(batchProfiles);
+            String message = String.format("批量新增完成，成功添加 %d 条记录，共 %d 条记录", 
+                    successCount, batchProfiles.size());
+            
+            if (successCount == batchProfiles.size()) {
+                return Result.success(message);
+            } else {
+                return Result.error(message + "，部分记录添加失败");
+            }
+        } catch (Exception e) {
+            log.error("批量新增老人档案失败，错误信息: {}", e.getMessage(), e);
+            return Result.error("批量新增失败: " + e.getMessage());
+        }
     }
 
     @PostMapping("/addc")

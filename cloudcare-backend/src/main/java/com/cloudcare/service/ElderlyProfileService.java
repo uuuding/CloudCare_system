@@ -22,6 +22,12 @@ public interface ElderlyProfileService {
 
     public boolean addProfile(ElderlyProfile profile);
 
+    // 批量新增老人档案
+    public int batchAddProfiles(List<ElderlyProfile> profiles);
+    
+    // 批量新增老人档案（含病例信息）
+    public int batchAddProfilesWithDisease(List<com.cloudcare.dto.BatchElderlyProfileDTO> batchProfiles);
+
     public boolean addCaseEntry(ElderlyChronicDisease caseEntry);
 
     // 获取老人既往病史

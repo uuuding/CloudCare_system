@@ -21,6 +21,10 @@
             <el-button type="primary" @click="filterObservations">搜索</el-button>
             <el-button @click="resetSearch">重置</el-button>
             <el-button type="success" @click="openImportDialog">添加新记录</el-button>
+            <el-button type="warning" @click="showBindDialog">
+              <el-icon><Link /></el-icon>
+              设备绑定
+            </el-button>
           </div>
         </div>
 
@@ -230,6 +234,35 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 设备绑定对话框 -->
+    <el-dialog v-model="bindDialogVisible" title="设备绑定" width="500px">
+      <el-form :model="bindForm" :rules="bindRules" ref="bindFormRef" label-width="120px">
+        <el-form-item label="设备MAC地址" prop="macid">
+          <el-input v-model="bindForm.macid" placeholder="请输入设备MAC地址" />
+        </el-form-item>
+        
+        <el-form-item label="选择老人" prop="elderlyId">
+          <el-select v-model="bindForm.elderlyId" placeholder="请选择老人" filterable style="width: 100%">
+            <el-option 
+              v-for="elderly in elderlyList" 
+              :key="elderly.id" 
+              :label="`${elderly.name} (ID: ${elderly.id})`" 
+              :value="elderly.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="resetBindForm">取消</el-button>
+          <el-button type="primary" @click="bindDevice" :loading="bindLoading">
+            确认绑定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -258,6 +291,12 @@ const importDialogVisible = ref(false);
 const importLoading = ref(false);
 const importFormRef = ref(null);
 
+// 设备绑定功能相关变量
+const bindDialogVisible = ref(false);
+const bindLoading = ref(false);
+const bindFormRef = ref(null);
+const deviceBindings = ref([]);
+
 // 表单数据
 const importForm = ref({
   elderlyId: '',
@@ -272,6 +311,12 @@ const importForm = ref({
   temperature: null,
   cough:false,
   notes: ''
+});
+
+// 设备绑定表单数据
+const bindForm = ref({
+  macid: '',
+  elderlyId: ''
 });
 
 // 日期时间格式化函数，避免时区转换问题
@@ -308,6 +353,16 @@ const importRules = ref({
   ],
   sleepHours: [
     { required: true, message: '请输入睡眠时长', trigger: 'blur' }
+  ]
+});
+
+// 设备绑定验证规则
+const bindRules = ref({
+  macid: [
+    { required: true, message: '请输入设备MAC地址', trigger: 'blur' }
+  ],
+  elderlyId: [
+    { required: true, message: '请选择老人', trigger: 'change' }
   ]
 });
 
@@ -686,6 +741,59 @@ const getOverallHealthStatus = (row) => {
     return { type: 'warning', text: '注意' };
   } else {
     return { type: 'danger', text: '异常' };
+  }
+};
+
+// 设备绑定相关函数
+const showBindDialog = () => {
+  bindDialogVisible.value = true;
+};
+
+const resetBindForm = () => {
+  bindDialogVisible.value = false;
+  bindForm.value = {
+    macid: '',
+    elderlyId: ''
+  };
+  if (bindFormRef.value) {
+    bindFormRef.value.resetFields();
+  }
+};
+
+const bindDevice = async () => {
+  try {
+    const valid = await bindFormRef.value.validate();
+    if (!valid) return;
+    
+    bindLoading.value = true;
+    
+    // 调用绑定设备API
+    const response = await fetch('/api/gps/bind', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        macid: bindForm.value.macid,
+        elderlyId: bindForm.value.elderlyId
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success === true) {
+      ElMessage.success(result.message || '设备绑定成功！');
+      resetBindForm();
+      // 可以在这里刷新设备绑定列表
+      // await loadDeviceBindings();
+    } else {
+      ElMessage.error(result.message || '绑定失败');
+    }
+  } catch (error) {
+    console.error('设备绑定失败:', error);
+    ElMessage.error('绑定失败，请检查网络连接');
+  } finally {
+    bindLoading.value = false;
   }
 };
 </script>

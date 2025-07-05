@@ -77,6 +77,15 @@ export function addElderlyProfile(data) {
   })
 }
 
+// 批量新增老人档案
+export function batchAddElderlyProfiles(data) {
+  return request({
+    url: '/elderly-profile/batch-add',
+    method: 'post',
+    data: data
+  })
+}
+
 /**
  * 删除老人档案
  * @param {number} id 老人档案ID

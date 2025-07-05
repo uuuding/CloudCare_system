@@ -11,6 +11,8 @@
         <el-button @click="resetSearch">重置</el-button>
         <!-- 导入按钮 -->
         <el-button type="success" @click="openImportDialog">导入老人档案</el-button>
+        <!-- 批量新增按钮 -->
+        <el-button type="warning" @click="openBatchAddDialog">批量新增</el-button>
         <!-- 新增按钮：录入病例 -->
         <el-button type="primary" @click="openCaseEntryDialog">录入病例</el-button>
       </div>
@@ -155,6 +157,75 @@
       </template>
     </el-dialog>
 
+    <!-- 批量新增弹窗 -->
+    <el-dialog v-model="batchAddDialogVisible" title="批量新增老人档案（含病例信息）" width="1400px" :before-close="closeBatchAddDialog">
+      <div class="batch-add-container">
+        <div class="batch-add-header">
+          <el-button type="primary" @click="addBatchRow">添加一行</el-button>
+          <el-button type="danger" @click="clearAllRows">清空所有</el-button>
+          <span class="batch-tip">提示：最多可同时添加20条记录，可选择性添加病例信息</span>
+        </div>
+        
+        <el-table :data="batchProfiles" style="width: 100%; margin-top: 20px;" border stripe max-height="500">
+          <el-table-column type="index" label="序号" width="60" />
+          <el-table-column label="姓名" width="150">
+            <template #default="{ row, $index }">
+              <el-input v-model="row.name" placeholder="请输入姓名" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="年龄" width="100">
+            <template #default="{ row, $index }">
+              <el-input-number v-model="row.age" :min="1" :max="150" placeholder="年龄" size="small" style="width: 100%;" />
+            </template>
+          </el-table-column>
+          <el-table-column label="性别" width="120">
+            <template #default="{ row, $index }">
+              <el-select v-model="row.gender" placeholder="选择性别" size="small" style="width: 100%;">
+                <el-option label="男" value="男" />
+                <el-option label="女" value="女" />
+                <el-option label="其他" value="其他" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="病例信息" width="600">
+            <template #default="{ row, $index }">
+              <div class="disease-container">
+                <div v-if="row.chronicDiseases.length === 0" class="no-disease">
+                  <span style="color: #999; font-size: 12px;">暂无病例</span>
+                  <el-button type="primary" size="small" @click="addDiseaseToProfile($index)" style="margin-left: 10px;">添加病例</el-button>
+                </div>
+                <div v-else>
+                  <div v-for="(disease, diseaseIndex) in row.chronicDiseases" :key="diseaseIndex" class="disease-row" style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <el-input v-model="disease.diseaseName" placeholder="疾病名称" size="small" style="width: 120px; margin-right: 8px;" />
+                    <el-select v-model="disease.diseaseCategory" placeholder="类别" size="small" style="width: 80px; margin-right: 8px;">
+                      <el-option label="A类" value="A" />
+                      <el-option label="B类" value="B" />
+                      <el-option label="C类" value="C" />
+                    </el-select>
+                    <el-date-picker v-model="disease.diagnosisDate" type="date" placeholder="诊断日期" size="small" style="width: 120px; margin-right: 8px;" />
+                    <el-button type="danger" size="small" @click="removeDiseaseFromProfile($index, diseaseIndex)" style="margin-right: 4px;">删除</el-button>
+                  </div>
+                  <el-button type="primary" size="small" @click="addDiseaseToProfile($index)" style="margin-top: 4px;">+ 添加病例</el-button>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="{ row, $index }">
+              <el-button type="danger" size="small" @click="removeBatchRow($index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeBatchAddDialog">取消</el-button>
+          <el-button type="primary" @click="handleBatchSave" :loading="batchSaving">确定提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -168,7 +239,8 @@ import {
   deleteElderlyProfile,
   addElderlyProfile,
   getChronicDiseasesByElderlyId,
-  addCaseEntry
+  addCaseEntry,
+  batchAddElderlyProfiles
 } from "@/api/elderlyProfile"
 
 const elderlyProfiles = ref([])
@@ -178,6 +250,11 @@ const importProfile = reactive({ name: "", age: "", gender: "", chronicDiseases:
 const dialogVisible = ref(false)
 const importDialogVisible = ref(false) // 控制导入弹窗的显示
 const caseEntryDialogVisible = ref(false); // 录入病例弹窗
+
+// 批量新增相关数据
+const batchAddDialogVisible = ref(false) // 控制批量新增弹窗的显示
+const batchProfiles = ref([]) // 批量新增的老人档案数据
+const batchSaving = ref(false) // 批量保存状态
 // 录入病例数据
 const caseEntry = reactive({
   elderlyId: null,  // 老人ID
@@ -359,6 +436,151 @@ const openChronicDialog = async (profile) => {
 
 const closeChronicDialog = () => {
   chronicDialogVisible.value = false
+}
+
+// 批量新增相关方法
+const openBatchAddDialog = () => {
+  batchProfiles.value = [createEmptyProfile()] // 初始化一行空数据
+  batchAddDialogVisible.value = true
+}
+
+const closeBatchAddDialog = () => {
+  batchAddDialogVisible.value = false
+  batchProfiles.value = []
+}
+
+const createEmptyProfile = () => {
+  return {
+    name: '',
+    age: null,
+    gender: '',
+    // 病例信息数组
+    chronicDiseases: []
+  }
+}
+
+// 创建空病例记录
+const createEmptyDisease = () => {
+  return {
+    diseaseName: '',
+    diseaseCategory: 'A',
+    diagnosisDate: ''
+  }
+}
+
+const addBatchRow = () => {
+  if (batchProfiles.value.length >= 20) {
+    ElMessage.warning('最多只能添加20条记录')
+    return
+  }
+  batchProfiles.value.push(createEmptyProfile())
+}
+
+const removeBatchRow = (index) => {
+  if (batchProfiles.value.length <= 1) {
+    ElMessage.warning('至少保留一行数据')
+    return
+  }
+  batchProfiles.value.splice(index, 1)
+}
+
+const clearAllRows = () => {
+  batchProfiles.value = [createEmptyProfile()]
+}
+
+// 为指定老人添加病例记录
+const addDiseaseToProfile = (profileIndex) => {
+  batchProfiles.value[profileIndex].chronicDiseases.push(createEmptyDisease())
+}
+
+// 从指定老人删除病例记录
+const removeDiseaseFromProfile = (profileIndex, diseaseIndex) => {
+  batchProfiles.value[profileIndex].chronicDiseases.splice(diseaseIndex, 1)
+}
+
+const handleBatchSave = async () => {
+  // 数据验证
+  const validProfiles = []
+  const invalidRows = []
+  
+  batchProfiles.value.forEach((profile, index) => {
+    // 基本信息验证
+    if (!profile.name || !profile.name.trim()) {
+      invalidRows.push(`第${index + 1}行：姓名不能为空`)
+      return
+    }
+    if (!profile.age || profile.age <= 0 || profile.age > 150) {
+      invalidRows.push(`第${index + 1}行：年龄必须在1-150之间`)
+      return
+    }
+    if (!profile.gender || !profile.gender.trim()) {
+      invalidRows.push(`第${index + 1}行：性别不能为空`)
+      return
+    }
+    
+    // 病例信息验证
+    const validDiseases = []
+    if (profile.chronicDiseases && profile.chronicDiseases.length > 0) {
+      profile.chronicDiseases.forEach((disease, diseaseIndex) => {
+        // 检查病例信息是否完整
+        if (disease.diseaseName && disease.diseaseName.trim()) {
+          if (!disease.diseaseCategory) {
+            invalidRows.push(`第${index + 1}行第${diseaseIndex + 1}个病例：疾病类别不能为空`)
+            return
+          }
+          if (!disease.diagnosisDate) {
+            invalidRows.push(`第${index + 1}行第${diseaseIndex + 1}个病例：诊断日期不能为空`)
+            return
+          }
+          validDiseases.push({
+            diseaseName: disease.diseaseName.trim(),
+            diseaseCategory: disease.diseaseCategory,
+            diagnosisDate: disease.diagnosisDate
+          })
+        }
+      })
+    }
+    
+    const validProfile = {
+      name: profile.name.trim(),
+      age: profile.age,
+      gender: profile.gender
+    }
+    
+    // 如果有有效的病例信息，包含病例数据
+    if (validDiseases.length > 0) {
+      validProfile.chronicDiseases = validDiseases
+    }
+    
+    validProfiles.push(validProfile)
+  })
+  
+  if (invalidRows.length > 0) {
+    ElMessage.error(`数据验证失败：\n${invalidRows.join('\n')}`)
+    return
+  }
+  
+  if (validProfiles.length === 0) {
+    ElMessage.warning('没有有效的数据可以提交')
+    return
+  }
+  
+  try {
+    batchSaving.value = true
+    const response = await batchAddElderlyProfiles(validProfiles)
+    
+    if (response.success) {
+      ElMessage.success(response.data || '批量新增成功')
+      closeBatchAddDialog()
+      await loadElderlyProfiles()
+    } else {
+      ElMessage.error(response.message || '批量新增失败')
+    }
+  } catch (error) {
+    ElMessage.error('批量新增失败: ' + (error.message || error))
+  } finally {
+    batchSaving.value = false
+  }
 }
 
 onMounted(() => {
