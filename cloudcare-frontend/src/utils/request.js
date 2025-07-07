@@ -35,7 +35,7 @@ service.interceptors.response.use(
     
     const res = response.data
 
-    // 检查是否是GPS相关API的响应格式 {success: true/false, data: [], message: ''}
+    // 检查是否是Result格式的响应 {success: true/false, code: number, message: '', data: any}
     if (res.hasOwnProperty('success')) {
       if (!res.success) {
         ElMessage({
@@ -45,11 +45,12 @@ service.interceptors.response.use(
         })
         return Promise.reject(new Error(res.message || '系统错误'))
       }
+      // 对于Result格式的成功响应，直接返回
       return res
     }
 
-    // 如果返回的状态码不是200，则判断为错误
-    if (res.code !== 200) {
+    // 如果返回的状态码不是200，则判断为错误（针对非Result格式的响应）
+    if (res.code && res.code !== 200) {
       ElMessage({
         message: res.message || '系统错误',
         type: 'error',
@@ -75,14 +76,38 @@ service.interceptors.response.use(
         })
       }
       return Promise.reject(new Error(res.message || '系统错误'))
-    } else {
-      return res
     }
+    
+    // 对于其他格式的响应，直接返回
+    return res
   },
   error => {
-    console.error('响应错误:', error)
+    let errorMessage = '请求失败'
+    
+    if (error.response) {
+      // 服务器返回了错误状态码
+      const status = error.response.status
+      const data = error.response.data
+      
+      if (status === 500) {
+        errorMessage = '服务器内部错误'
+      } else if (status === 404) {
+        errorMessage = '请求的资源不存在'
+      } else if (status === 400) {
+        errorMessage = '请求参数错误'
+      } else {
+        errorMessage = data?.message || `请求失败 (${status})`
+      }
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      errorMessage = '网络连接失败，请检查网络'
+    } else {
+      // 其他错误
+      errorMessage = error.message || '未知错误'
+    }
+    
     ElMessage({
-      message: error.message || '请求失败',
+      message: errorMessage,
       type: 'error',
       duration: 5 * 1000
     })

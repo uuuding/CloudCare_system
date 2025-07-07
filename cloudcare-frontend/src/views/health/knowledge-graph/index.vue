@@ -50,6 +50,10 @@
               <el-option label="力导向布局" value="force"></el-option>
               <el-option label="圆形布局" value="circular"></el-option>
               <el-option label="网格布局" value="grid"></el-option>
+              <el-option label="层次布局" value="hierarchical"></el-option>
+              <el-option label="径向布局" value="radial"></el-option>
+              <el-option label="树形布局" value="tree"></el-option>
+              <el-option label="同心圆布局" value="concentric"></el-option>
             </el-select>
           </div>
 
@@ -73,6 +77,44 @@
                 <span class="stat-label">关系数量：</span>
                 <span class="stat-value">{{ linkCount }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- 节点管理 -->
+          <div class="control-section">
+            <h4>节点管理</h4>
+            <div class="management-buttons">
+              <el-button type="primary" size="small" @click="openAddNodeDialog">
+                <i class="el-icon-plus"></i>
+                添加节点
+              </el-button>
+              <el-tooltip content="请先点击图谱中的节点进行选择" placement="top" :disabled="!!selectedNode">
+                <el-button type="warning" size="small" @click="openEditNodeDialog" :disabled="!selectedNode">
+                  <i class="el-icon-edit"></i>
+                  编辑节点
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="请先点击图谱中的节点进行选择" placement="top" :disabled="!!selectedNode">
+                <el-button type="danger" size="small" @click="deleteSelectedNode" :disabled="!selectedNode">
+                  <i class="el-icon-delete"></i>
+                  删除节点
+                </el-button>
+              </el-tooltip>
+            </div>
+          </div>
+
+          <!-- 关系管理 -->
+          <div class="control-section">
+            <h4>关系管理</h4>
+            <div class="management-buttons">
+              <el-button type="primary" size="small" @click="openAddRelationDialog">
+                <i class="el-icon-connection"></i>
+                添加关系
+              </el-button>
+              <el-button type="danger" size="small" @click="openDeleteRelationDialog">
+                <i class="el-icon-remove"></i>
+                删除关系
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -120,7 +162,7 @@
               <ul class="tips-list">
                 <li>鼠标拖拽可移动节点</li>
                 <li>滚轮缩放图谱</li>
-                <li>点击节点查看详情</li>
+                <li>点击节点查看详情并启用编辑/删除功能</li>
                 <li>双击节点高亮相关节点</li>
               </ul>
             </template>
@@ -128,14 +170,203 @@
         </div>
       </div>
     </div>
+
+    <!-- 添加节点对话框 -->
+    <el-dialog v-model="showAddNodeDialog" title="添加节点" width="500px">
+      <el-form :model="newNodeForm" label-width="80px">
+        <el-form-item label="节点类型">
+          <el-select v-model="newNodeForm.type" placeholder="请选择节点类型">
+            <el-option label="疾病" value="disease"></el-option>
+            <el-option label="症状" value="symptom"></el-option>
+            <el-option label="用药" value="medicine"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="节点名称">
+          <el-input v-model="newNodeForm.name" placeholder="请输入节点名称"></el-input>
+        </el-form-item>
+        <el-form-item label="描述" v-if="newNodeForm.type !== 'symptom'">
+          <el-input v-model="newNodeForm.description" type="textarea" placeholder="请输入描述"></el-input>
+        </el-form-item>
+        <template v-if="newNodeForm.type === 'medicine'">
+          <el-form-item label="剂量">
+            <el-input v-model="newNodeForm.dosage" placeholder="请输入剂量"></el-input>
+          </el-form-item>
+          <el-form-item label="用药频率">
+            <el-input v-model="newNodeForm.frequency" placeholder="请输入用药频率"></el-input>
+          </el-form-item>
+          <el-form-item label="副作用">
+            <el-input v-model="newNodeForm.sideEffects" type="textarea" placeholder="请输入副作用"></el-input>
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showAddNodeDialog = false">取消</el-button>
+          <el-button type="primary" @click="addNode">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑节点对话框 -->
+    <el-dialog v-model="showEditNodeDialog" title="编辑节点" width="500px">
+      <el-form :model="editNodeForm" label-width="80px">
+        <el-form-item label="节点名称">
+          <el-input v-model="editNodeForm.name" placeholder="请输入节点名称"></el-input>
+        </el-form-item>
+        <el-form-item label="描述" v-if="editNodeForm.category !== 1">
+          <el-input v-model="editNodeForm.description" type="textarea" placeholder="请输入描述"></el-input>
+        </el-form-item>
+        <template v-if="editNodeForm.category === 2">
+          <el-form-item label="剂量">
+            <el-input v-model="editNodeForm.dosage" placeholder="请输入剂量"></el-input>
+          </el-form-item>
+          <el-form-item label="用药频率">
+            <el-input v-model="editNodeForm.frequency" placeholder="请输入用药频率"></el-input>
+          </el-form-item>
+          <el-form-item label="副作用">
+            <el-input v-model="editNodeForm.sideEffects" type="textarea" placeholder="请输入副作用"></el-input>
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showEditNodeDialog = false">取消</el-button>
+          <el-button type="primary" @click="updateNode">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 添加关系对话框 -->
+    <el-dialog v-model="showAddRelationDialog" title="添加关系" width="500px">
+      <el-form :model="newRelationForm" label-width="80px">
+        <el-form-item label="关系类型">
+          <el-select v-model="newRelationForm.type" placeholder="请选择关系类型" @change="handleRelationTypeChange">
+            <el-option label="疾病-症状" value="disease-symptom"></el-option>
+            <el-option label="用药-疾病" value="medicine-disease"></el-option>
+          </el-select>
+        </el-form-item>
+        <template v-if="newRelationForm.type === 'disease-symptom'">
+          <el-form-item label="疾病">
+            <el-select v-model="newRelationForm.disease" placeholder="请选择疾病">
+              <el-option 
+                v-for="disease in allDiseases" 
+                :key="disease.id" 
+                :label="disease.name" 
+                :value="disease.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="症状">
+            <el-select v-model="newRelationForm.symptom" placeholder="请选择症状">
+              <el-option 
+                v-for="symptom in allSymptoms" 
+                :key="symptom.id" 
+                :label="symptom.name" 
+                :value="symptom.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
+        <template v-if="newRelationForm.type === 'medicine-disease'">
+          <el-form-item label="用药">
+            <el-select v-model="newRelationForm.medicine" placeholder="请选择用药">
+              <el-option 
+                v-for="medicine in allMedicines" 
+                :key="medicine.id" 
+                :label="medicine.name" 
+                :value="medicine.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="疾病">
+            <el-select v-model="newRelationForm.disease" placeholder="请选择疾病">
+              <el-option 
+                v-for="disease in allDiseases" 
+                :key="disease.id" 
+                :label="disease.name" 
+                :value="disease.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showAddRelationDialog = false">取消</el-button>
+          <el-button type="primary" @click="addRelation">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 删除关系对话框 -->
+    <el-dialog v-model="showDeleteRelationDialog" title="删除关系" width="500px">
+      <el-form :model="deleteRelationForm" label-width="80px">
+        <el-form-item label="关系类型">
+          <el-select v-model="deleteRelationForm.type" placeholder="请选择关系类型" @change="handleDeleteRelationTypeChange">
+            <el-option label="疾病-症状" value="disease-symptom"></el-option>
+            <el-option label="用药-疾病" value="medicine-disease"></el-option>
+          </el-select>
+        </el-form-item>
+        <template v-if="deleteRelationForm.type === 'disease-symptom'">
+          <el-form-item label="疾病">
+            <el-select v-model="deleteRelationForm.disease" placeholder="请选择疾病">
+              <el-option 
+                v-for="disease in allDiseases" 
+                :key="disease.id" 
+                :label="disease.name" 
+                :value="disease.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="症状">
+            <el-select v-model="deleteRelationForm.symptom" placeholder="请选择症状">
+              <el-option 
+                v-for="symptom in allSymptoms" 
+                :key="symptom.id" 
+                :label="symptom.name" 
+                :value="symptom.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
+        <template v-if="deleteRelationForm.type === 'medicine-disease'">
+          <el-form-item label="用药">
+            <el-select v-model="deleteRelationForm.medicine" placeholder="请选择用药">
+              <el-option 
+                v-for="medicine in allMedicines" 
+                :key="medicine.id" 
+                :label="medicine.name" 
+                :value="medicine.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="疾病">
+            <el-select v-model="deleteRelationForm.disease" placeholder="请选择疾病">
+              <el-option 
+                v-for="disease in allDiseases" 
+                :key="disease.id" 
+                :label="disease.name" 
+                :value="disease.name">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showDeleteRelationDialog = false">取消</el-button>
+          <el-button type="danger" @click="deleteRelation">确定删除</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import * as echarts from 'echarts';
 import request from '@/utils/request';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 const graph = ref(null);
 let myChart = null;
@@ -148,6 +379,50 @@ const selectedCategories = ref(['疾病', '症状', '用药']);
 const layoutType = ref('force');
 const selectedNode = ref(null);
 const relatedNodes = ref([]);
+
+// 对话框控制
+const showAddNodeDialog = ref(false);
+const showEditNodeDialog = ref(false);
+const showAddRelationDialog = ref(false);
+const showDeleteRelationDialog = ref(false);
+
+// 表单数据
+const newNodeForm = ref({
+  type: '',
+  name: '',
+  description: '',
+  dosage: '',
+  frequency: '',
+  sideEffects: ''
+});
+
+const editNodeForm = ref({
+  name: '',
+  category: 0,
+  description: '',
+  dosage: '',
+  frequency: '',
+  sideEffects: ''
+});
+
+const newRelationForm = ref({
+  type: '',
+  disease: '',
+  symptom: '',
+  medicine: ''
+});
+
+const deleteRelationForm = ref({
+  type: '',
+  disease: '',
+  symptom: '',
+  medicine: ''
+});
+
+// 所有节点数据
+const allDiseases = ref([]);
+const allSymptoms = ref([]);
+const allMedicines = ref([]);
 
 // 计算属性
 const diseaseCount = computed(() => {
@@ -246,15 +521,16 @@ const highlightNode = (nodeId) => {
   }
 };
 
-// 获取相关节点
+// 获取相关节点 - 基于原始完整数据
 const getRelatedNodes = (nodeId) => {
   const related = [];
-  filteredData.value.links.forEach(link => {
+  // 使用原始数据中的所有连接来查找相关节点
+  originalData.value.links.forEach(link => {
     if (link.source === nodeId) {
-      const targetNode = filteredData.value.nodes.find(node => node.id === link.target);
+      const targetNode = originalData.value.nodes.find(node => node.id === link.target);
       if (targetNode) related.push(targetNode);
     } else if (link.target === nodeId) {
-      const sourceNode = filteredData.value.nodes.find(node => node.id === link.source);
+      const sourceNode = originalData.value.nodes.find(node => node.id === link.source);
       if (sourceNode) related.push(sourceNode);
     }
   });
@@ -310,13 +586,13 @@ const updateChart = () => {
       top: 50,
       left: 'center'
     },
-    animationDuration: layoutType.value === 'grid' ? 0 : 1500,
-    animationEasingUpdate: layoutType.value === 'grid' ? 'linear' : 'quinticInOut',
+    animationDuration: ['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 0 : 1500,
+    animationEasingUpdate: ['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 'linear' : 'quinticInOut',
     series: [
       {
         name: '知识图谱',
         type: 'graph',
-        layout: layoutType.value === 'grid' ? 'none' : layoutType.value,
+        layout: ['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 'none' : layoutType.value,
         data: filteredData.value.nodes.map((node, index) => {
           const nodeData = {
             id: String(node.id), // 确保ID是字符串
@@ -332,16 +608,61 @@ const updateChart = () => {
             }
           };
           
-          // 网格布局时手动设置位置
-           if (layoutType.value === 'grid') {
-             const cols = Math.ceil(Math.sqrt(filteredData.value.nodes.length));
-             const row = Math.floor(index / cols);
-             const col = index % cols;
-             nodeData.x = (col + 1) * (100 / (cols + 1));
-             nodeData.y = (row + 1) * (100 / (Math.ceil(filteredData.value.nodes.length / cols) + 1));
-             // 不完全固定位置，允许轻微移动但保持网格结构
-             nodeData.fixed = false;
-           }
+          // 手动布局时设置位置
+          if (layoutType.value === 'grid') {
+            const cols = Math.ceil(Math.sqrt(filteredData.value.nodes.length));
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            nodeData.x = (col + 1) * (100 / (cols + 1));
+            nodeData.y = (row + 1) * (100 / (Math.ceil(filteredData.value.nodes.length / cols) + 1));
+            nodeData.fixed = false;
+          } else if (layoutType.value === 'hierarchical') {
+            // 层次布局：按类别分层
+            const layerHeight = 100 / 4; // 分为4层
+            const categoryLayer = node.category + 1;
+            const sameTypeNodes = filteredData.value.nodes.filter(n => n.category === node.category);
+            const indexInType = sameTypeNodes.findIndex(n => n.id === node.id);
+            nodeData.x = (indexInType + 1) * (100 / (sameTypeNodes.length + 1));
+            nodeData.y = categoryLayer * layerHeight;
+            nodeData.fixed = false;
+          } else if (layoutType.value === 'radial') {
+            // 径向布局：以第一个疾病节点为中心
+            const centerNode = filteredData.value.nodes.find(n => n.category === 0);
+            if (node.id === centerNode?.id) {
+              nodeData.x = 50;
+              nodeData.y = 50;
+            } else {
+              const angle = (index * 2 * Math.PI) / filteredData.value.nodes.length;
+              const radius = node.category === 0 ? 20 : (node.category === 1 ? 35 : 30);
+              nodeData.x = 50 + radius * Math.cos(angle);
+              nodeData.y = 50 + radius * Math.sin(angle);
+            }
+            nodeData.fixed = false;
+          } else if (layoutType.value === 'tree') {
+            // 树形布局：疾病在顶层，症状和用药在下层
+            if (node.category === 0) { // 疾病
+              const diseaseNodes = filteredData.value.nodes.filter(n => n.category === 0);
+              const diseaseIndex = diseaseNodes.findIndex(n => n.id === node.id);
+              nodeData.x = (diseaseIndex + 1) * (100 / (diseaseNodes.length + 1));
+              nodeData.y = 20;
+            } else { // 症状和用药
+              const nonDiseaseNodes = filteredData.value.nodes.filter(n => n.category !== 0);
+              const nonDiseaseIndex = nonDiseaseNodes.findIndex(n => n.id === node.id);
+              nodeData.x = (nonDiseaseIndex + 1) * (100 / (nonDiseaseNodes.length + 1));
+              nodeData.y = node.category === 1 ? 60 : 80; // 症状在中间，用药在底部
+            }
+            nodeData.fixed = false;
+          } else if (layoutType.value === 'concentric') {
+            // 同心圆布局：按类别分圆圈
+            const centerX = 50, centerY = 50;
+            const radius = node.category === 0 ? 15 : (node.category === 1 ? 25 : 35);
+            const sameTypeNodes = filteredData.value.nodes.filter(n => n.category === node.category);
+            const indexInType = sameTypeNodes.findIndex(n => n.id === node.id);
+            const angle = (indexInType * 2 * Math.PI) / sameTypeNodes.length;
+            nodeData.x = centerX + radius * Math.cos(angle);
+            nodeData.y = centerY + radius * Math.sin(angle);
+            nodeData.fixed = false;
+          }
           
           return nodeData;
         }),
@@ -398,15 +719,15 @@ const updateChart = () => {
           }
         },
         force: {
-          repulsion: layoutType.value === 'force' ? 200 : (layoutType.value === 'grid' ? 50 : 100),
-          edgeLength: layoutType.value === 'force' ? 80 : (layoutType.value === 'grid' ? 30 : 50),
-          gravity: layoutType.value === 'grid' ? 0.3 : 0.1
+          repulsion: layoutType.value === 'force' ? 200 : (['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 50 : 100),
+          edgeLength: layoutType.value === 'force' ? 80 : (['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 30 : 50),
+          gravity: ['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? 0.3 : 0.1
         },
         circular: {
           rotateLabel: true
         },
-        // 网格布局时的特殊配置
-        ...(layoutType.value === 'grid' ? {
+        // 手动布局时的特殊配置
+        ...(['grid', 'hierarchical', 'radial', 'tree', 'concentric'].includes(layoutType.value) ? {
           animation: false, // 禁用动画以提高性能
           edgeSymbol: ['none', 'none'], // 简化边的显示
           edgeSymbolSize: 0
@@ -485,6 +806,243 @@ const loadData = async () => {
   }
 };
 
+// 节点管理方法
+const openAddNodeDialog = () => {
+  newNodeForm.value = {
+    type: '',
+    name: '',
+    description: '',
+    dosage: '',
+    frequency: '',
+    sideEffects: ''
+  };
+  showAddNodeDialog.value = true;
+};
+
+const openEditNodeDialog = () => {
+  if (!selectedNode.value) {
+    ElMessage.warning('请先选择一个节点');
+    return;
+  }
+  editNodeForm.value = {
+    name: selectedNode.value.name,
+    category: selectedNode.value.category,
+    description: selectedNode.value.description || '',
+    dosage: selectedNode.value.dosage || '',
+    frequency: selectedNode.value.frequency || '',
+    sideEffects: selectedNode.value.sideEffects || ''
+  };
+  showEditNodeDialog.value = true;
+};
+
+const deleteSelectedNode = async () => {
+  if (!selectedNode.value) {
+    ElMessage.warning('请先选择一个节点');
+    return;
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除节点 "${selectedNode.value.name}" 吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    
+    let endpoint = '';
+    if (selectedNode.value.category === 0) {
+      endpoint = `/knowledge-graph/disease/${selectedNode.value.name}`;
+    } else if (selectedNode.value.category === 1) {
+      endpoint = `/knowledge-graph/symptom/${selectedNode.value.name}`;
+    } else if (selectedNode.value.category === 2) {
+      endpoint = `/knowledge-graph/medicine/${selectedNode.value.name}`;
+    }
+    
+    await request.delete(endpoint);
+    ElMessage.success('节点删除成功');
+    selectedNode.value = null;
+    await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除节点失败:', error);
+      ElMessage.error('删除节点失败，请稍后重试');
+    }
+  }
+};
+
+const addNode = async () => {
+  try {
+    let endpoint = '';
+    let data = {
+      name: newNodeForm.value.name,
+      description: newNodeForm.value.description
+    };
+    
+    if (newNodeForm.value.type === 'disease') {
+      endpoint = '/knowledge-graph/disease';
+    } else if (newNodeForm.value.type === 'symptom') {
+      endpoint = '/knowledge-graph/symptom';
+    } else if (newNodeForm.value.type === 'medicine') {
+      endpoint = '/knowledge-graph/medicine';
+      data = {
+        ...data,
+        dosage: newNodeForm.value.dosage,
+        frequency: newNodeForm.value.frequency,
+        sideEffects: newNodeForm.value.sideEffects
+      };
+    }
+    
+    const response = await request.post(endpoint, data);
+    
+    ElMessage.success('节点添加成功');
+    showAddNodeDialog.value = false;
+    await loadData();
+  } catch (error) {
+    console.error('添加节点失败:', error);
+    ElMessage.error('添加节点失败，请稍后重试');
+  }
+};
+
+const updateNode = async () => {
+  try {
+    let endpoint = '';
+    let data = {
+      name: editNodeForm.value.name, // 使用编辑后的节点名称
+      description: editNodeForm.value.description
+    };
+    
+    if (editNodeForm.value.category === 0) {
+      endpoint = `/knowledge-graph/disease/${selectedNode.value.name}`; // 路径参数使用原始名称
+    } else if (editNodeForm.value.category === 1) {
+      endpoint = `/knowledge-graph/symptom/${selectedNode.value.name}`;
+    } else if (editNodeForm.value.category === 2) {
+      endpoint = `/knowledge-graph/medicine/${selectedNode.value.name}`;
+      data = {
+        ...data,
+        dosage: editNodeForm.value.dosage,
+        frequency: editNodeForm.value.frequency,
+        sideEffects: editNodeForm.value.sideEffects
+      };
+    }
+    
+    await request.put(endpoint, data);
+    ElMessage.success('节点更新成功');
+    showEditNodeDialog.value = false;
+    selectedNode.value = null;
+    await loadData();
+  } catch (error) {
+    console.error('更新节点失败:', error);
+    ElMessage.error('更新节点失败，请稍后重试');
+  }
+};
+
+// 关系管理方法
+const openAddRelationDialog = async () => {
+  try {
+    // 获取所有节点数据
+    const [diseasesRes, symptomsRes, medicinesRes] = await Promise.all([
+      request.get('/knowledge-graph/diseases'),
+      request.get('/knowledge-graph/symptoms'),
+      request.get('/knowledge-graph/medicines')
+    ]);
+    
+    allDiseases.value = diseasesRes.data;
+    allSymptoms.value = symptomsRes.data;
+    allMedicines.value = medicinesRes.data;
+    
+    newRelationForm.value = {
+      type: '',
+      disease: '',
+      symptom: '',
+      medicine: ''
+    };
+    showAddRelationDialog.value = true;
+  } catch (error) {
+    console.error('获取节点数据失败:', error);
+    ElMessage.error('获取节点数据失败，请稍后重试');
+  }
+};
+
+const openDeleteRelationDialog = async () => {
+  try {
+    // 获取所有节点数据
+    const [diseasesRes, symptomsRes, medicinesRes] = await Promise.all([
+      request.get('/knowledge-graph/diseases'),
+      request.get('/knowledge-graph/symptoms'),
+      request.get('/knowledge-graph/medicines')
+    ]);
+    
+    allDiseases.value = diseasesRes.data;
+    allSymptoms.value = symptomsRes.data;
+    allMedicines.value = medicinesRes.data;
+    
+    deleteRelationForm.value = {
+      type: '',
+      disease: '',
+      symptom: '',
+      medicine: ''
+    };
+    showDeleteRelationDialog.value = true;
+  } catch (error) {
+    console.error('获取节点数据失败:', error);
+    ElMessage.error('获取节点数据失败，请稍后重试');
+  }
+};
+
+const addRelation = async () => {
+  try {
+    let endpoint = '';
+    
+    if (newRelationForm.value.type === 'disease-symptom') {
+      endpoint = `/knowledge-graph/symptom/${newRelationForm.value.symptom}/disease/${newRelationForm.value.disease}`;
+    } else if (newRelationForm.value.type === 'medicine-disease') {
+      endpoint = `/knowledge-graph/medicine/${newRelationForm.value.medicine}/disease/${newRelationForm.value.disease}`;
+    }
+    
+    await request.post(endpoint);
+    ElMessage.success('关系添加成功');
+    showAddRelationDialog.value = false;
+    await loadData();
+  } catch (error) {
+    console.error('添加关系失败:', error);
+    ElMessage.error('添加关系失败，请稍后重试');
+  }
+};
+
+const deleteRelation = async () => {
+  try {
+    let endpoint = '';
+    
+    if (deleteRelationForm.value.type === 'disease-symptom') {
+      endpoint = `/knowledge-graph/symptom/${deleteRelationForm.value.symptom}/disease/${deleteRelationForm.value.disease}`;
+    } else if (deleteRelationForm.value.type === 'medicine-disease') {
+      endpoint = `/knowledge-graph/medicine/${deleteRelationForm.value.medicine}/disease/${deleteRelationForm.value.disease}`;
+    }
+    
+    await request.delete(endpoint);
+    ElMessage.success('关系删除成功');
+    showDeleteRelationDialog.value = false;
+    await loadData();
+  } catch (error) {
+    console.error('删除关系失败:', error);
+    ElMessage.error('删除关系失败，请稍后重试');
+  }
+};
+
+// 处理关系类型变化
+const handleRelationTypeChange = (value) => {
+  console.log('关系类型变化:', value);
+  // 可以在这里添加额外的逻辑，比如根据关系类型更新其他字段
+};
+
+const handleDeleteRelationTypeChange = (value) => {
+  console.log('删除关系类型变化:', value);
+  // 可以在这里添加额外的逻辑，比如根据关系类型更新其他字段
+};
+
 onMounted(async () => {
   initChart();
   await loadData();
@@ -521,7 +1079,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 32px;
+  padding: 12px 24px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -537,7 +1095,7 @@ onMounted(async () => {
 
 .page-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
@@ -545,7 +1103,7 @@ onMounted(async () => {
   background-clip: text;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -554,7 +1112,7 @@ onMounted(async () => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: 28px;
+  font-size: 22px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
@@ -565,27 +1123,27 @@ onMounted(async () => {
 }
 
 .search-input {
-  width: 320px;
+  width: 280px;
 }
 
 /* 主要内容区域 */
 .main-content {
   flex: 1;
   display: flex;
-  gap: 24px;
-  padding: 24px;
+  gap: 16px;
+  padding: 16px;
   overflow: visible;
   position: relative;
   z-index: 1;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 80px);
 }
 
 /* 左侧控制面板 */
 .control-panel {
-  width: 320px;
+  width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   max-height: none;
   overflow-y: auto;
 }
@@ -611,14 +1169,14 @@ onMounted(async () => {
 }
 
 .panel-card :deep(.el-card__header) {
-  padding: 20px 24px;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(240, 242, 245, 0.6);
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   position: relative;
 }
 
 .panel-card :deep(.el-card__body) {
-  padding: 24px;
+  padding: 16px;
 }
 
 .panel-title {
@@ -632,7 +1190,7 @@ onMounted(async () => {
 }
 
 .control-section {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .control-section:last-child {
@@ -640,8 +1198,8 @@ onMounted(async () => {
 }
 
 .control-section h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
+  margin: 0 0 10px 0;
+  font-size: 13px;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
@@ -650,7 +1208,7 @@ onMounted(async () => {
   text-transform: uppercase;
   letter-spacing: 1px;
   position: relative;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .control-section h4::after {
@@ -675,16 +1233,16 @@ onMounted(async () => {
 .stats {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid rgba(102, 126, 234, 0.15);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;

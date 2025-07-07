@@ -156,4 +156,107 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
         graph.put("links", links);
         return graph;
     }
+
+    // 删除操作实现
+    @Override
+    @Transactional
+    public void deleteMedicine(String name) {
+        Medicine medicine = medicineRepository.findByName(name);
+        if (medicine != null) {
+            medicineRepository.delete(medicine);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteDisease(String name) {
+        Disease disease = diseaseRepository.findByName(name);
+        if (disease != null) {
+            diseaseRepository.delete(disease);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteSymptom(String name) {
+        Symptom symptom = symptomRepository.findByName(name);
+        if (symptom != null) {
+            symptomRepository.delete(symptom);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void removeMedicineFromDisease(String medicineName, String diseaseName) {
+        Medicine medicine = medicineRepository.findByName(medicineName);
+        Disease disease = diseaseRepository.findByName(diseaseName);
+        if (medicine != null && disease != null) {
+            // 使用自定义查询直接删除Neo4j中的关系
+            medicineRepository.removeTreatmentRelation(medicineName, diseaseName);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void removeSymptomFromDisease(String symptomName, String diseaseName) {
+        Symptom symptom = symptomRepository.findByName(symptomName);
+        Disease disease = diseaseRepository.findByName(diseaseName);
+        if (symptom != null && disease != null) {
+            // 使用自定义查询直接删除Neo4j中的关系
+            diseaseRepository.removeSymptomRelation(diseaseName, symptomName);
+        }
+    }
+
+    // 更新操作实现
+    @Override
+    @Transactional
+    public void updateMedicine(String originalName, Medicine medicine) {
+        Medicine existingMedicine = medicineRepository.findByName(originalName);
+        if (existingMedicine != null) {
+            existingMedicine.setName(medicine.getName());
+            existingMedicine.setDescription(medicine.getDescription());
+            existingMedicine.setDosage(medicine.getDosage());
+            existingMedicine.setFrequency(medicine.getFrequency());
+            existingMedicine.setSideEffects(medicine.getSideEffects());
+            medicineRepository.save(existingMedicine);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateDisease(String originalName, Disease disease) {
+        Disease existingDisease = diseaseRepository.findByName(originalName);
+        if (existingDisease != null) {
+            existingDisease.setName(disease.getName());
+            existingDisease.setDescription(disease.getDescription());
+            diseaseRepository.save(existingDisease);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateSymptom(String originalName, Symptom symptom) {
+        Symptom existingSymptom = symptomRepository.findByName(originalName);
+        if (existingSymptom != null) {
+            existingSymptom.setName(symptom.getName());
+            // 如果Symptom实体有其他字段，在这里添加更新逻辑
+            symptomRepository.save(existingSymptom);
+        }
+    }
+
+    // 获取所有节点实现
+    @Override
+    public List<Disease> getAllDiseases() {
+        return (List<Disease>) diseaseRepository.findAll();
+    }
+
+    @Override
+    public List<Medicine> getAllMedicines() {
+        return (List<Medicine>) medicineRepository.findAll();
+    }
+
+    @Override
+    public List<Symptom> getAllSymptoms() {
+        return (List<Symptom>) symptomRepository.findAll();
+    }
 }

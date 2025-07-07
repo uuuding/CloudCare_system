@@ -16,4 +16,7 @@ public interface MedicineRepository extends Neo4jRepository<Medicine, Long> {
 
     @Query("MATCH (m:Medicine)-[:治疗]->(d:Disease) WHERE d.id = $diseaseId RETURN m")
     List<Medicine> findByDiseaseId(@Param("diseaseId") Long diseaseId);
+    
+    @Query("MATCH (m:Medicine {name: $medicineName})-[r:治疗]->(d:Disease {name: $diseaseName}) DELETE r")
+    void removeTreatmentRelation(@Param("medicineName") String medicineName, @Param("diseaseName") String diseaseName);
 }
