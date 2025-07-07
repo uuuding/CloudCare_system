@@ -29,7 +29,20 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '首页', icon: 'HomeFilled' }
+        meta: { title: '首页', icon: 'HomeFilled', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
+      }
+    ]
+  },
+  {
+    path: '/elderly-dashboard',
+    component: Layout,
+    redirect: '/elderly-dashboard/index',
+    children: [
+      {
+        path: 'index',
+        name: 'ElderlyDashboard',
+        component: () => import('@/views/dashboard/elderly-dashboard.vue'),
+        meta: { title: '老人首页', icon: 'HomeFilled', roles: ['ROLE_ELDERLY'] }
       }
     ]
   },
@@ -49,7 +62,7 @@ const routes = [
         path: 'index',
         name: 'ElderlyProfile',
         component: () => import('@/views/elderly-profile/index.vue'),
-        meta: { title: '老人档案管理', icon: 'Files' }
+        meta: { title: '老人档案管理', icon: 'Files', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -63,20 +76,26 @@ const routes = [
         path: 'alert',
         name: 'HealthAlert',
         component: () => import('@/views/health/alert/index.vue'),
-        meta: { title: '健康预警', icon: 'Warning' }
+        meta: { title: '健康预警', icon: 'Warning', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'assessment',
         name: 'HealthAssessment',
         component: () => import('@/views/health/assessment/index.vue'),
-        meta: { title: '健康评估', icon: 'TrendCharts' }
+        meta: { title: '健康评估', icon: 'TrendCharts', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       },
       {
-        path: 'profile-analysis/:id',
+                path: 'profile-analysis/:id',
         name: 'ElderlyProfileAnalysis',
         component: () => import('@/views/health/profile-analysis/index.vue'),
-        meta: { title: '老人画像分析', icon: 'DataAnalysis' },
+        meta: { title: '老人画像分析', icon: 'DataAnalysis', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] },
         hidden: true
+      },
+      {
+        path: 'knowledge-graph',
+        name: 'KnowledgeGraph',
+        component: () => import('@/views/health/knowledge-graph/index.vue'),
+        meta: { title: '知识图谱', icon: 'Connection', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -84,20 +103,20 @@ const routes = [
     path: '/intervention',
     component: Layout,
     redirect: '/intervention/plan',
-    meta: { title: '干预管理模块', icon: 'Tools' },
+    meta: { title: '干预管理模块', icon: 'Tools', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] },
     children: [
       {
         path: 'plan',
         name: 'InterventionPlan',
         component: () => import('@/views/intervention-plan/index.vue'),
-        meta: { title: '干预方案', icon: 'List' }
+        meta: { title: '干预方案', icon: 'List', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
 
       {
         path: 'template',
         name: 'InterventionTemplate',
         component: () => import('@/views/intervention-template/index.vue'),
-        meta: { title: '干预模板', icon: 'Document' }
+        meta: { title: '干预模板', icon: 'Document', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -111,13 +130,13 @@ const routes = [
         path: 'appointment',
         name: 'Appointment',
         component: () => import('@/views/medical/appointment/index.vue'),
-        meta: { title: '在线预约', icon: 'Calendar' }
+        meta: { title: '在线预约', icon: 'Calendar', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       },
       {
         path: 'medical-record',
         name: 'MedicalRecord',
         component: () => import('@/views/medical/medical-record/index.vue'),
-        meta: { title: '电子病历共享', icon: 'Document' }
+        meta: { title: '电子病历共享', icon: 'Document', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       }
     ]
   },
@@ -131,25 +150,25 @@ const routes = [
         path: 'institution',
         name: 'Institution',
         component: () => import('@/views/elderly-service/institution/index.vue'),
-        meta: { title: '机构管理', icon: 'House' }
+        meta: { title: '机构管理', icon: 'House', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'service-schedule',
         name: 'ServiceSchedule',
         component: () => import('@/views/elderly-service/service-schedule/index.vue'),
-        meta: { title: '服务调度', icon: 'Clock' }
+        meta: { title: '服务调度', icon: 'Clock', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'geo-fence',
         name: 'GeoFence',
         component: () => import('@/views/elderly-service/geo-fence/index.vue'),
-        meta: { title: '电子围栏', icon: 'Location' }
+        meta: { title: '电子围栏', icon: 'Location', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'family-interaction',
         name: 'FamilyInteraction',
         component: () => import('@/views/elderly-service/family-interaction/index.vue'),
-        meta: { title: '家属互动', icon: 'ChatDotRound' }
+        meta: { title: '家属互动', icon: 'ChatDotRound', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       }
     ]
   },
@@ -162,7 +181,7 @@ const routes = [
         path: 'index',
         name: 'Reports',
         component: () => import('@/views/reports/index.vue'),
-        meta: { title: '报表统计与分析', icon: 'PieChart' }
+        meta: { title: '报表统计与分析', icon: 'PieChart', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -175,7 +194,7 @@ const routes = [
         path: 'index',
         name: 'Device',
         component: () => import('@/views/device/index.vue'),
-        meta: { title: '设备管理', icon: 'Monitor' }
+        meta: { title: '设备管理', icon: 'Monitor', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -183,31 +202,31 @@ const routes = [
     path: '/sms',
     component: Layout,
     redirect: '/sms/send',
-    meta: { title: '短信管理', icon: 'Message' },
+    meta: { title: '短信管理', icon: 'Message', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] },
     children: [
       {
         path: 'send',
         name: 'SmsSend',
         component: () => import('@/views/sms/send/index.vue'),
-        meta: { title: '短信发送', icon: 'Promotion' }
+        meta: { title: '短信发送', icon: 'Promotion', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'template',
         name: 'SmsTemplate',
         component: () => import('@/views/sms/template/index.vue'),
-        meta: { title: '短信模板', icon: 'Document' }
+        meta: { title: '短信模板', icon: 'Document', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'record',
         name: 'SmsRecord',
         component: () => import('@/views/sms/record/index.vue'),
-        meta: { title: '发送记录', icon: 'List' }
+        meta: { title: '发送记录', icon: 'List', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       },
       {
         path: 'balance',
         name: 'SmsBalance',
         component: () => import('@/views/sms/balance/index.vue'),
-        meta: { title: '余额查询', icon: 'Coin' }
+        meta: { title: '余额查询', icon: 'Coin', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -215,7 +234,7 @@ const routes = [
     path: '/user',
     component: Layout,
     redirect: '/user/elder-account',
-    meta: { title: '用户与权限管理', icon: 'User' },
+    meta: { title: '用户与权限管理', icon: 'User', roles: ['ROLE_ADMIN'] },
     children: [
       {
         path: 'elder-account',
@@ -239,7 +258,7 @@ const routes = [
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/user/profile/index.vue'),
-        meta: { title: '个人中心', icon: 'User' }
+        meta: { title: '个人中心', icon: 'User', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       }
     ]
   },
@@ -253,7 +272,7 @@ const routes = [
         path: 'index',
         name: 'Help',
         component: () => import('@/views/help/index.vue'),
-        meta: { title: '使用帮助', icon: 'QuestionFilled' }
+        meta: { title: '使用帮助', icon: 'QuestionFilled', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       }
     ]
   },
@@ -266,7 +285,7 @@ const routes = [
         path: 'index',
         name: 'SystemLog',
         component: () => import('@/views/system-log/index.vue'),
-        meta: { title: '系统日志', icon: 'Document' }
+        meta: { title: '系统日志', icon: 'Document', roles: ['ROLE_ADMIN'] }
       }
     ]
   },
@@ -333,7 +352,15 @@ router.beforeEach(async (to, from, next) => {
               next('/doctor-dashboard')
               return
             }
+            if ((to.path === '/' || to.path === '/dashboard') && userStore.userType === 3) {
+              next('/elderly-dashboard')
+              return
+            }
             if (to.path === '/doctor-dashboard' && userStore.userType !== 2) {
+              next('/dashboard')
+              return
+            }
+            if (to.path === '/elderly-dashboard' && userStore.userType !== 3) {
               next('/dashboard')
               return
             }

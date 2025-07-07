@@ -15,6 +15,7 @@
     "echarts": "^5.4.3",
     "element-plus": "^2.3.8",
     "js-cookie": "^3.0.5",
+    "neo4j-driver": "^5.28.1",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.4",
     "vue": "^3.3.4",

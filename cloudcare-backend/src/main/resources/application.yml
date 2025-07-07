@@ -94,3 +94,9 @@ logging:
 
 deepseek:
   api-key: sk-a78ba32fa79c443299eaa7ed4b6d8315
+
+# Neo4j配置
+neo4j:
+  uri: bolt://localhost:7687
+  username: neo4j
+  password: zzm503503 # 请替换为您的Neo4j密码

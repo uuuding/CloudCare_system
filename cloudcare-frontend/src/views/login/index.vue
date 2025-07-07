@@ -114,8 +114,18 @@ const handleLogin = () => {
         })
         .then(() => {
           ElMessage.success('登录成功')
-          // 跳转到首页或者重定向页面
-          const redirect = route.query.redirect || '/'
+          // 根据用户类型跳转到对应的首页
+          let redirect = route.query.redirect
+          if (!redirect) {
+            // 根据用户类型设置默认首页
+            if (userStore.userType === 2) {
+              redirect = '/doctor-dashboard'
+            } else if (userStore.userType === 3) {
+              redirect = '/elderly-dashboard'
+            } else {
+              redirect = '/dashboard'
+            }
+          }
           router.push(redirect)
         })
         .catch(error => {
