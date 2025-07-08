@@ -13,6 +13,8 @@ public interface KnowledgeGraphService {
     List<Disease> findDiseasesBySymptom(String symptomName);
 
     Medicine findMedicineByName(String name);
+    
+    Medicine findMedicineById(Long id);
 
     List<Medicine> findMedicinesByDisease(String diseaseName);
 

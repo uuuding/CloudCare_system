@@ -117,6 +117,60 @@
               </el-button>
             </div>
           </div>
+
+          <!-- 智能药物推荐 -->
+          <div class="control-section">
+            <h4>智能药物推荐</h4>
+            <div class="recommendation-form">
+              <el-form :model="recommendationForm" label-width="80px" size="small">
+                <el-form-item label="选择症状">
+                  <el-select v-model="recommendationForm.symptomId" placeholder="请选择症状" style="width: 100%">
+                    <el-option 
+                      v-for="symptom in allSymptoms" 
+                      :key="symptom.id" 
+                      :label="symptom.name" 
+                      :value="symptom.id">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="推荐数量">
+                  <el-input-number 
+                    v-model="recommendationForm.topK" 
+                    :min="1" 
+                    :max="10" 
+                    style="width: 100%">
+                  </el-input-number>
+                </el-form-item>
+                <el-form-item label="传播参数">
+                  <el-slider 
+                    v-model="recommendationForm.alpha" 
+                    :min="0.1" 
+                    :max="1" 
+                    :step="0.1">
+                  </el-slider>
+                </el-form-item>
+                <el-form-item label="迭代次数">
+                  <el-input-number 
+                    v-model="recommendationForm.iterations" 
+                    :min="1" 
+                    :max="10" 
+                    style="width: 100%">
+                  </el-input-number>
+                </el-form-item>
+                <el-form-item>
+                  <el-button 
+                    type="success" 
+                    @click="getRecommendations" 
+                    :loading="recommendationLoading"
+                    :disabled="recommendationForm.symptomId === null || recommendationForm.symptomId === undefined"
+                    style="width: 100%">
+                    <i class="el-icon-magic-stick"></i>
+                    获取推荐
+                  </el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+          </div>
         </el-card>
 
         <!-- 节点详情 -->
@@ -141,6 +195,49 @@
               >
                 {{ node.name }}
               </el-tag>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 推荐结果 -->
+        <el-card class="panel-card" v-if="recommendations.length > 0">
+          <template #header>
+            <span class="panel-title">药物推荐结果</span>
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="clearRecommendations"
+              style="float: right; margin-top: -5px;">
+              清除
+            </el-button>
+          </template>
+          <div class="recommendation-results">
+            <div 
+              v-for="(rec, index) in recommendations" 
+              :key="rec.medicineId"
+              class="recommendation-item"
+              @click="highlightMedicine(rec.medicineId)">
+              <div class="recommendation-rank">{{ index + 1 }}</div>
+              <div class="recommendation-content">
+                <h5 class="medicine-name">{{ rec.medicineName }}</h5>
+                <div class="similarity-score">
+                  <span>相似度: </span>
+                  <el-progress 
+                    :percentage="Math.round(rec.similarity * 100)" 
+                    :stroke-width="8"
+                    :show-text="false"
+                    status="success">
+                  </el-progress>
+                  <span class="score-text">{{ (rec.similarity * 100).toFixed(1) }}%</span>
+                </div>
+                <div class="medicine-details" v-if="rec.medicine">
+                  <p v-if="rec.medicine.description"><small>{{ rec.medicine.description }}</small></p>
+                  <div class="medicine-meta">
+                    <el-tag size="mini" v-if="rec.medicine.dosage">{{ rec.medicine.dosage }}</el-tag>
+                    <el-tag size="mini" type="info" v-if="rec.medicine.frequency">{{ rec.medicine.frequency }}</el-tag>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </el-card>
@@ -367,6 +464,26 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import * as echarts from 'echarts';
 import request from '@/utils/request';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { 
+  getFullGraph, 
+  getAllDiseases, 
+  getAllSymptoms, 
+  getAllMedicines,
+  addDisease,
+  addSymptom,
+  addMedicine,
+  updateDisease,
+  updateSymptom,
+  updateMedicine,
+  deleteDisease,
+  deleteSymptom,
+  deleteMedicine,
+  addSymptomToDisease,
+  addMedicineToDisease,
+  removeSymptomFromDisease,
+  removeMedicineFromDisease,
+  recommendMedicinesBySymptom
+} from '@/api/knowledgeGraph';
 
 const graph = ref(null);
 let myChart = null;
@@ -423,6 +540,16 @@ const deleteRelationForm = ref({
 const allDiseases = ref([]);
 const allSymptoms = ref([]);
 const allMedicines = ref([]);
+
+// 药物推荐相关数据
+const recommendationForm = ref({
+  symptomId: null,
+  topK: 5,
+  alpha: 0.6,
+  iterations: 3
+});
+const recommendations = ref([]);
+const recommendationLoading = ref(false);
 
 // 计算属性
 const diseaseCount = computed(() => {
@@ -1043,9 +1170,103 @@ const handleDeleteRelationTypeChange = (value) => {
   // 可以在这里添加额外的逻辑，比如根据关系类型更新其他字段
 };
 
+// 药物推荐相关方法
+const getRecommendations = async () => {
+  if (recommendationForm.value.symptomId === null || recommendationForm.value.symptomId === undefined) {
+    ElMessage.warning('请先选择症状');
+    return;
+  }
+  
+  recommendationLoading.value = true;
+  try {
+    const response = await recommendMedicinesBySymptom({
+      symptomId: recommendationForm.value.symptomId,
+      topK: recommendationForm.value.topK,
+      alpha: recommendationForm.value.alpha,
+      iterations: recommendationForm.value.iterations
+    });
+    
+    recommendations.value = response.data;
+    ElMessage.success(`成功获取 ${response.data.length} 个药物推荐`);
+    
+    // 高亮推荐的药物节点
+    if (recommendations.value.length > 0) {
+      highlightRecommendedMedicines();
+    }
+  } catch (error) {
+    console.error('获取药物推荐失败:', error);
+    ElMessage.error('获取药物推荐失败，请稍后重试');
+  } finally {
+    recommendationLoading.value = false;
+  }
+};
+
+const clearRecommendations = () => {
+  recommendations.value = [];
+  // 重置图谱高亮
+  updateChart();
+};
+
+const highlightMedicine = (medicineId) => {
+  // 在图谱中高亮指定的药物节点
+  const nodeId = `Medicine_${medicineId}`;
+  highlightNode(nodeId);
+};
+
+const highlightRecommendedMedicines = () => {
+  // 高亮所有推荐的药物节点
+  const recommendedNodeIds = recommendations.value.map(rec => `Medicine_${rec.medicineId}`);
+  
+  // 更新图表选项以高亮推荐的节点
+  const option = myChart.getOption();
+  if (option && option.series && option.series[0]) {
+    const series = option.series[0];
+    series.data = series.data.map(node => {
+      if (recommendedNodeIds.includes(node.id)) {
+        return {
+          ...node,
+          itemStyle: {
+            ...node.itemStyle,
+            borderWidth: 4,
+            borderColor: '#ff4757',
+            shadowBlur: 10,
+            shadowColor: '#ff4757'
+          },
+          label: {
+            ...node.label,
+            fontWeight: 'bold',
+            color: '#ff4757'
+          }
+        };
+      }
+      return node;
+    });
+    
+    myChart.setOption(option);
+  }
+};
+
+// 加载所有节点数据用于推荐功能
+const loadAllNodesData = async () => {
+  try {
+    const [diseasesRes, symptomsRes, medicinesRes] = await Promise.all([
+      getAllDiseases(),
+      getAllSymptoms(),
+      getAllMedicines()
+    ]);
+    
+    allDiseases.value = diseasesRes.data;
+    allSymptoms.value = symptomsRes.data;
+    allMedicines.value = medicinesRes.data;
+  } catch (error) {
+    console.error('加载节点数据失败:', error);
+  }
+};
+
 onMounted(async () => {
   initChart();
   await loadData();
+  await loadAllNodesData();
 });
 </script>
 
@@ -1602,6 +1823,160 @@ onMounted(async () => {
   50% {
     transform: translateY(-10px);
   }
+}
+
+/* 推荐功能样式 */
+.recommendation-form {
+  padding: 8px 0;
+}
+
+.recommendation-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+}
+
+.recommendation-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.recommendation-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.recommendation-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.medicine-name {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.similarity-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #606266;
+}
+
+.similarity-score .el-progress {
+  flex: 1;
+  max-width: 80px;
+}
+
+.score-text {
+  font-weight: 600;
+  color: #67C23A;
+  min-width: 40px;
+  text-align: right;
+}
+
+.medicine-details {
+  font-size: 12px;
+  color: #909399;
+}
+
+.medicine-details p {
+  margin: 0 0 6px 0;
+  line-height: 1.4;
+}
+
+.medicine-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.medicine-meta .el-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  height: auto;
+  line-height: 1.2;
+}
+
+/* 推荐表单样式优化 */
+.recommendation-form :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+
+.recommendation-form :deep(.el-form-item__label) {
+  font-size: 12px;
+  font-weight: 600;
+  color: #606266;
+  line-height: 1.4;
+  padding-bottom: 4px;
+}
+
+.recommendation-form :deep(.el-input-number) {
+  width: 100%;
+}
+
+.recommendation-form :deep(.el-input-number .el-input__wrapper) {
+  border-radius: 8px;
+}
+
+.recommendation-form :deep(.el-slider) {
+  margin: 8px 0;
+}
+
+.recommendation-form :deep(.el-slider__runway) {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.recommendation-form :deep(.el-slider__bar) {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.recommendation-form :deep(.el-slider__button) {
+  border: 2px solid #667eea;
+  background: white;
+}
+
+.recommendation-form :deep(.el-slider__button:hover) {
+  border-color: #5a6fd8;
 }
 
 /* 滚动条美化 */
