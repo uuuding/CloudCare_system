@@ -234,8 +234,10 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 import {
   getAppointmentPage,
   createAppointment,
@@ -326,14 +328,35 @@ const getAppointmentList = async () => {
   }
 }
 
+// 获取路由参数
+const route = useRoute()
+
+// 获取用户store
+const userStore = useUserStore()
+
 // 获取老人列表
 const getElderList = async () => {
   try {
     const response = await fetchElderList()
-    elderList.value = response.data.map(user => ({
-      elderId: user.userId,
-      name: user.realName
-    }))
+    if (userStore.isElderly) {
+      // 如果是老人账号，只显示自己
+      elderList.value = response.data
+        .filter(user => user.userId === userStore.userId)
+        .map(user => ({
+          elderId: user.userId,
+          name: user.realName
+        }))
+      // 自动选择当前老人
+      if (elderList.value.length > 0 && form.elderId === '') {
+        form.elderId = elderList.value[0].elderId
+      }
+    } else {
+      // 其他账号显示所有老人
+      elderList.value = response.data.map(user => ({
+        elderId: user.userId,
+        name: user.realName
+      }))
+    }
   } catch (error) {
     console.error('获取老人列表失败:', error)
     ElMessage.error('获取老人列表失败')
@@ -374,6 +397,12 @@ const resetSearch = () => {
 const handleAdd = () => {
   dialogTitle.value = '新增预约'
   resetForm()
+  
+  // 如果是老人账号，自动选择当前用户
+  if (userStore.isElderly && elderList.value.length > 0) {
+    form.elderId = elderList.value[0].elderId
+  }
+  
   dialogVisible.value = true
 }
 

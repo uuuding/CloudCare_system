@@ -21,6 +21,8 @@ public class Disease {
     @Relationship(type = "有症状", direction = Relationship.Direction.OUTGOING)
     private Set<Symptom> symptoms = new HashSet<>();
 
+    public Disease() {}
+    
     public Disease(String name, String description) {
         this.name = name;
         this.description = description;

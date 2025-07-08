@@ -43,6 +43,11 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
     public Medicine findMedicineByName(String name) {
         return medicineRepository.findByName(name);
     }
+    
+    @Override
+    public Medicine findMedicineById(Long id) {
+        return medicineRepository.findById(id).orElse(null);
+    }
 
     @Override
     public List<Medicine> findMedicinesByDisease(String diseaseName) {

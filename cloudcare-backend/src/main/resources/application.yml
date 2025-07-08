@@ -99,4 +99,4 @@ deepseek:
 neo4j:
   uri: bolt://localhost:7687
   username: neo4j
-  password: zzm503503 # 请替换为您的Neo4j密码
+  password: wyt603129 # 请替换为您的Neo4j密码

@@ -14,7 +14,7 @@
         />
         <div class="avatar-info">
           <h3>{{ userInfo.realName || userInfo.username }}</h3>
-          <p class="user-type">{{ userInfo.userType }}</p>
+          <p class="user-type">{{ getUserTypeName(userInfo.userType) }}</p>
         </div>
       </div>
       
@@ -34,7 +34,7 @@
           <el-input v-model="userInfo.email" />
         </el-form-item>
         <el-form-item label="用户类型">
-          <el-input v-model="userInfo.userType" disabled />
+          <el-input :model-value="getUserTypeName(userInfo.userType)" disabled />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="saveUserInfo" :loading="saving">
@@ -53,6 +53,18 @@ import { getUserInfo, updateUserInfo } from '@/api/auth'
 import * as userApi from '@/api/user'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { useUserStore } from '@/stores/user'
+
+// 用户类型映射
+const userTypeMap = {
+  1: '管理员',
+  2: '医生',
+  3: '老人'
+}
+
+// 获取用户类型名称
+const getUserTypeName = (type) => {
+  return userTypeMap[type] || `未知类型(${type})`
+}
 
 const formRef = ref(null)
 const saving = ref(false)

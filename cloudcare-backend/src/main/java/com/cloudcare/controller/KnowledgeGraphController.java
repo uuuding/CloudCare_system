@@ -5,6 +5,7 @@ import com.cloudcare.entity.Disease;
 import com.cloudcare.entity.Medicine;
 import com.cloudcare.entity.Symptom;
 import com.cloudcare.service.KnowledgeGraphService;
+import com.cloudcare.service.GCNService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,9 @@ public class KnowledgeGraphController {
 
     @Autowired
     private KnowledgeGraphService knowledgeGraphService;
+    
+    @Autowired
+    private GCNService gcnService;
 
     @GetMapping("/disease/{name}")
     public Disease getDiseaseByName(@PathVariable String name) {
@@ -209,6 +213,60 @@ public class KnowledgeGraphController {
             return Result.success(symptoms, "获取所有症状成功");
         } catch (Exception e) {
             return Result.error("获取症状列表失败: " + e.getMessage());
+        }
+    }
+    
+    // GCN特征传播接口
+    @PostMapping("/gcn/propagate")
+    public Result<GCNService.PropagationResult> performGCNPropagation(
+            @RequestParam(defaultValue = "0.6") double alpha,
+            @RequestParam(defaultValue = "3") int iterations) {
+        try {
+            GCNService.PropagationResult result = gcnService.performPropagation(alpha, iterations);
+            return Result.success(result, "GCN特征传播计算成功");
+        } catch (Exception e) {
+            return Result.error("GCN特征传播计算失败: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/gcn/similarity")
+    public Result<Double> calculateNodeSimilarity(
+            @RequestParam String nodeId1,
+            @RequestParam String nodeId2,
+            @RequestParam(defaultValue = "0.6") double alpha,
+            @RequestParam(defaultValue = "3") int iterations) {
+        try {
+            // 执行特征传播
+            GCNService.PropagationResult result = gcnService.performPropagation(alpha, iterations);
+            
+            // 获取两个节点的特征
+            double[] features1 = result.getNodeFeatures().get(nodeId1);
+            double[] features2 = result.getNodeFeatures().get(nodeId2);
+            
+            if (features1 == null || features2 == null) {
+                return Result.error("节点不存在");
+            }
+            
+            // 计算相似度
+            double similarity = gcnService.calculateSimilarity(features1, features2);
+            return Result.success(similarity, "节点相似度计算成功");
+        } catch (Exception e) {
+            return Result.error("节点相似度计算失败: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/gcn/recommend-medicines")
+    public Result<List<GCNService.MedicineRecommendation>> recommendMedicinesBySymptom(
+            @RequestParam Long symptomId,
+            @RequestParam(defaultValue = "5") int topK,
+            @RequestParam(defaultValue = "0.6") double alpha,
+            @RequestParam(defaultValue = "3") int iterations) {
+        try {
+            List<GCNService.MedicineRecommendation> recommendations = 
+                gcnService.recommendMedicinesBySymptom(symptomId, topK, alpha, iterations);
+            return Result.success(recommendations, "基于症状的药物推荐成功");
+        } catch (Exception e) {
+            return Result.error("药物推荐失败: " + e.getMessage());
         }
     }
 }

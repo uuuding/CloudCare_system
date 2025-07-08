@@ -1,5 +1,7 @@
 package com.cloudcare.entity;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
@@ -8,6 +10,8 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import java.util.HashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Node("Medicine")
 public class Medicine {
 
@@ -43,59 +47,4 @@ public class Medicine {
 
     // Getters and Setters
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDosage() {
-        return dosage;
-    }
-
-    public void setDosage(String dosage) {
-        this.dosage = dosage;
-    }
-
-    public String getFrequency() {
-        return frequency;
-    }
-
-    public void setFrequency(String frequency) {
-        this.frequency = frequency;
-    }
-
-    public String getSideEffects() {
-        return sideEffects;
-    }
-
-    public void setSideEffects(String sideEffects) {
-        this.sideEffects = sideEffects;
-    }
-
-    public Set<Disease> getTreatedDiseases() {
-        return treatedDiseases;
-    }
-
-    public void setTreatedDiseases(Set<Disease> treatedDiseases) {
-        this.treatedDiseases = treatedDiseases;
-    }
 }
