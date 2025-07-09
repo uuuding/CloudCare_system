@@ -104,7 +104,7 @@
               </div>
               <span>病历查看</span>
             </div>
-            <div class="function-item" @click="navigateTo('/elderly-service/family-interaction')">
+            <div class="function-item" @click="navigateTo('/elder-family')">
               <div class="function-icon family">
                 <el-icon :size="32"><ChatDotRound /></el-icon>
               </div>
@@ -190,6 +190,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { getObservationsByElderlyId } from '@/api/elderlyObservations'
 import {
   Monitor,
   TrendCharts,
@@ -236,9 +237,9 @@ const weather = reactive({
 
 // 健康数据
 const healthData = reactive({
-  heartRate: 72,
-  bloodPressure: '120/80',
-  bloodSugar: 5.6
+  heartRate: null,
+  bloodPressure: null,
+  bloodSugar: null
 })
 
 // 今日提醒
@@ -307,8 +308,12 @@ const getHealthStatus = (value, type) => {
       if (value >= 60 && value <= 100) return 'normal'
       return 'abnormal'
     case 'bloodPressure':
-      // 简单判断，实际应该解析血压值
-      return 'normal'
+      if (typeof value === 'string' && value.includes('/')) {
+        const [systolic] = value.split('/').map(Number)
+        if (systolic >= 90 && systolic <= 140) return 'normal'
+        return 'abnormal'
+      }
+      return 'unknown'
     case 'bloodSugar':
       if (value >= 3.9 && value <= 6.1) return 'normal'
       return 'abnormal'
@@ -345,13 +350,19 @@ onMounted(() => {
 // 加载健康数据
 const loadHealthData = async () => {
   try {
-    // 这里应该调用API获取用户的健康数据
-    // const res = await getElderlyHealthData(userStore.userId)
-    // healthData.heartRate = res.data.heartRate
-    // healthData.bloodPressure = res.data.bloodPressure
-    // healthData.bloodSugar = res.data.bloodSugar
+    const res = await getObservationsByElderlyId(userStore.userId)
+    if (res.data && res.data.length > 0) {
+      const latestData = res.data[0] // 获取最新记录
+      healthData.heartRate = latestData.heartRate
+      if (latestData.systolicBp) {
+        const diastolic = latestData.diastolicBp || '--'
+        healthData.bloodPressure = `${latestData.systolicBp}/${diastolic}`
+      }
+      healthData.bloodSugar = latestData.bloodSugar
+    }
   } catch (error) {
     console.error('加载健康数据失败:', error)
+    ElMessage.warning('健康数据加载失败，请稍后重试')
   }
 }
 </script>
