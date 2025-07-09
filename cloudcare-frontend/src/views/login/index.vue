@@ -85,7 +85,7 @@ const loading = ref(false)
 
 // 登录表单
 const loginForm = reactive({
-  username: '',
+  username: route.query.type === 'elderly' ? route.query.elderlyName || '老人' : '',
   password: '',
   rememberMe: false
 })
