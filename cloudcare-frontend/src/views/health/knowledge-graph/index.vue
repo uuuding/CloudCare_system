@@ -81,7 +81,7 @@
           </div>
 
           <!-- 节点管理 -->
-          <div class="control-section">
+          <div class="control-section" v-if="!isElderly">
             <h4>节点管理</h4>
             <div class="management-buttons">
               <el-button type="primary" size="small" @click="openAddNodeDialog">
@@ -104,7 +104,7 @@
           </div>
 
           <!-- 关系管理 -->
-          <div class="control-section">
+          <div class="control-section" v-if="!isElderly">
             <h4>关系管理</h4>
             <div class="management-buttons">
               <el-button type="primary" size="small" @click="openAddRelationDialog">
@@ -464,6 +464,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import * as echarts from 'echarts';
 import request from '@/utils/request';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { useUserStore } from '@/stores/user';
 import { 
   getFullGraph, 
   getAllDiseases, 
@@ -487,6 +488,11 @@ import {
 
 const graph = ref(null);
 let myChart = null;
+
+// 用户状态
+const userStore = useUserStore();
+const isElderly = computed(() => userStore.isElderly);
+const currentUserId = computed(() => userStore.userId);
 
 // 响应式数据
 const originalData = ref({ nodes: [], links: [] });

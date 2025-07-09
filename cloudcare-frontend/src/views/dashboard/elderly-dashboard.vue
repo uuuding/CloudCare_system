@@ -86,7 +86,7 @@
             </div>
           </template>
           <div class="quick-functions">
-            <div class="function-item" @click="navigateTo('/health/assessment')">
+            <div class="function-item" @click="router.push({ name: 'HealthAssessment' })">
               <div class="function-icon health">
                 <el-icon :size="32"><DataAnalysis /></el-icon>
               </div>

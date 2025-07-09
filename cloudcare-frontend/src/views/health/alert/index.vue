@@ -2,8 +2,8 @@
   <div class="health-alert">
     <!-- 页面标题和统计卡片 -->
     <div class="header-section">
-      <h2>健康预警管理</h2>
-      <div class="statistics-cards">
+      <h2>{{ isElderly ? '我的健康预警' : '健康预警管理' }}</h2>
+      <div class="statistics-cards" v-if="!isElderly">
         <el-card class="stat-card critical">
           <div class="stat-content">
             <div class="stat-number">{{ statistics.criticalCount || 0 }}</div>
@@ -41,7 +41,7 @@
     <el-card class="filter-card">
       <div class="filter-section">
         <el-form :model="filterForm" inline>
-          <el-form-item label="预警状态">
+          <el-form-item label="预警状态" v-if="!isElderly">
             <el-select v-model="filterForm.status" placeholder="请选择状态" clearable>
               <el-option label="全部" value=""></el-option>
               <el-option label="活跃" value="ACTIVE"></el-option>
@@ -82,7 +82,7 @@
           <el-form-item>
             <el-button type="primary" @click="searchAlerts">查询</el-button>
             <el-button @click="resetFilter">重置</el-button>
-            <el-button type="success" @click="showRuleDialog = true">预警规则管理</el-button>
+            <el-button v-if="!isElderly" type="success" @click="showRuleDialog = true">预警规则管理</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -336,12 +336,14 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 import {
   getAllAlerts,
   getAlertsByStatus,
   getAlertsByLevel,
   getAlertsByType,
   getAlertsByTimeRange,
+  getAlertsByElderlyId,
   resolveAlert,
   ignoreAlert,
   getActiveAlertCount,
@@ -353,6 +355,11 @@ import {
   toggleRuleStatus,
   initializeDefaultRules
 } from '@/api/healthAlert'
+
+// 用户状态
+const userStore = useUserStore()
+const isElderly = computed(() => userStore.isElderly)
+const currentUserId = computed(() => userStore.userId)
 
 // 响应式数据
 const loading = ref(false)
@@ -440,14 +447,24 @@ onMounted(() => {
 const loadAlerts = async () => {
   loading.value = true
   try {
-    const response = await getAllAlerts()
+    let response
+    if (isElderly.value) {
+      // 老人用户只能查看自己的预警
+      response = await getAlertsByElderlyId(currentUserId.value)
+    } else {
+      // 管理员和医生可以查看所有预警
+      response = await getAllAlerts()
+    }
+    
     if (response.code === 200) {
       alertList.value = response.data || []
       total.value = alertList.value.length
+    } else {
+      ElMessage.error('加载预警记录失败：' + response.msg)
     }
   } catch (error) {
     console.error('加载预警记录失败:', error)
-    ElMessage.error('加载预警记录失败')
+    ElMessage.error('加载预警记录失败：' + error.message)
   } finally {
     loading.value = false
   }
@@ -494,16 +511,30 @@ const searchAlerts = async () => {
   loading.value = true
   try {
     let response
-    if (filterForm.status) {
-      response = await getAlertsByStatus(filterForm.status)
-    } else if (filterForm.level) {
-      response = await getAlertsByLevel(filterForm.level)
-    } else if (filterForm.type) {
-      response = await getAlertsByType(filterForm.type)
-    } else if (filterForm.timeRange && filterForm.timeRange.length === 2) {
-      response = await getAlertsByTimeRange(filterForm.timeRange[0], filterForm.timeRange[1])
+    const params = {
+      status: filterForm.status,
+      level: filterForm.level,
+      type: filterForm.type,
+      startTime: filterForm.timeRange ? filterForm.timeRange[0] : null,
+      endTime: filterForm.timeRange ? filterForm.timeRange[1] : null
+    }
+
+    if (isElderly.value) {
+      // 老人用户只能查看自己的预警
+      response = await getAlertsByElderlyId(currentUserId.value, params)
     } else {
-      response = await getAllAlerts()
+      // 管理员和医生可以根据条件查看预警
+      if (filterForm.status) {
+        response = await getAlertsByStatus(filterForm.status)
+      } else if (filterForm.level) {
+        response = await getAlertsByLevel(filterForm.level)
+      } else if (filterForm.type) {
+        response = await getAlertsByType(filterForm.type)
+      } else if (filterForm.timeRange && filterForm.timeRange.length === 2) {
+        response = await getAlertsByTimeRange(filterForm.timeRange[0], filterForm.timeRange[1])
+      } else {
+        response = await getAllAlerts()
+      }
     }
     
     if (response.code === 200) {

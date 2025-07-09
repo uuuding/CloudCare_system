@@ -23,7 +23,7 @@ const routes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/elderly-dashboard',
     children: [
       {
         path: 'dashboard',
@@ -33,8 +33,7 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/elderly-dashboard',
+  {    path: '/elderly-dashboard',
     component: Layout,
     redirect: '/elderly-dashboard/index',
     children: [
@@ -43,6 +42,18 @@ const routes = [
         name: 'ElderlyDashboard',
         component: () => import('@/views/dashboard/elderly-dashboard.vue'),
         meta: { title: '老人首页', icon: 'HomeFilled', roles: ['ROLE_ELDERLY'] }
+      }
+    ]
+  },
+  {
+    path: '/elderly-assessment',
+    name: 'ElderlyHealthAssessment',
+    component: Layout,
+    meta: { title: '我的健康评估', icon: 'TrendCharts', roles: ['ROLE_ELDERLY'] },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/dashboard/elderly-assessment.vue')
       }
     ]
   },
@@ -70,7 +81,7 @@ const routes = [
     path: '/health',
     component: Layout,
     redirect: '/health/alert',
-    meta: { title: '健康管理模块', icon: 'MagicStick' },
+    meta: { title: '健康管理模块', icon: 'MagicStick', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] },
     children: [
       {
         path: 'alert',
@@ -85,7 +96,7 @@ const routes = [
         meta: { title: '健康评估', icon: 'TrendCharts', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       },
       {
-                path: 'profile-analysis/:id',
+        path: 'profile-analysis/:id',
         name: 'ElderlyProfileAnalysis',
         component: () => import('@/views/health/profile-analysis/index.vue'),
         meta: { title: '老人画像分析', icon: 'DataAnalysis', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] },
@@ -413,7 +424,15 @@ router.beforeEach(async (to, from, next) => {
  */
 function hasPermission(roles, route) {
   if (route.meta && route.meta.roles) {
-    return roles.some(role => route.meta.roles.includes(role))
+    // 检查用户是否具有访问该路由所需的任一角色
+    const hasRole = roles.some(role => route.meta.roles.includes(role))
+    console.log('Route check:', {
+      path: route.path,
+      roles: route.meta.roles,
+      userRoles: roles,
+      hasPermission: hasRole
+    })
+    return hasRole
   } else {
     // 如果路由没有设置roles字段，则视为所有人都可以访问
     return true

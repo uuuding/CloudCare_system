@@ -75,6 +75,10 @@ export const useUserStore = defineStore('user', {
         } else if (userType === 3) {
           this.roles = ['ROLE_ELDERLY']
         }
+        console.log('User roles set:', {
+          userType,
+          roles: this.roles
+        })
 
         return Promise.resolve(data)
       } catch (error) {

@@ -2,12 +2,10 @@
   <div class="elderly-dashboard">
     <!-- 顶部统计信息 -->
     <div class="statistics">
-      <div class="stat-card">
-        <h3>地域分布</h3>
+      <div class="stat-card" v-if="!isElderly">
         <div id="locationMap" style="width: 100%; height: 300px;"></div>
       </div>
-      <div class="stat-card">
-        <h3>体检记录统计</h3>
+      <div class="stat-card" :class="{ 'full-width': isElderly }">
         <div id="observationStats" style="width: 100%; height: 300px;"></div>
       </div>
     </div>
@@ -17,14 +15,16 @@
       <div class="table-container">
         <div class="search-section">
           <div class="search-row">
-            <el-input v-model="searchTerm" placeholder="搜索老人ID、姓名或地点" style="width: 250px;" clearable @keyup.enter="filterObservations" />
-            <el-button type="primary" @click="filterObservations">搜索</el-button>
-            <el-button @click="resetSearch">重置</el-button>
-            <el-button type="success" @click="openImportDialog">添加新记录</el-button>
-            <el-button type="warning" @click="showBindDialog">
-              <el-icon><Link /></el-icon>
-              设备绑定
-            </el-button>
+            <template v-if="!isElderly">
+              <el-input v-model="searchTerm" placeholder="搜索老人ID、姓名或地点" style="width: 250px;" clearable @keyup.enter="filterObservations" />
+              <el-button type="primary" @click="filterObservations">搜索</el-button>
+              <el-button @click="resetSearch">重置</el-button>
+              <el-button type="success" @click="openImportDialog">添加新记录</el-button>
+              <el-button type="warning" @click="showBindDialog">
+                <el-icon><Link /></el-icon>
+                设备绑定
+              </el-button>
+            </template>
           </div>
         </div>
 
@@ -114,7 +114,7 @@
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="scope">
             <el-button @click="viewDetails(scope.row)" type="primary" size="small" style="margin-right: 8px;">查看详情</el-button>
-            <el-button @click="deleteRecord(scope.row.id)" type="danger" size="small">删除</el-button>
+            <el-button v-if="!isElderly" @click="deleteRecord(scope.row.id)" type="danger" size="small">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -269,16 +269,21 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 import * as echarts from 'echarts';
 import {
   deleteObservation,
   getAllObservations,
+  getObservationsByElderlyId,
   addObservation
 } from '@/api/elderlyObservations';
 import { getAllElderlyProfiles, getChronicDiseasesByElderlyId } from '@/api/elderlyProfile';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();
+const userStore = useUserStore();
+const isElderly = userStore.isElderly;
+const currentUserId = userStore.userId;
 
 const searchTerm = ref('');
 const observations = ref([]);
@@ -367,12 +372,29 @@ const bindRules = ref({
 });
 
 const fetchObservations = async () => {
-  const response = await getAllObservations();
-  observations.value = response.data;
-  filteredObservations.value = observations.value;
-  console.log(filteredObservations);
-  // 重新渲染健康状态统计图表
-  renderObservationStats();
+  try {
+    let response;
+    if (isElderly) {
+      // 老人用户只能查看自己的记录
+      response = await getObservationsByElderlyId(currentUserId);
+    } else {
+      // 管理员和医生可以查看所有记录
+      response = await getAllObservations();
+    }
+    
+    if (response.code === 200) {
+      observations.value = response.data;
+      filteredObservations.value = observations.value;
+      console.log(filteredObservations);
+      // 重新渲染健康状态统计图表
+      renderObservationStats();
+    } else {
+      ElMessage.error('获取体检记录失败：' + response.msg);
+    }
+  } catch (error) {
+    console.error('获取体检记录失败：', error);
+    ElMessage.error('获取体检记录失败：' + error.message);
+  }
 };
 
 const filterObservations = () => {
@@ -405,12 +427,16 @@ const loadElderlyList = async () => {
 
 onMounted(() => {
   fetchObservations();
-  loadElderlyList();
-  renderLocationMap();
+  if (!isElderly) {
+    loadElderlyList();
+    renderLocationMap();
+  }
   renderObservationStats();
 });
 
 const renderLocationMap = async () => {
+  if (isElderly) return;
+  
   const response = await getAllObservations();
   const observations = response.data;
 
@@ -457,7 +483,13 @@ const renderLocationMap = async () => {
 };
 
 const renderObservationStats = () => {
-  const myChart = echarts.init(document.getElementById('observationStats'));
+  const chartContainer = document.getElementById('observationStats');
+  if (!chartContainer) return;
+  
+  const myChart = echarts.init(chartContainer);
+  
+  // 设置图表标题
+  const title = isElderly ? '我的健康状态统计' : '全部老人健康状态统计';
   
   // 统计健康状态分布
   const healthStats = {
@@ -480,23 +512,30 @@ const renderObservationStats = () => {
   
   const option = {
     title: {
-      text: '健康状态分布',
-      left: 'center'
+      text: title,
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333'
+      }
     },
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     legend: {
-      orient: 'vertical',
-      left: 'left',
+      orient: 'horizontal',
+      bottom: 'bottom',
       data: ['健康', '注意', '异常']
     },
     series: [
       {
         name: '健康状态',
         type: 'pie',
-        radius: '50%',
+        radius: ['40%', '70%'],
+        center: ['50%', '50%'],
+        roseType: 'radius',
         data: [
           { value: healthStats.healthy, name: '健康', itemStyle: { color: '#67c23a' } },
           { value: healthStats.attention, name: '注意', itemStyle: { color: '#e6a23c' } },
@@ -523,6 +562,12 @@ const renderObservationStats = () => {
 
 const viewDetails = async (row) => {
   try {
+    // 检查权限：老人用户只能查看自己的记录
+    if (isElderly && row.elderlyId !== currentUserId) {
+      ElMessage.error('您只能查看自己的健康记录详情')
+      return
+    }
+
     // 获取老人档案信息
     const elderlyProfileResponse = await getAllElderlyProfiles()
     const elderlyProfile = elderlyProfileResponse.data?.find(profile => profile.id === row.elderlyId)
@@ -799,74 +844,76 @@ const bindDevice = async () => {
 </script>
 
 <style scoped>
-.el-table {
-  width: 100%;
-  margin-top: 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  font-size: 14px;
+.elderly-dashboard {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
-.el-table th {
-  background-color: #f5f7fa;
-  color: #606266;
-  font-weight: bold;
-  font-size: 13px;
+.statistics {
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-.el-table tr:nth-child(odd) {
-  background-color: #f9f9f9;
+.stat-card {
+  flex: 1;
+  padding: 24px;
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
-.el-table td {
-  padding: 8px 0;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 
-.text-muted {
-  color: #c0c4cc;
-  font-style: italic;
+.stat-card.full-width {
+  flex: 1;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 /* 健康状态标签样式 */
 .health-status-tag {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 500;
+  font-size: 16px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
   display: inline-block;
-  min-width: 40px;
+  min-width: 80px;
   text-align: center;
+  margin-top: 6px;
 }
 
 .status-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: #e3f3e6;
+  color: #2c7a34;
+  border: none;
 }
 
 .status-warning {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
+  background-color: #fff6e5;
+  color: #b45309;
+  border: none;
 }
 
 .status-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
 }
 
 .status-info {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
-}
-
-/* BMI数值样式 */
-.bmi-value {
-  font-weight: 600;
-  font-size: 14px;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: none;
 }
 
 /* 健康指标列样式 */
@@ -874,202 +921,186 @@ const bindDevice = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
+  padding: 8px 0;
 }
 
 .indicator-value {
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.indicator-status {
-  font-size: 11px;
-}
-
-.el-table .el-table__cell {
-  border-bottom: 1px solid #ebeef5;
-}
-
-.el-table--border .el-table__cell {
-  border-right: 1px solid #ebeef5;
-}
-
-.el-table__header th {
-  background-color: #fafafa;
-  color: #303133;
   font-weight: 600;
+  font-size: 18px;
+  color: #1f2937;
 }
 
-.el-table tr:nth-child(even) {
-  background-color: #fff;
+.text-muted {
+  color: #6b7280;
+  font-size: 16px;
 }
 
-.el-table td {
-  color: #606266;
-}
-
-.el-button {
-  margin: 5px;
-}
-
-.el-input {
-  margin-bottom: 20px;
-}
-
-.el-table-column {
-  padding: 10px;
-}
-
-.el-table-column .el-button {
-  margin-right: 10px;
-}
-
-.el-table-column:last-child .el-button {
-  margin-right: 0;
-}
-
-/* 表格容器样式 - 居中显示 */
+/* 表格样式优化 */
 .table-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  padding: 24px;
+  border-radius: 16px;
   background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.el-table {
+  --el-table-border-color: #e5e7eb;
+  --el-table-header-bg-color: #f3f4f6;
+  --el-table-row-hover-bg-color: #f9fafb;
+  border-radius: 12px;
   overflow: hidden;
 }
 
-/* 搜索区域分行布局 */
+.el-table th {
+  background-color: var(--el-table-header-bg-color) !important;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  padding: 20px 16px;
+  height: 60px;
+}
+
+.el-table td {
+  font-size: 16px;
+  color: #4b5563;
+  padding: 20px 16px;
+  height: 60px;
+}
+
+/* 搜索区域样式 */
 .search-section {
-  padding: 20px 0;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 24px;
 }
 
 .search-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.action-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-/* 搜索区域按钮统一样式 */
-.search-section .el-button {
-  height: 36px;
-  padding: 9px 18px;
-  font-size: 14px;
-  border-radius: 6px;
-  margin: 0;
-  font-weight: 500;
-}
-
-.search-section .el-input {
-  height: 36px;
-}
-
-.search-section .el-input .el-input__inner {
-  height: 36px;
-  line-height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-/* 按钮颜色优化 */
-.search-section .el-button--primary {
-  background-color: #409eff;
-  border-color: #409eff;
-}
-
-.search-section .el-button--success {
-  background-color: #67c23a;
-  border-color: #67c23a;
-}
-
-/* 统计卡片样式 - 与表格保持一致的居中布局 */
-.statistics {
-  max-width: 1400px;
-  margin: 0 auto 40px auto;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.stat-card {
-  flex: 1;
-  padding: 20px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.stat-card h3 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* 表格样式优化 */
-.el-table {
-  width: 100%;
-  margin-bottom: 20px;
-  border-radius: 0 0 8px 8px;
-}
-
-.table-container .el-table {
-  box-shadow: none;
-  border: none;
-}
-
-.table-container .el-table th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.observations {
-  margin-bottom: 40px;
-}
-
+/* 按钮样式优化 */
 .el-button {
-  margin-right: 10px;
+  height: 44px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-/* 添加记录对话框样式 */
-  .el-form {
-    padding: 10px 0;
+.el-button--primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.el-button--primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.el-button--success {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.el-button--success:hover {
+  background-color: #047857;
+  border-color: #047857;
+  transform: translateY(-2px);
+}
+
+.el-button--danger {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.el-button--danger:hover {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
+  transform: translateY(-2px);
+}
+
+/* 表单控件样式 */
+.el-input, .el-select, .el-date-picker {
+  --el-input-height: 44px;
+  font-size: 16px;
+}
+
+.el-input__inner {
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 16px !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+}
+
+.el-input__wrapper {
+  border-radius: 8px !important;
+}
+
+/* 对话框样式 */
+.el-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  padding: 24px;
+  background-color: #f8f9fa;
+  margin-right: 0;
+}
+
+.el-dialog__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.el-dialog__body {
+  padding: 24px;
+}
+
+.el-form-item__label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  padding-bottom: 8px;
+}
+
+.dialog-footer {
+  padding: 20px 24px;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* 适配移动设备 */
+@media screen and (max-width: 768px) {
+  .statistics {
+    flex-direction: column;
   }
-  
-  .el-form-item {
-    margin-bottom: 20px;
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
   }
-  
-  .el-input, .el-select, .el-date-picker, .el-input-number {
-    border-radius: 6px;
+
+  .el-button {
+    width: 100%;
   }
-  
-  .el-textarea .el-textarea__inner {
-    border-radius: 6px;
+
+  .el-input {
+    width: 100% !important;
   }
-  
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-  
-  .dialog-footer .el-button {
-    border-radius: 6px;
-    padding: 8px 16px;
-  }
+}
 </style>
 
 
