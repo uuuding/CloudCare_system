@@ -168,7 +168,7 @@ const routes = [
         path: 'family-interaction',
         name: 'FamilyInteraction',
         component: () => import('@/views/elderly-service/family-interaction/index.vue'),
-        meta: { title: '家属互动', icon: 'ChatDotRound', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
+        meta: { title: '家属互动', icon: 'ChatDotRound', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR'] }
       }
     ]
   },
@@ -286,6 +286,19 @@ const routes = [
         name: 'SystemLog',
         component: () => import('@/views/system-log/index.vue'),
         meta: { title: '系统日志', icon: 'Document', roles: ['ROLE_ADMIN'] }
+      }
+    ]
+  },
+  {
+    path: '/elder-family',
+    component: Layout,
+    redirect:'/elder-family/index',
+    children:[
+      {
+        path:'index',
+        name:'Elder-family',
+        component: () => import('@/views/elder-family/index.vue'),
+        meta: { title: '家属互动', requiresAuth: ['ROLE_ELDERLY'] }
       }
     ]
   },
