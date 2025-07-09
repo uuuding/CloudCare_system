@@ -60,15 +60,15 @@
       </el-col>
       
       <el-col :span="8">
-        <el-card class="health-card blood-sugar">
+        <el-card class="health-card body-temperature">
           <div class="health-content">
             <div class="health-icon">
               <el-icon :size="40"><DataAnalysis /></el-icon>
             </div>
             <div class="health-info">
-              <h3>{{ healthData.bloodSugar || '--' }}</h3>
-              <p>血糖 (mmol/L)</p>
-              <span :class="['status', getHealthStatus(healthData.bloodSugar, 'bloodSugar')]">{{ getHealthStatusText(healthData.bloodSugar, 'bloodSugar') }}</span>
+              <h3>{{ healthData.bodyTemperature || '--' }}</h3>
+              <p>体温 (°C)</p>
+              <span :class="['status', getHealthStatus(healthData.bodyTemperature, 'bodyTemperature')]">{{ getHealthStatusText(healthData.bodyTemperature, 'bodyTemperature') }}</span>
             </div>
           </div>
         </el-card>
@@ -239,7 +239,7 @@ const weather = reactive({
 const healthData = reactive({
   heartRate: null,
   bloodPressure: null,
-  bloodSugar: null
+  bodyTemperature: null
 })
 
 // 今日提醒
@@ -308,14 +308,13 @@ const getHealthStatus = (value, type) => {
       if (value >= 60 && value <= 100) return 'normal'
       return 'abnormal'
     case 'bloodPressure':
-      if (typeof value === 'string' && value.includes('/')) {
-        const [systolic] = value.split('/').map(Number)
-        if (systolic >= 90 && systolic <= 140) return 'normal'
+      if (typeof value === 'number') {
+        if (value >= 90 && value <= 140) return 'normal'
         return 'abnormal'
       }
       return 'unknown'
-    case 'bloodSugar':
-      if (value >= 3.9 && value <= 6.1) return 'normal'
+    case 'bodyTemperature':
+      if (value >= 36.0 && value <= 37.5) return 'normal'
       return 'abnormal'
     default:
       return 'unknown'
@@ -354,11 +353,8 @@ const loadHealthData = async () => {
     if (res.data && res.data.length > 0) {
       const latestData = res.data[0] // 获取最新记录
       healthData.heartRate = latestData.heartRate
-      if (latestData.systolicBp) {
-        const diastolic = latestData.diastolicBp || '--'
-        healthData.bloodPressure = `${latestData.systolicBp}/${diastolic}`
-      }
-      healthData.bloodSugar = latestData.bloodSugar
+      healthData.bloodPressure = latestData.systolicBp
+      healthData.bodyTemperature = latestData.bodyTemperature
     }
   } catch (error) {
     console.error('加载健康数据失败:', error)
@@ -471,7 +467,7 @@ const loadHealthData = async () => {
   background: linear-gradient(135deg, #4ecdc4, #44a08d);
 }
 
-.blood-sugar .health-icon {
+.body-temperature .health-icon {
   background: linear-gradient(135deg, #45b7d1, #96c93d);
 }
 

@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-container">
     <!-- 欢迎信息组件 -->
-    <welcome-message />
     
     <!-- 功能快捷入口 -->
     <div class="quick-access-grid">
