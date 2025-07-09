@@ -1,8 +1,8 @@
 <template>
-  <div class="medical-record-container">
+  <div class="medical-record-container" :class="{ 'elderly-mode': isElderly }">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>电子病历共享</h1>
+      <h1>电子病历</h1>
       <p>查看和管理老人的电子病历信息</p>
     </div>
 
@@ -239,6 +239,10 @@ import { Search, Refresh, User } from '@element-plus/icons-vue'
 import { getAllElderlyProfiles, getChronicDiseasesByElderlyId } from '@/api/elderlyProfile'
 import { getObservationsByElderlyId, getObservationsByTimeRange } from '@/api/elderlyObservations'
 import { getAlertsByElderlyId } from '@/api/healthAlert'
+import { useUserStore } from '@/stores/user'
+
+// 用户store
+const userStore = useUserStore()
 
 // 响应式数据
 const elderlyList = ref([])
@@ -248,6 +252,9 @@ const searchForm = reactive({
   name: '',
   ageRange: ''
 })
+
+// 是否为老人用户
+const isElderly = computed(() => userStore.isElderly)
 
 // 体检记录相关
 const allObservations = ref([])
@@ -309,7 +316,18 @@ onMounted(() => {
 const loadElderlyList = async () => {
   try {
     const response = await getAllElderlyProfiles()
-    elderlyList.value = response.data || []
+    if (isElderly.value) {
+      // 老人用户只显示自己的信息
+      elderlyList.value = response.data?.filter(elderly => elderly.name === userStore.realName) || []
+      if (elderlyList.value.length > 0) {
+        // 自动选择自己
+        selectElderly(elderlyList.value[0])
+      } else {
+        ElMessage.warning('未找到与您用户名匹配的老人档案，请联系管理员')
+      }
+    } else {
+      elderlyList.value = response.data || []
+    }
   } catch (error) {
     console.error('加载老人列表失败:', error)
     ElMessage.error('加载老人列表失败')
@@ -466,6 +484,35 @@ const getAlertLevelText = (level) => {
 <style scoped>
 .medical-record-container {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 40px);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.medical-record-container.elderly-mode {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+}
+
+.medical-record-container.elderly-mode .page-header h1 {
+  font-size: 36px;
+  background: linear-gradient(45deg, #2c3e50, #3498db);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleFade 1s ease-in-out;
+}
+
+@keyframes titleFade {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-header {
@@ -474,22 +521,32 @@ const getAlertLevelText = (level) => {
 
 .page-header h1 {
   margin: 0 0 10px 0;
-  color: #303133;
-  font-size: 28px;
-  font-weight: 600;
+  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .page-header p {
   margin: 0;
-  color: #606266;
-  font-size: 14px;
+  color: #5e6d82;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
 .search-section {
   margin-bottom: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.search-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .elderly-list {
@@ -500,50 +557,94 @@ const getAlertLevelText = (level) => {
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 20px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #f0f2f5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .elderly-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .elderly-card.active {
   border-color: #409eff;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  animation: cardPulse 2s infinite;
+}
+
+@keyframes cardPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(64, 158, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(64, 158, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(64, 158, 255, 0);
+  }
 }
 
 .elderly-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
+  padding: 16px;
+}
+
+.elderly-avatar {
+  flex-shrink: 0;
+}
+
+.elderly-details {
+  flex-grow: 1;
 }
 
 .elderly-details h3 {
-  margin: 0 0 8px 0;
-  color: #303133;
-  font-size: 16px;
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  font-size: 18px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .elderly-details p {
-  margin: 4px 0;
-  color: #606266;
+  margin: 8px 0;
+  color: #5e6d82;
   font-size: 14px;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .elderly-details .label {
-  color: #909399;
+  color: #8492a6;
   font-weight: 500;
+  min-width: 70px;
 }
 
 .medical-details {
   margin-top: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  background: linear-gradient(145deg, #f8fafc, #ffffff);
+  border-radius: 12px 12px 0 0;
+}
+
+.card-header span {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .basic-info {
@@ -558,14 +659,19 @@ const getAlertLevelText = (level) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  background: linear-gradient(145deg, #f8fafc, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .section-header h3 {
   margin: 0;
-  color: #303133;
-  font-size: 18px;
+  color: #2c3e50;
+  font-size: 20px;
   font-weight: 600;
+  letter-spacing: -0.3px;
 }
 
 .pagination {
@@ -574,19 +680,74 @@ const getAlertLevelText = (level) => {
 }
 
 .chronic-diseases {
-  padding: 20px 0;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  min-height: 200px;
 }
 
 .disease-tag {
-  margin: 5px 10px 5px 0;
+  margin: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.disease-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .health-alerts {
-  padding: 20px 0;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.health-alerts:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.health-alerts .el-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.health-alerts .el-table th {
+  background: linear-gradient(145deg, #f8fafc, #ffffff);
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.health-alerts .el-table td {
+  transition: all 0.3s ease;
+}
+
+.health-alerts .el-table tr:hover td {
+  background-color: #f5f7fa;
 }
 
 .empty-state {
   margin-top: 50px;
   text-align: center;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state :deep(.el-empty__description) {
+  font-size: 16px;
+  color: #5e6d82;
+  margin-top: 20px;
+}
+
+.empty-state :deep(.el-empty__image) {
+  width: 160px;
+  height: 160px;
 }
 </style>

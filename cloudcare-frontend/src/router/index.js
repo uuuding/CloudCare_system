@@ -136,7 +136,7 @@ const routes = [
         path: 'medical-record',
         name: 'MedicalRecord',
         component: () => import('@/views/medical/medical-record/index.vue'),
-        meta: { title: '电子病历共享', icon: 'Document', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
+        meta: { title: '电子病历', icon: 'Document', roles: ['ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ELDERLY'] }
       }
     ]
   },
