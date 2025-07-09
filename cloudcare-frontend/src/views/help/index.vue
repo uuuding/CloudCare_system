@@ -346,7 +346,7 @@ const activeNames2 = ref([])
 // 打开文档链接
 const openDoc = (type) => {
   const docs = {
-    api: '/docs/api-docs.md',
+    api: 'http://localhost:8000/api-docs.html',
     video: '#',
     gps: '/docs/GPS_FENCE_SYSTEM_README.md',
     sms: '/docs/SMS_MODULE_DOCUMENTATION.md',
