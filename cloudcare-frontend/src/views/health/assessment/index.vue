@@ -509,33 +509,26 @@ const renderObservationStats = () => {
       healthStats.abnormal++;
     }
   });
-  
+
   const option = {
     title: {
-      text: title,
-      left: 'center',
-      textStyle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333'
-      }
+      text: '健康状态分布',
+      left: 'center'
     },
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     legend: {
-      orient: 'horizontal',
-      bottom: 'bottom',
+      orient: 'vertical',
+      left: 'left',
       data: ['健康', '注意', '异常']
     },
     series: [
       {
         name: '健康状态',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '50%'],
-        roseType: 'radius',
+        radius: '50%',
         data: [
           { value: healthStats.healthy, name: '健康', itemStyle: { color: '#67c23a' } },
           { value: healthStats.attention, name: '注意', itemStyle: { color: '#e6a23c' } },
@@ -580,9 +573,10 @@ const viewDetails = async (row) => {
     // 获取老人疾病信息
     const chronicDiseasesResponse = await getChronicDiseasesByElderlyId(row.elderlyId)
     const chronicDiseases = chronicDiseasesResponse.data || []
+    console.log(99999999999999)
     
     // 跳转到老人画像分析页面，传递数据
-    router.push({
+    await router.push({
       name: 'ElderlyProfileAnalysis',
       params: {
         id: row.elderlyId
@@ -844,76 +838,74 @@ const bindDevice = async () => {
 </script>
 
 <style scoped>
-.elderly-dashboard {
-  padding: 24px;
-  background-color: #f8f9fa;
-  min-height: 100vh;
+.el-table {
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
 }
 
-.statistics {
-  max-width: 1400px;
-  margin: 0 auto 40px auto;
-  padding: 0 24px;
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+.el-table th {
+  background-color: #f5f7fa;
+  color: #606266;
+  font-weight: bold;
+  font-size: 13px;
 }
 
-.stat-card {
-  flex: 1;
-  padding: 24px;
-  border: none;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+.el-table tr:nth-child(odd) {
+  background-color: #f9f9f9;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+.el-table td {
+  padding: 8px 0;
 }
 
-.stat-card.full-width {
-  flex: 1;
-  max-width: 1000px;
-  margin: 0 auto;
+.text-muted {
+  color: #c0c4cc;
+  font-style: italic;
 }
 
 /* 健康状态标签样式 */
 .health-status-tag {
-  font-size: 16px;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
   display: inline-block;
-  min-width: 80px;
+  min-width: 40px;
   text-align: center;
-  margin-top: 6px;
 }
 
 .status-success {
-  background-color: #e3f3e6;
-  color: #2c7a34;
-  border: none;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
 .status-warning {
-  background-color: #fff6e5;
-  color: #b45309;
-  border: none;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
 }
 
 .status-danger {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: none;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
 .status-info {
-  background-color: #e0f2fe;
-  color: #0369a1;
-  border: none;
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* BMI数值样式 */
+.bmi-value {
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* 健康指标列样式 */
@@ -921,185 +913,201 @@ const bindDevice = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 2px;
 }
 
 .indicator-value {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.indicator-status {
+  font-size: 11px;
+}
+
+.el-table .el-table__cell {
+  border-bottom: 1px solid #ebeef5;
+}
+
+.el-table--border .el-table__cell {
+  border-right: 1px solid #ebeef5;
+}
+
+.el-table__header th {
+  background-color: #fafafa;
+  color: #303133;
   font-weight: 600;
-  font-size: 18px;
-  color: #1f2937;
 }
 
-.text-muted {
-  color: #6b7280;
-  font-size: 16px;
-}
-
-/* 表格样式优化 */
-.table-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.el-table {
-  --el-table-border-color: #e5e7eb;
-  --el-table-header-bg-color: #f3f4f6;
-  --el-table-row-hover-bg-color: #f9fafb;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background-color: var(--el-table-header-bg-color) !important;
-  font-size: 16px;
-  font-weight: 600;
-  color: #374151;
-  padding: 20px 16px;
-  height: 60px;
+.el-table tr:nth-child(even) {
+  background-color: #fff;
 }
 
 .el-table td {
-  font-size: 16px;
-  color: #4b5563;
-  padding: 20px 16px;
-  height: 60px;
+  color: #606266;
 }
 
-/* 搜索区域样式 */
+.el-button {
+  margin: 5px;
+}
+
+.el-input {
+  margin-bottom: 20px;
+}
+
+.el-table-column {
+  padding: 10px;
+}
+
+.el-table-column .el-button {
+  margin-right: 10px;
+}
+
+.el-table-column:last-child .el-button {
+  margin-right: 0;
+}
+
+/* 表格容器样式 - 居中显示 */
+.table-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* 搜索区域分行布局 */
 .search-section {
-  padding: 24px 0;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 20px;
 }
 
 .search-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 15px;
 }
 
-/* 按钮样式优化 */
-.el-button {
-  height: 44px;
-  padding: 0 24px;
-  font-size: 16px;
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* 搜索区域按钮统一样式 */
+.search-section .el-button {
+  height: 36px;
+  padding: 9px 18px;
+  font-size: 14px;
+  border-radius: 6px;
+  margin: 0;
   font-weight: 500;
+}
+
+.search-section .el-input {
+  height: 36px;
+}
+
+.search-section .el-input .el-input__inner {
+  height: 36px;
+  line-height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 按钮颜色优化 */
+.search-section .el-button--primary {
+  background-color: #409eff;
+  border-color: #409eff;
+}
+
+.search-section .el-button--success {
+  background-color: #67c23a;
+  border-color: #67c23a;
+}
+
+/* 统计卡片样式 - 与表格保持一致的居中布局 */
+.statistics {
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.stat-card {
+  flex: 1;
+  padding: 20px;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  background: #fff;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.el-button--primary {
-  background-color: #2563eb;
-  border-color: #2563eb;
-}
-
-.el-button--primary:hover {
-  background-color: #1d4ed8;
-  border-color: #1d4ed8;
-  transform: translateY(-2px);
-}
-
-.el-button--success {
-  background-color: #059669;
-  border-color: #059669;
-}
-
-.el-button--success:hover {
-  background-color: #047857;
-  border-color: #047857;
-  transform: translateY(-2px);
-}
-
-.el-button--danger {
-  background-color: #dc2626;
-  border-color: #dc2626;
-}
-
-.el-button--danger:hover {
-  background-color: #b91c1c;
-  border-color: #b91c1c;
-  transform: translateY(-2px);
-}
-
-/* 表单控件样式 */
-.el-input, .el-select, .el-date-picker {
-  --el-input-height: 44px;
+.stat-card h3 {
+  margin: 0 0 15px 0;
+  color: #303133;
   font-size: 16px;
-}
-
-.el-input__inner {
-  height: 44px !important;
-  line-height: 44px !important;
-  padding: 0 16px !important;
-  border-radius: 8px !important;
-  font-size: 16px !important;
-}
-
-.el-input__wrapper {
-  border-radius: 8px !important;
-}
-
-/* 对话框样式 */
-.el-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.el-dialog__header {
-  padding: 24px;
-  background-color: #f8f9fa;
-  margin-right: 0;
-}
-
-.el-dialog__title {
-  font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
 }
 
-.el-dialog__body {
-  padding: 24px;
+/* 表格样式优化 */
+.el-table {
+  width: 100%;
+  margin-bottom: 20px;
+  border-radius: 0 0 8px 8px;
 }
 
-.el-form-item__label {
-  font-size: 16px;
-  font-weight: 500;
-  color: #374151;
-  padding-bottom: 8px;
+.table-container .el-table {
+  box-shadow: none;
+  border: none;
+}
+
+.table-container .el-table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.observations {
+  margin-bottom: 40px;
+}
+
+.el-button {
+  margin-right: 10px;
+}
+
+/* 添加记录对话框样式 */
+.el-form {
+  padding: 10px 0;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-input, .el-select, .el-date-picker, .el-input-number {
+  border-radius: 6px;
+}
+
+.el-textarea .el-textarea__inner {
+  border-radius: 6px;
 }
 
 .dialog-footer {
-  padding: 20px 24px;
-  background-color: #f8f9fa;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* 适配移动设备 */
-@media screen and (max-width: 768px) {
-  .statistics {
-    flex-direction: column;
-  }
-
-  .search-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .el-button {
-    width: 100%;
-  }
-
-  .el-input {
-    width: 100% !important;
-  }
+.dialog-footer .el-button {
+  border-radius: 6px;
+  padding: 8px 16px;
 }
 </style>
 

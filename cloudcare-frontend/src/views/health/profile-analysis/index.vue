@@ -177,21 +177,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { useUserStore } from '@/stores/user'
-import { predictNextState, getStateScores, getElderlyProfileById, getChronicDiseasesByElderlyId } from '@/api/health/hmm'
-
-// 获取用户状态
-const userStore = useUserStore()
-const isElderly = computed(() => userStore.isElderly)
-const currentUserId = computed(() => userStore.userId)
+import { predictNextState, getStateScores } from '@/api/hmm'
+import { getAllElderlyProfiles, getChronicDiseasesByElderlyId } from '@/api/elderlyProfile'
 
 const route = useRoute()
 const router = useRouter()
-
-// 用户状态
-const userStore = useUserStore()
-const isElderly = computed(() => userStore.isElderly)
-const currentUserId = computed(() => userStore.userId)
 
 // 响应式数据
 const observationData = ref(null)
@@ -213,50 +203,30 @@ onMounted(async () => {
 // 初始化数据
 const initializeData = async () => {
   try {
-    let elderlyId
-    
-    // 如果是老人用户，只能查看自己的画像
-    if (isElderly.value) {
-      elderlyId = currentUserId.value
-    } else {
-      // 从路由query参数获取老人ID
-      elderlyId = route.query.elderlyId
-      if (!elderlyId) {
-        ElMessage.warning('未指定老人ID，请重新选择')
-        return
-      }
+    // 从路由query参数获取数据
+    const queryData = route.query
+
+    if (queryData.observationData) {
+      observationData.value = JSON.parse(decodeURIComponent(queryData.observationData))
+    }
+    if (queryData.elderlyProfile) {
+      elderlyProfile.value = JSON.parse(decodeURIComponent(queryData.elderlyProfile))
+    }
+    if (queryData.chronicDiseases) {
+      chronicDiseases.value = JSON.parse(decodeURIComponent(queryData.chronicDiseases))
     }
 
-    // 获取老人画像数据
-    const profileResponse = await getElderlyProfileById(elderlyId)
-    if (profileResponse.code === 200) {
-      elderlyProfile.value = profileResponse.data
-      
-      // 获取老人的慢性病数据
-      const diseasesResponse = await getChronicDiseasesByElderlyId(elderlyId)
-      if (diseasesResponse.code === 200) {
-        chronicDiseases.value = diseasesResponse.data
-      }
-
-      // 从路由query参数获取观察数据
-      if (route.query.observationData) {
-        observationData.value = JSON.parse(decodeURIComponent(route.query.observationData))
-      }
-
-      // 如果没有从query获取到观察数据，显示警告
-      if (!observationData.value) {
-        ElMessage.warning('观察数据获取失败，请重新进入')
-        return
-      }
-
-      // 计算当前健康状态
-      currentState.value = calculateCurrentHealthState()
-    } else {
-      ElMessage.error('获取老人画像数据失败：' + profileResponse.msg)
+    // 如果没有从query获取到数据，显示警告
+    if (!observationData.value) {
+      ElMessage.warning('数据获取失败，请重新进入')
+      return
     }
+
+    // 计算当前健康状态
+    currentState.value = calculateCurrentHealthState()
   } catch (error) {
     console.error('初始化数据失败:', error)
-    ElMessage.error('数据初始化失败：' + error.message)
+    ElMessage.error('数据初始化失败')
   }
 }
 

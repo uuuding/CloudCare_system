@@ -382,7 +382,7 @@ const deviceStatus = ref([
   {
     id: 1,
     name: 'GPS定位手环',
-    description: '张老太太 - 北京朝阳区',
+    description: '张老太太 - 成都市郫都区',
     deviceDesc: '高精度GPS定位，支持室内外无缝切换，电池续航72小时',
     status: 'online',
     time: '2分钟前',
@@ -393,7 +393,7 @@ const deviceStatus = ref([
   {
     id: 2,
     name: 'GPS定位手环',
-    description: '李大爷 - 上海浦东新区',
+    description: '李大爷 - 重庆市璧山区',
     deviceDesc: '高精度GPS定位，支持室内外无缝切换，电池续航72小时',
     status: 'online',
     time: '5分钟前',
@@ -404,7 +404,7 @@ const deviceStatus = ref([
   {
     id: 3,
     name: 'GPS定位手环',
-    description: '王奶奶 - 广州天河区',
+    description: '王奶奶 - 林芝市鲁朗镇',
     deviceDesc: '高精度GPS定位，支持室内外无缝切换，电池续航72小时',
     status: 'online',
     time: '1小时前',
@@ -941,10 +941,11 @@ const fetchDeviceStats = async () => {
           
           // 使用真实设备绑定数据替换静态数据
           if (activeBindings.length > 0) {
+            const locations = ['成都市郫都区', '重庆市璧山区', '林芝市鲁朗镇', '深圳市南山区', '杭州市西湖区']
             deviceStatus.value = activeBindings.map((binding, index) => ({
               id: binding.id || index + 1,
               name: 'GPS定位手环', // 统一设备名称
-              description: `${binding.elderly_name || binding.elderlyName || '未知老人'} - 北京朝阳区`, // 使用老人姓名，地址保持不变
+              description: `${binding.elderly_name || binding.elderlyName || '未知老人'} - ${locations[index % locations.length]}`, // 使用老人姓名，并循环使用地址
               deviceDesc: '高精度GPS定位，支持室内外无缝切换，电池续航72小时', // GPS定位设备描述
               status: 'online', // 已绑定的设备都显示为在线
               time: '2024-01-15 14:30',
