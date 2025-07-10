@@ -309,7 +309,7 @@ const routes = [
         path:'index',
         name:'Elder-family',
         component: () => import('@/views/elder-family/index.vue'),
-        meta: { title: '家属互动', requiresAuth: ['ROLE_ELDERLY'] }
+        meta: { title: '家属互动', icon: 'ChatDotRound', roles: ['ROLE_ELDERLY'] }
       }
     ]
   },
