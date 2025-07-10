@@ -314,6 +314,14 @@ const getStatusTag = (status) => {
 const getInteractionList = async () => {
   try {
     loading.value = true
+    
+    // 确保用户已登录且有有效的userId
+    if (!userStore.userId) {
+      console.warn('用户ID为空，无法获取互动记录列表')
+      loading.value = false
+      return
+    }
+    
     const params = {
       ...searchForm,
       currentPage: pagination.currentPage,
@@ -340,11 +348,24 @@ const getInteractionList = async () => {
 // 获取统计数据
 const getStatistics = async () => {
   try {
+    // 确保用户已登录且有有效的userId
+    if (!userStore.userId) {
+      console.warn('用户ID为空，无法获取统计数据')
+      return
+    }
+    
     const params = {
       elderId: userStore.userId // 只获取当前老人的统计数据
     }
+    
     const response = await getInteractionStatistics(params)
-    Object.assign(statistics, response.data)
+    
+    // 映射后端返回的字段到前端显示的字段
+    const data = response.data
+    statistics.totalInteractions = data.total_count || 0
+    statistics.todayInteractions = data.today_count || 0
+    statistics.activeFamilies = data.active_families || 0
+    statistics.pendingReplies = data.pending_count || 0
   } catch (error) {
     console.error('获取统计数据失败:', error)
   }
@@ -388,7 +409,17 @@ const handleCurrentChange = (page) => {
 }
 
 // 页面初始化
-onMounted(() => {
+onMounted(async () => {
+  // 确保用户信息已加载
+  if (!userStore.userId) {
+    try {
+      await userStore.getInfo()
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+      return
+    }
+  }
+  
   getInteractionList()
   getStatistics()
 })

@@ -44,6 +44,7 @@
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="email" label="邮箱" width="180" />
+        <el-table-column prop="gender" label="性别" width="80" />
         <el-table-column prop="age" label="年龄" width="80" />
         <el-table-column prop="emergencyContact" label="紧急联系人" width="120" />
         <el-table-column prop="emergencyPhone" label="紧急联系电话" width="130" />
@@ -193,7 +194,7 @@ const form = reactive({
   realName: '',
   phone: '',
   email: '',
-  gender: '',
+  gender: '男',
   age: null,
   emergencyContact: '',
   emergencyPhone: '',
@@ -247,7 +248,12 @@ const fetchData = async () => {
     
     const response = await getUserPage(params)
     if (response.success) {
-      tableData.value = response.data.records || []
+      // 转换性别格式为中文显示
+      const records = (response.data.records || []).map(record => ({
+        ...record,
+        gender: record.gender === 1 || record.gender === '1' ? '男' : record.gender === 0 || record.gender === '0' ? '女' : record.gender
+      }))
+      tableData.value = records
       pagination.total = response.data.total || 0
     } else {
       ElMessage.error('获取数据失败')
@@ -385,11 +391,17 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitLoading.value = true
     
+    // 转换性别格式为后端期望的数字格式
+    const submitData = {
+      ...form,
+      gender: form.gender === '男' ? 1 : form.gender === '女' ? 0 : form.gender
+    }
+    
     let response
     if (isEdit.value) {
-      response = await updateUser(form)
+      response = await updateUser(submitData)
     } else {
-      response = await addUser(form)
+      response = await addUser(submitData)
     }
     
     if (response.success) {
@@ -420,7 +432,7 @@ const resetForm = () => {
     realName: '',
     phone: '',
     email: '',
-    gender: '',
+    gender: '男',
     age: null,
     emergencyContact: '',
     emergencyPhone: '',
