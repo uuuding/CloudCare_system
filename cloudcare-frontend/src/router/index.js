@@ -23,7 +23,7 @@ const routes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/elderly-dashboard',
+    redirect: '/dashboard',
     children: [
       {
         path: 'dashboard',

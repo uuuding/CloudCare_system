@@ -120,12 +120,7 @@
               </div>
               <span>设备管理</span>
             </div>
-            <div class="action-item" @click="navigateTo('/intervention-plan')">
-              <div class="action-icon intervention">
-                <el-icon :size="24"><DocumentAdd /></el-icon>
-              </div>
-              <span>干预方案</span>
-            </div>
+
             <div class="action-item" @click="navigateTo('/reports')">
               <div class="action-icon report">
                 <el-icon :size="24"><TrendCharts /></el-icon>

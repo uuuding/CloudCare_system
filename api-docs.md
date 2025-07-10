@@ -52,6 +52,44 @@
   - [7.4 获取围栏列表](#74-获取围栏列表)
   - [7.5 获取围栏详情](#75-获取围栏详情)
   - [7.6 获取老人的围栏列表](#76-获取老人的围栏列表)
+- [8. 短信服务管理](#8-短信服务管理)
+  - [8.1 发送普通短信](#81-发送普通短信)
+  - [8.2 批量发送短信](#82-批量发送短信)
+  - [8.3 发送模板短信](#83-发送模板短信)
+  - [8.4 批量发送模板短信](#84-批量发送模板短信)
+  - [8.5 查询账户余额](#85-查询账户余额)
+  - [8.6 获取短信发送记录](#86-获取短信发送记录)
+  - [8.7 获取短信发送统计](#87-获取短信发送统计)
+  - [8.8 获取短信模板列表](#88-获取短信模板列表)
+- [9. 医疗预约管理](#9-医疗预约管理)
+  - [9.1 分页查询医疗预约列表](#91-分页查询医疗预约列表)
+  - [9.2 根据ID查询医疗预约详情](#92-根据id查询医疗预约详情)
+  - [9.3 创建医疗预约](#93-创建医疗预约)
+  - [9.4 更新医疗预约](#94-更新医疗预约)
+  - [9.5 删除医疗预约](#95-删除医疗预约)
+  - [9.6 更新预约状态](#96-更新预约状态)
+- [10. 设备管理](#10-设备管理)
+    - [10.1 获取设备信息列表](#101-获取设备信息列表)
+    - [10.2 根据ID获取设备信息](#102-根据id获取设备信息)
+    - [10.3 创建设备信息](#103-创建设备信息)
+    - [10.4 更新设备信息](#104-更新设备信息)
+    - [10.5 删除设备信息](#105-删除设备信息)
+  - [11. 老人观察记录管理](#11-老人观察记录管理)
+    - [11.1 获取观察记录列表](#111-获取观察记录列表)
+    - [11.2 根据ID获取观察记录](#112-根据id获取观察记录)
+    - [11.3 创建观察记录](#113-创建观察记录)
+    - [11.4 更新观察记录](#114-更新观察记录)
+    - [11.5 删除观察记录](#115-删除观察记录)
+- [12. 机构管理](#12-机构管理)
+  - [12.1 分页查询机构信息列表](#121-分页查询机构信息列表)
+  - [12.2 根据ID查询机构信息](#122-根据id查询机构信息)
+  - [12.3 新增机构信息](#123-新增机构信息)
+  - [12.4 修改机构信息](#124-修改机构信息)
+  - [12.5 删除机构信息](#125-删除机构信息)
+  - [12.6 获取机构统计信息](#126-获取机构统计信息)
+- [13. 系统配置管理](#13-系统配置管理)
+    - [13.1 获取系统配置](#131-获取系统配置)
+    - [13.2 更新系统配置](#132-更新系统配置)
 
 ## 1. 接口规范
 
@@ -68,6 +106,736 @@
 所有接口返回统一的JSON格式：
 
 ```
+
+## 8. 医疗预约管理
+
+### 8.1 分页查询医疗预约列表
+
+- **接口URL**: `/api/medical/appointment/page`
+- **请求方式**: GET
+- **接口描述**: 分页查询医疗预约列表，支持多条件筛选
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 | 默认值 |
+| ----- | --- | ------- | ---- | ----- |
+| elderName | String | 否 | 老人姓名（模糊查询） | - |
+| doctorName | String | 否 | 医生姓名（模糊查询） | - |
+| appointmentType | Integer | 否 | 预约类型（1-体检 2-门诊 3-专科 4-急诊） | - |
+| status | Integer | 否 | 预约状态（1-待确认 2-已确认 3-已完成 4-已取消） | - |
+| startTime | String | 否 | 预约开始时间（格式：yyyy-MM-dd HH:mm:ss） | - |
+| endTime | String | 否 | 预约结束时间（格式：yyyy-MM-dd HH:mm:ss） | - |
+| current | Integer | 否 | 当前页码 | 1 |
+| size | Integer | 否 | 每页大小 | 10 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| total | Long | 总记录数 |
+| pages | Long | 总页数 |
+| current | Long | 当前页码 |
+| size | Long | 每页大小 |
+| records | Array | 预约列表 |
+
+#### 预约数据结构
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| appointmentId | Long | 预约ID |
+| elderId | Long | 老人ID |
+| elderName | String | 老人姓名 |
+| doctorId | Long | 医生ID |
+| doctorName | String | 医生姓名 |
+| appointmentTime | String | 预约时间 |
+| appointmentType | Integer | 预约类型 |
+| appointmentTypeText | String | 预约类型文本 |
+| status | Integer | 预约状态 |
+| statusText | String | 预约状态文本 |
+| remark | String | 备注 |
+| createTime | String | 创建时间 |
+| updateTime | String | 更新时间 |
+
+#### 请求示例
+
+```http
+GET /api/medical/appointment/page?elderName=张&appointmentType=2&status=1&current=1&size=10
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "total": 50,
+    "pages": 5,
+    "current": 1,
+    "size": 10,
+    "records": [
+      {
+        "appointmentId": 1,
+        "elderId": 3,
+        "elderName": "张老先生",
+        "doctorId": 1,
+        "doctorName": "李医生",
+        "appointmentTime": "2024-01-20T09:00:00+08:00",
+        "appointmentType": 2,
+        "appointmentTypeText": "门诊",
+        "status": 1,
+        "statusText": "待确认",
+        "remark": "定期复查",
+        "createTime": "2024-01-15 10:30:00",
+        "updateTime": "2024-01-15 10:30:00"
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+## 8. 短信服务管理
+
+### 8.1 发送普通短信
+
+- **接口URL**: `/sms/send`
+- **请求方式**: POST
+- **接口描述**: 发送普通短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phone | String | 是 | 手机号 |
+| content | String | 是 | 短信内容 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 发送结果 |
+
+#### 请求示例
+
+```http
+POST /sms/send
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "content": "您好，这是一条测试短信。"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "短信发送成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.2 批量发送短信
+
+- **接口URL**: `/sms/send/batch`
+- **请求方式**: POST
+- **接口描述**: 批量发送短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phones | String | 是 | 手机号列表（逗号分隔） |
+| content | String | 是 | 短信内容 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 发送结果 |
+
+#### 请求示例
+
+```http
+POST /sms/send/batch
+Content-Type: application/json
+
+{
+  "phones": "13800138000,13900139000,13700137000",
+  "content": "系统维护通知：系统将于今晚22:00-24:00进行维护，期间可能影响服务使用。"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "批量短信发送成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.3 发送模板短信
+
+- **接口URL**: `/sms/send/template`
+- **请求方式**: POST
+- **接口描述**: 根据模板发送短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phone | String | 是 | 手机号 |
+| templateCode | String | 是 | 模板代码 |
+| params | Object | 否 | 模板参数 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 发送结果 |
+
+#### 请求示例
+
+```http
+POST /sms/send/template
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "templateCode": "LOGIN_SECURITY",
+  "params": {
+    "username": "张三",
+    "loginTime": "2024-01-15 10:30:00",
+    "location": "北京市朝阳区"
+  }
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "模板短信发送成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.4 批量发送模板短信
+
+- **接口URL**: `/sms/send/template/batch`
+- **请求方式**: POST
+- **接口描述**: 批量发送模板短信
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phones | String | 是 | 手机号列表（逗号分隔） |
+| templateCode | String | 是 | 模板代码 |
+| params | Object | 否 | 模板参数 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 发送结果 |
+
+#### 请求示例
+
+```http
+POST /sms/send/template/batch
+Content-Type: application/json
+
+{
+  "phones": "13800138000,13900139000",
+  "templateCode": "APPOINTMENT_REMINDER",
+  "params": {
+    "elderName": "张老先生",
+    "appointmentTime": "2024-01-20 09:00",
+    "hospitalName": "北京协和医院",
+    "department": "心内科"
+  }
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "批量模板短信发送成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 8.5 查询账户余额
+
+- **接口URL**: `/sms/balance`
+- **请求方式**: GET
+- **接口描述**: 查询短信账户余额
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 账户余额 |
+
+#### 请求示例
+
+```http
+GET /sms/balance
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "查询成功",
+  "data": "1000",
+  "timestamp": 1628756438000
+}
+```
+
+### 8.6 获取短信发送记录
+
+- **接口URL**: `/sms/records`
+- **请求方式**: GET
+- **接口描述**: 分页获取短信发送记录
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| phone | String | 否 | 手机号 |
+| status | String | 否 | 发送状态 |
+| type | String | 否 | 短信类型 |
+| startTime | String | 否 | 开始时间 |
+| endTime | String | 否 | 结束时间 |
+| page | Integer | 否 | 页码 |
+| size | Integer | 否 | 每页大小 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 分页数据 |
+
+#### 请求示例
+
+```http
+GET /sms/records?page=1&size=10&status=success
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "total": 100,
+    "pages": 10,
+    "current": 1,
+    "size": 10,
+    "records": [
+      {
+        "recordId": 1,
+        "phone": "13800138000",
+        "content": "测试短信内容",
+        "type": "normal",
+        "status": "success",
+        "sendTime": "2024-01-15 10:30:00"
+      }
+    ]
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 8.7 获取短信发送统计
+
+- **接口URL**: `/sms/stats`
+- **请求方式**: GET
+- **接口描述**: 获取今日短信发送统计信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 统计信息 |
+
+#### 请求示例
+
+```http
+GET /sms/stats
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "todayTotal": 50,
+    "todaySuccess": 48,
+    "todayFailed": 2,
+    "successRate": "96%"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 8.8 获取短信模板列表
+
+- **接口URL**: `/sms/templates`
+- **请求方式**: GET
+- **接口描述**: 获取所有可用的短信模板
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 模板列表 |
+
+#### 请求示例
+
+```http
+GET /sms/templates
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "code": "REGISTER_WELCOME",
+      "name": "注册欢迎",
+      "content": "【云护CloudCare平台】感谢您的注册，欢迎来到云护CloudCare智慧系统。",
+      "params": []
+    },
+    {
+      "code": "LOGIN_SECURITY",
+      "name": "登录安全提醒",
+      "content": "【云护CloudCare】用户{username}于{loginTime}在{location}登录系统，如非本人操作请及时联系管理员。",
+      "params": ["username", "loginTime", "location"]
+    }
+  ],VITE_APP_BASE_API=''
+  "timestamp": 1628756438000
+}
+```
+
+### 8.2 根据ID查询医疗预约详情
+
+- **接口URL**: `/api/medical/appointment/{appointmentId}`
+- **请求方式**: GET
+- **接口描述**: 根据预约ID查询医疗预约详情
+- **权限要求**: 管理员、医生、护士或相关老人
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| appointmentId | Long | 是 | 预约ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 预约详情（结构同分页查询） |
+
+#### 请求示例
+
+```http
+GET /api/medical/appointment/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "appointmentId": 1,
+    "elderId": 3,
+    "elderName": "张老先生",
+    "doctorId": 1,
+    "doctorName": "李医生",
+    "appointmentTime": "2024-01-20T09:00:00+08:00",
+    "appointmentType": 2,
+    "appointmentTypeText": "门诊",
+    "status": 1,
+    "statusText": "待确认",
+    "remark": "定期复查",
+    "createTime": "2024-01-15 10:30:00",
+    "updateTime": "2024-01-15 10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 8.3 创建医疗预约
+
+- **接口URL**: `/api/medical/appointment`
+- **请求方式**: POST
+- **接口描述**: 创建新的医疗预约
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderId | Long | 是 | 老人ID |
+| doctorId | Long | 是 | 医生ID |
+| appointmentTime | String | 是 | 预约时间（格式：yyyy-MM-ddTHH:mm:ss+08:00） |
+| appointmentType | Integer | 是 | 预约类型（1-体检 2-门诊 3-专科 4-急诊） |
+| status | Integer | 否 | 预约状态（默认为1-待确认） |
+| remark | String | 否 | 备注 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 操作结果消息 |
+
+#### 请求示例
+
+```http
+POST /api/medical/appointment
+Content-Type: application/json
+
+{
+  "elderId": 3,
+  "doctorId": 1,
+  "appointmentTime": "2024-01-25T14:00:00+08:00",
+  "appointmentType": 2,
+  "remark": "定期复查血压"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": "创建预约成功",
+  "timestamp": 1628756438000
+}
+```
+
+### 8.4 更新医疗预约
+
+- **接口URL**: `/api/medical/appointment/{appointmentId}`
+- **请求方式**: PUT
+- **接口描述**: 更新指定的医疗预约信息
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| appointmentId | Long | 是 | 预约ID（路径参数） |
+| elderId | Long | 是 | 老人ID |
+| doctorId | Long | 是 | 医生ID |
+| appointmentTime | String | 是 | 预约时间（格式：yyyy-MM-ddTHH:mm:ss+08:00） |
+| appointmentType | Integer | 是 | 预约类型（1-体检 2-门诊 3-专科 4-急诊） |
+| status | Integer | 否 | 预约状态 |
+| remark | String | 否 | 备注 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 操作结果消息 |
+
+#### 请求示例
+
+```http
+PUT /api/medical/appointment/1
+Content-Type: application/json
+
+{
+  "elderId": 3,
+  "doctorId": 1,
+  "appointmentTime": "2024-01-25T15:00:00+08:00",
+  "appointmentType": 2,
+  "status": 2,
+  "remark": "已确认预约时间"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": "更新预约成功",
+  "timestamp": 1628756438000
+}
+```
+
+### 8.5 删除医疗预约
+
+- **接口URL**: `/api/medical/appointment/{appointmentId}`
+- **请求方式**: DELETE
+- **接口描述**: 删除指定的医疗预约
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| appointmentId | Long | 是 | 预约ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 操作结果消息 |
+
+#### 请求示例
+
+```http
+DELETE /api/medical/appointment/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": "删除预约成功",
+  "timestamp": 1628756438000
+}
+```
+
+### 8.6 更新预约状态
+
+- **接口URL**: `/api/medical/appointment/{appointmentId}/status`
+- **请求方式**: PATCH
+- **接口描述**: 更新指定预约的状态
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| appointmentId | Long | 是 | 预约ID（路径参数） |
+| status | Integer | 是 | 预约状态（1-待确认 2-已确认 3-已完成 4-已取消） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | String | 操作结果消息 |
+
+#### 请求示例
+
+```http
+PATCH /api/medical/appointment/1/status?status=2
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": "更新预约状态成功",
+  "timestamp": 1628756438000
+}
+```
+
+---
+
+**医疗预约管理模块说明**：
+
+1. **预约类型说明**：
+   - 1：体检 - 定期健康体检
+   - 2：门诊 - 普通门诊就诊
+   - 3：专科 - 专科医生诊疗
+   - 4：急诊 - 紧急医疗服务
+
+2. **预约状态说明**：
+   - 1：待确认 - 预约已提交，等待确认
+   - 2：已确认 - 预约已确认，等待就诊
+   - 3：已完成 - 预约已完成就诊
+   - 4：已取消 - 预约已取消
+
+3. **时间格式说明**：
+   - 预约时间使用ISO 8601格式：`yyyy-MM-ddTHH:mm:ss+08:00`
+   - 查询时间参数使用简化格式：`yyyy-MM-dd HH:mm:ss`
+
+4. **权限控制**：
+   - 管理员：拥有所有操作权限
+   - 医生：可以查看、创建、更新和删除预约
+   - 护士：可以查看、创建和更新预约状态
+   - 老人：只能查看自己的预约信息
+
+5. **业务规则**：
+   - 同一老人在同一时间段只能有一个预约
+   - 同一医生在同一时间段只能接受一个预约
+   - 预约时间不能早于当前时间
+   - 已完成或已取消的预约不能再次修改
+
+**更新日志**：
+
+- 2024-01-15：新增医疗预约管理模块
+- 2024-01-15：完善预约状态管理和权限控制
+- 2024-01-15：优化时间格式处理和业务规则验证
 
 ## 6. 电子围栏管理
 
@@ -136,7 +904,7 @@ Content-Type: application/json
 
 ### 6.1 接收GPS数据推送
 
-- **接口URL**: `/api/gps/push`
+- **接口URL**: `/gps/push`
 - **请求方式**: POST
 - **接口描述**: 接收GPS设备推送的定位数据
 - **权限要求**: 无（设备接口）
@@ -172,7 +940,7 @@ method=status&serialNumber=1628756438000&data=[{"macid":"TEST123456789","gpsTime
 
 ### 6.2 获取老人轨迹数据
 
-- **接口URL**: `/api/gps/track/{elderlyId}`
+- **接口URL**: `/gps/track/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 获取指定老人在指定时间范围内的GPS轨迹数据
 - **权限要求**: 管理员、医生或相关老人
@@ -241,7 +1009,7 @@ GET /api/gps/track/1?startTime=2023-08-08 00:00:00&endTime=2023-08-08 23:59:59
 
 ### 6.3 获取老人最新位置
 
-- **接口URL**: `/api/gps/latest/{elderlyId}`
+- **接口URL**: `/gps/latest/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 获取指定老人的最新GPS位置信息
 - **权限要求**: 管理员、医生或相关老人
@@ -290,7 +1058,7 @@ GET /api/gps/latest/1
 
 ### 6.4 绑定GPS设备
 
-- **接口URL**: `/api/gps/bind`
+- **接口URL**: `/gps/bind`
 - **请求方式**: POST
 - **接口描述**: 将GPS设备与老人建立绑定关系
 - **权限要求**: 管理员或医生
@@ -332,7 +1100,7 @@ Content-Type: application/json
 
 ### 6.5 获取设备绑定列表
 
-- **接口URL**: `/api/gps/bindings`
+- **接口URL**: `/gps/bindings`
 - **请求方式**: GET
 - **接口描述**: 获取所有GPS设备与老人的绑定关系列表
 - **权限要求**: 管理员或医生
@@ -385,7 +1153,7 @@ GET /api/gps/bindings
 
 ### 6.6 解绑GPS设备
 
-- **接口URL**: `/api/gps/unbind/{macid}`
+- **接口URL**: `/gps/unbind/{macid}`
 - **请求方式**: DELETE
 - **接口描述**: 解除GPS设备与老人的绑定关系
 - **权限要求**: 管理员或医生
@@ -422,7 +1190,7 @@ DELETE /api/gps/unbind/TEST123456789
 
 ### 7.1 创建围栏
 
-- **接口URL**: `/api/geo-fence/create`
+- **接口URL**: `/geo-fence/create`
 - **请求方式**: POST
 - **接口描述**: 创建新的电子围栏
 - **权限要求**: 管理员或医生角色
@@ -497,9 +1265,9 @@ Content-Type: application/json
 - 2024-01-15：优化GPS时间戳处理，解决时区转换问题
 - 2024-01-15：完善电子围栏管理接口文档
 
-### 6.2 更新围栏
+### 7.2 更新围栏
 
-- **接口URL**: `/api/geo-fence/update/{id}`
+- **接口URL**: `/geo-fence/update/{id}`
 - **请求方式**: PUT
 - **接口描述**: 更新指定的电子围栏
 - **权限要求**: 管理员或医生角色
@@ -549,9 +1317,9 @@ Content-Type: application/json
 }
 ```
 
-### 6.3 删除围栏
+### 7.3 删除围栏
 
-- **接口URL**: `/api/geo-fence/delete/{fenceId}`
+- **接口URL**: `/geo-fence/delete/{fenceId}`
 - **请求方式**: DELETE
 - **接口描述**: 删除指定的电子围栏
 - **权限要求**: 管理员或医生角色
@@ -586,9 +1354,9 @@ DELETE /api/geo-fence/delete/1
 }
 ```
 
-### 6.4 分页查询所有围栏
+### 7.4 分页查询所有围栏
 
-- **接口URL**: `/api/geo-fence/list`
+- **接口URL**: `/geo-fence/list`
 - **请求方式**: GET
 - **接口描述**: 分页查询所有电子围栏
 - **权限要求**: 需要登录
@@ -646,9 +1414,9 @@ GET /api/geo-fence/list?page=1&size=10
 }
 ```
 
-### 6.5 根据老人ID查询围栏
+### 7.5 根据老人ID查询围栏
 
-- **接口URL**: `/api/geo-fence/list/{elderlyId}`
+- **接口URL**: `/geo-fence/list/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 查询指定老人的所有围栏
 - **权限要求**: 需要登录
@@ -694,9 +1462,576 @@ GET /api/geo-fence/list/123
 }
 ```
 
-### 6.6 查询围栏详情
+## 9. 设备管理
 
-- **接口URL**: `/api/geo-fence/detail/{fenceId}`
+### 9.1 获取设备信息列表
+
+- **接口URL**: `/device/list`
+- **请求方式**: GET
+- **接口描述**: 获取设备信息列表
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 设备信息列表 |
+
+#### 请求示例
+
+```http
+GET /device-info/list
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "deviceId": 1,
+      "deviceName": "GPS定位器",
+      "deviceType": "GPS",
+      "deviceModel": "GT06N",
+      "status": 1,
+      "createTime": "2024-01-15 10:30:00"
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+### 9.2 根据ID获取设备信息
+
+- **接口URL**: `/device/{deviceId}`
+- **请求方式**: GET
+- **接口描述**: 根据设备ID获取设备详细信息
+- **权限要求**: 管理员或医生角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| deviceId | Long | 是 | 设备ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 设备详细信息 |
+
+#### 请求示例
+
+```http
+GET /device-info/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "deviceId": 1,
+    "deviceName": "GPS定位器",
+    "deviceType": "GPS",
+    "deviceModel": "GT06N",
+    "status": 1,
+    "createTime": "2024-01-15 10:30:00",
+    "updateTime": "2024-01-15 10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 9.3 创建设备信息
+
+- **接口URL**: `/device`
+- **请求方式**: POST
+- **接口描述**: 创建新的设备信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| deviceName | String | 是 | 设备名称 |
+| deviceType | String | 是 | 设备类型 |
+| deviceModel | String | 是 | 设备型号 |
+| status | Integer | 否 | 设备状态 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 创建结果 |
+
+#### 请求示例
+
+```http
+POST /device-info
+Content-Type: application/json
+
+{
+  "deviceName": "新GPS定位器",
+  "deviceType": "GPS",
+  "deviceModel": "GT06N",
+  "status": 1
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 9.4 更新设备信息
+
+- **接口URL**: `/device`
+- **请求方式**: PUT
+- **接口描述**: 更新设备信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| deviceId | Long | 是 | 设备ID（路径参数） |
+| deviceName | String | 否 | 设备名称 |
+| deviceType | String | 否 | 设备类型 |
+| deviceModel | String | 否 | 设备型号 |
+| status | Integer | 否 | 设备状态 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /device-info/1
+Content-Type: application/json
+
+{
+  "deviceName": "更新后的GPS定位器",
+  "status": 0
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 9.5 删除设备信息
+
+- **接口URL**: `/device/{deviceIds}`
+- **请求方式**: DELETE
+- **接口描述**: 删除设备信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| deviceId | Long | 是 | 设备ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 删除结果 |
+
+#### 请求示例
+
+```http
+DELETE /device-info/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+## 10. 老人观察记录管理
+
+### 10.1 获取观察记录列表
+
+- **接口URL**: `/elderly-observations/list`
+- **请求方式**: GET
+- **接口描述**: 获取老人观察记录列表
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 否 | 老人ID |
+| page | Integer | 否 | 页码 |
+| size | Integer | 否 | 每页大小 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Array | 观察记录列表 |
+
+#### 请求示例
+
+```http
+GET /elderly-observations/list?elderlyId=1&page=1&size=10
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": [
+    {
+      "observationId": 1,
+      "elderlyId": 1,
+      "elderlyName": "张老先生",
+      "observationType": "日常观察",
+      "observationContent": "精神状态良好，食欲正常",
+      "observationTime": "2024-01-15 10:30:00",
+      "observerId": 2,
+      "observerName": "李护士",
+      "createTime": "2024-01-15 10:30:00"
+    }
+  ],
+  "timestamp": 1628756438000
+}
+```
+
+### 10.2 根据ID获取观察记录
+
+- **接口URL**: `/elderly-observations/{observationId}`
+- **请求方式**: GET
+- **接口描述**: 根据观察记录ID获取详细信息
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| observationId | Long | 是 | 观察记录ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 观察记录详细信息 |
+
+#### 请求示例
+
+```http
+GET /elderly-observations/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "observationId": 1,
+    "elderlyId": 1,
+    "elderlyName": "张老先生",
+    "observationType": "日常观察",
+    "observationContent": "精神状态良好，食欲正常",
+    "observationTime": "2024-01-15 10:30:00",
+    "observerId": 2,
+    "observerName": "李护士",
+    "createTime": "2024-01-15 10:30:00",
+    "updateTime": "2024-01-15 10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 10.3 创建观察记录
+
+- **接口URL**: `/elderly-observations`
+- **请求方式**: POST
+- **接口描述**: 创建新的观察记录
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| elderlyId | Long | 是 | 老人ID |
+| observationType | String | 是 | 观察类型 |
+| observationContent | String | 是 | 观察内容 |
+| observationTime | String | 是 | 观察时间 |
+| observerId | Long | 是 | 观察者ID |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 创建结果 |
+
+#### 请求示例
+
+```http
+POST /elderly-observations
+Content-Type: application/json
+
+{
+  "elderlyId": 1,
+  "observationType": "日常观察",
+  "observationContent": "精神状态良好，食欲正常",
+  "observationTime": "2024-01-15 10:30:00",
+  "observerId": 2
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 10.4 更新观察记录
+
+- **接口URL**: `/elderly-observations/{observationId}`
+- **请求方式**: PUT
+- **接口描述**: 更新观察记录
+- **权限要求**: 管理员、医生或护士角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| observationId | Long | 是 | 观察记录ID（路径参数） |
+| observationType | String | 否 | 观察类型 |
+| observationContent | String | 否 | 观察内容 |
+| observationTime | String | 否 | 观察时间 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /elderly-observations/1
+Content-Type: application/json
+
+{
+  "observationContent": "精神状态良好，食欲正常，血压稳定"
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+### 10.5 删除观察记录
+
+- **接口URL**: `/elderly-observations/{observationId}`
+- **请求方式**: DELETE
+- **接口描述**: 删除观察记录
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| observationId | Long | 是 | 观察记录ID（路径参数） |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 删除结果 |
+
+#### 请求示例
+
+```http
+DELETE /elderly-observations/1
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+## 11. 系统配置管理
+
+### 11.1 获取系统配置
+
+- **接口URL**: `/system/config`
+- **请求方式**: GET
+- **接口描述**: 获取系统配置信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+无
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Object | 系统配置信息 |
+
+#### 请求示例
+
+```http
+GET /system-config
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "systemName": "云护CloudCare智慧医养系统",
+    "systemVersion": "v1.0.0",
+    "maxUserCount": 1000,
+    "dataRetentionDays": 365,
+    "enableSmsAlert": true,
+    "enableEmailAlert": false,
+    "updateTime": "2024-01-15 10:30:00"
+  },
+  "timestamp": 1628756438000
+}
+```
+
+### 11.2 更新系统配置
+
+- **接口URL**: `/system/config`
+- **请求方式**: PUT
+- **接口描述**: 更新系统配置信息
+- **权限要求**: 管理员角色
+
+#### 请求参数
+
+| 参数名 | 类型 | 是否必须 | 描述 |
+| ----- | --- | ------- | ---- |
+| systemName | String | 否 | 系统名称 |
+| maxUserCount | Integer | 否 | 最大用户数 |
+| dataRetentionDays | Integer | 否 | 数据保留天数 |
+| enableSmsAlert | Boolean | 否 | 启用短信告警 |
+| enableEmailAlert | Boolean | 否 | 启用邮件告警 |
+
+#### 响应参数
+
+| 参数名 | 类型 | 描述 |
+| ----- | --- | ---- |
+| - | Boolean | 更新结果 |
+
+#### 请求示例
+
+```http
+PUT /system-config
+Content-Type: application/json
+
+{
+  "maxUserCount": 2000,
+  "dataRetentionDays": 730,
+  "enableEmailAlert": true
+}
+```
+
+#### 响应示例
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": true,
+  "timestamp": 1628756438000
+}
+```
+
+---
+
+**注意事项**：
+
+1. **接口路径统一**：所有接口路径已统一修正，去除了不必要的 `/api` 前缀
+2. **响应格式统一**：所有接口都使用 `Result<T>` 格式返回数据
+3. **权限控制**：不同角色用户只能访问相应权限范围内的数据
+4. **时间格式**：统一使用 `yyyy-MM-dd HH:mm:ss` 格式
+5. **错误处理**：所有接口都会返回统一的错误格式
+6. **数据验证**：所有输入参数都会进行有效性验证
+
+**更新日志**：
+
+- 2024-01-20：修正所有接口路径，确保与后端实现一致
+- 2024-01-20：补充设备管理、老人观察记录管理和系统配置管理模块
+- 2024-01-20：统一响应格式为 `Result<T>`
+- 2024-01-20：完善健康预警管理接口，修正为实际存在的接口
+
+### 7.6 查询围栏详情
+
+- **接口URL**: `/geo-fence/detail/{fenceId}`
 - **请求方式**: GET
 - **接口描述**: 查询指定围栏的详细信息
 - **权限要求**: 需要登录
@@ -761,9 +2096,9 @@ GET /api/geo-fence/detail/1
 }
 ```
 
-### 6.7 查询围栏事件记录
+### 7.7 查询围栏事件记录
 
-- **接口URL**: `/api/geo-fence/events/{elderlyId}`
+- **接口URL**: `/geo-fence/events/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 查询指定老人的围栏事件记录
 - **权限要求**: 需要登录
@@ -821,9 +2156,9 @@ GET /api/geo-fence/events/123?page=1&size=10
 }
 ```
 
-### 6.8 获取老人当前位置
+### 7.8 获取老人当前位置
 
-- **接口URL**: `/api/geo-fence/location/{elderlyId}`
+- **接口URL**: `/geo-fence/location/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 获取指定老人的当前位置
 - **权限要求**: 需要登录
@@ -1751,7 +3086,7 @@ GET /api/system/config
 
 ### 2.1 用户登录
 
-- **接口URL**: `/api/auth/login`
+- **接口URL**: `/auth/login`
 - **请求方式**: POST
 - **接口描述**: 用户登录接口
 
@@ -1796,7 +3131,7 @@ POST /api/auth/login?username=admin&password=123456
 
 ### 2.2 用户注册
 
-- **接口URL**: `/api/auth/register`
+- **接口URL**: `/auth/register`
 - **请求方式**: POST
 - **接口描述**: 用户注册接口
 
@@ -1836,7 +3171,7 @@ POST /api/auth/register?username=user1&password=123456&realName=张三&phone=138
 
 ### 2.3 退出登录
 
-- **接口URL**: `/api/auth/logout`
+- **接口URL**: `/auth/logout`
 - **请求方式**: POST
 - **接口描述**: 用户退出登录接口
 
@@ -1872,7 +3207,7 @@ POST /api/auth/logout
 
 ### 3.1 获取当前登录用户信息
 
-- **接口URL**: `/api/user/info`
+- **接口URL**: `/user/info`
 - **请求方式**: GET
 - **接口描述**: 获取当前登录用户的详细信息
 
@@ -1926,7 +3261,7 @@ GET /api/user/info
 
 ### 3.2 更新用户基本信息
 
-- **接口URL**: `/api/user/info`
+- **接口URL**: `/user/info`
 - **请求方式**: PUT
 - **接口描述**: 更新当前登录用户的基本信息
 
@@ -1971,7 +3306,7 @@ Content-Type: application/json
 
 ### 3.3 修改密码
 
-- **接口URL**: `/api/user/password`
+- **接口URL**: `/user/password`
 - **请求方式**: PUT
 - **接口描述**: 修改当前登录用户的密码
 
@@ -2008,7 +3343,7 @@ PUT /api/user/password?oldPassword=123456&newPassword=654321
 
 ### 3.4 更新用户头像
 
-- **接口URL**: `/api/user/avatar`
+- **接口URL**: `/user/avatar`
 - **请求方式**: PUT
 - **接口描述**: 更新当前登录用户的头像
 
@@ -2044,7 +3379,7 @@ PUT /api/user/avatar?avatar=https://example.com/avatar.jpg
 
 ### 3.5 分页查询用户列表
 
-- **接口URL**: `/api/user/page`
+- **接口URL**: `/user/page`
 - **请求方式**: GET
 - **接口描述**: 分页查询用户列表信息
 - **权限要求**: 管理员角色
@@ -2105,7 +3440,7 @@ GET /api/user/page?pageNum=1&pageSize=10&username=admin
 
 ### 3.6 获取用户详情
 
-- **接口URL**: `/api/user/{userId}`
+- **接口URL**: `/user/{userId}`
 - **请求方式**: GET
 - **接口描述**: 根据用户ID获取用户详情信息
 - **权限要求**: 管理员角色
@@ -2158,7 +3493,7 @@ GET /api/user/1
 
 ### 3.7 新增用户
 
-- **接口URL**: `/api/user`
+- **接口URL**: `/user`
 - **请求方式**: POST
 - **接口描述**: 新增用户信息
 - **权限要求**: 管理员角色
@@ -2212,7 +3547,7 @@ Content-Type: application/json
 
 ### 3.8 更新用户
 
-- **接口URL**: `/api/user`
+- **接口URL**: `/user`
 - **请求方式**: PUT
 - **接口描述**: 更新用户信息
 - **权限要求**: 管理员角色
@@ -2264,7 +3599,7 @@ Content-Type: application/json
 
 ### 3.9 删除用户
 
-- **接口URL**: `/api/user/{userId}`
+- **接口URL**: `/user/{userId}`
 - **请求方式**: DELETE
 - **接口描述**: 根据用户ID删除用户信息
 - **权限要求**: 管理员角色
@@ -2301,7 +3636,7 @@ DELETE /api/user/1
 
 ### 3.10 重置密码
 
-- **接口URL**: `/api/user/reset-password/{userId}`
+- **接口URL**: `/user/reset-password/{userId}`
 - **请求方式**: PUT
 - **接口描述**: 重置用户密码为默认密码
 - **权限要求**: 管理员角色
@@ -2338,7 +3673,7 @@ PUT /api/user/reset-password/1
 
 ### 3.11 更新用户状态
 
-- **接口URL**: `/api/user/status/{userId}/{status}`
+- **接口URL**: `/user/status/{userId}/{status}`
 - **请求方式**: PUT
 - **接口描述**: 更新用户状态（0：禁用，1：正常）
 - **权限要求**: 管理员角色
@@ -2378,7 +3713,7 @@ PUT /api/user/status/1/1
 
 ### 4.1 获取仪表盘统计数据
 
-- **接口URL**: `/api/dashboard/statistics`
+- **接口URL**: `/dashboard/statistics`
 - **请求方式**: GET
 - **接口描述**: 获取仪表盘统计数据
 - **权限要求**: 需要dashboard:view权限
@@ -2425,7 +3760,7 @@ GET /api/dashboard/statistics
 
 ### 4.2 获取健康预警趋势数据
 
-- **接口URL**: `/api/dashboard/warning/trend`
+- **接口URL**: `/dashboard/warning/trend`
 - **请求方式**: GET
 - **接口描述**: 获取健康预警趋势数据
 - **权限要求**: 需要dashboard:view权限
@@ -2466,7 +3801,7 @@ GET /api/dashboard/warning/trend?timeRange=week
 
 ### 4.3 获取健康记录分布数据
 
-- **接口URL**: `/api/dashboard/record/distribution`
+- **接口URL**: `/dashboard/record/distribution`
 - **请求方式**: GET
 - **接口描述**: 获取健康记录分布数据
 - **权限要求**: 需要dashboard:view权限
@@ -2507,7 +3842,7 @@ GET /api/dashboard/record/distribution?type=type
 
 ### 4.4 获取系统公告列表
 
-- **接口URL**: `/api/dashboard/announcements`
+- **接口URL**: `/dashboard/announcements`
 - **请求方式**: GET
 - **接口描述**: 获取系统公告列表
 
@@ -2559,7 +3894,7 @@ GET /api/dashboard/announcements?limit=5
 
 ### 4.5 获取天气信息
 
-- **接口URL**: `/api/dashboard/weather`
+- **接口URL**: `/dashboard/weather`
 - **请求方式**: GET
 - **接口描述**: 获取天气信息
 
@@ -2607,9 +3942,9 @@ GET /api/dashboard/weather?city=北京
 
 ## 5. 健康预警管理
 
-### 5.1 分页查询健康预警列表
+### 5.1 获取所有健康预警记录
 
-- **接口URL**: `/api/health/warning/list`
+- **接口URL**: `/health-alert/all`
 - **请求方式**: GET
 - **接口描述**: 分页查询健康预警列表
 - **权限要求**: 管理员、医生或护士角色
@@ -2673,9 +4008,9 @@ GET /api/health/warning/list?pageNum=1&pageSize=10&warningLevel=3
 }
 ```
 
-### 5.2 获取健康预警详情
+### 5.2 根据老人ID获取预警记录
 
-- **接口URL**: `/api/health/warning/{warningId}`
+- **接口URL**: `/health-alert/elderly/{elderlyId}`
 - **请求方式**: GET
 - **接口描述**: 获取健康预警详情
 - **权限要求**: 管理员、医生或护士角色
@@ -2740,9 +4075,9 @@ GET /api/health/warning/1
 }
 ```
 
-### 5.3 新增健康预警
+### 5.3 根据预警状态获取预警记录
 
-- **接口URL**: `/api/health/warning`
+- **接口URL**: `/health-alert/status/{status}`
 - **请求方式**: POST
 - **接口描述**: 新增健康预警
 - **权限要求**: 管理员、医生或护士角色
@@ -2788,9 +4123,9 @@ Content-Type: application/json
 }
 ```
 
-### 5.4 修改健康预警
+### 5.4 根据预警级别获取预警记录
 
-- **接口URL**: `/api/health/warning`
+- **接口URL**: `/health-alert/level/{alertLevel}`
 - **请求方式**: PUT
 - **接口描述**: 修改健康预警
 - **权限要求**: 管理员、医生或护士角色
@@ -2835,9 +4170,9 @@ Content-Type: application/json
 }
 ```
 
-### 5.5 删除健康预警
+### 5.5 根据时间范围获取预警记录
 
-- **接口URL**: `/api/health/warning/{warningIds}`
+- **接口URL**: `/health-alert/time-range`
 - **请求方式**: DELETE
 - **接口描述**: 删除健康预警
 - **权限要求**: 管理员角色
@@ -2872,9 +4207,9 @@ DELETE /api/health/warning/1,2,3
 }
 ```
 
-### 5.6 处理健康预警
+### 5.6 处理预警（标记为已解决）
 
-- **接口URL**: `/api/health/warning/process`
+- **接口URL**: `/health-alert/resolve/{alertId}`
 - **请求方式**: PUT
 - **接口描述**: 处理健康预警
 - **权限要求**: 管理员、医生或护士角色
@@ -2916,9 +4251,9 @@ Content-Type: application/json
 }
 ```
 
-### 5.7 获取未处理的健康预警数量
+### 5.7 获取活跃预警数量
 
-- **接口URL**: `/api/health/warning/unprocessed/count`
+- **接口URL**: `/health-alert/active-count`
 - **请求方式**: GET
 - **接口描述**: 获取未处理的健康预警数量
 - **权限要求**: 管理员、医生或护士角色
@@ -2951,9 +4286,9 @@ GET /api/health/warning/unprocessed/count
 }
 ```
 
-### 5.8 获取老人的健康预警列表
+### 5.8 获取预警统计信息
 
-- **接口URL**: `/api/health/warning/elder/{elderId}`
+- **接口URL**: `/health-alert/statistics`
 - **请求方式**: GET
 - **接口描述**: 获取老人的健康预警列表
 - **权限要求**: 管理员、医生、护士、老人或家属角色
@@ -3004,9 +4339,9 @@ GET /api/health/warning/elder/10
 }
 ```
 
-### 5.9 获取最近的健康预警列表
+### 5.9 根据预警类型获取预警记录
 
-- **接口URL**: `/api/health/warning/recent/{limit}`
+- **接口URL**: `/health-alert/type/{alertType}`
 - **请求方式**: GET
 - **接口描述**: 获取最近的健康预警列表
 - **权限要求**: 管理员、医生或护士角色
